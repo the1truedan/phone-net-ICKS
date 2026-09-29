@@ -126,6 +126,16 @@
   .tools .ai { font-size: 0.8rem; color: var(--fg-dimmer); }
   @media (max-width: 760px) { .totals { grid-template-columns: repeat(2, 1fr); } .how { grid-template-columns: 1fr; } }
 
+  .bt { max-width: 760px; margin: 1.4rem auto 0; padding: 0; list-style: none; }
+  .bt li { display: grid; grid-template-columns: 6.5rem 1fr; column-gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--line); }
+  .bt .bt-date { grid-row: span 3; font-family: var(--mono); font-size: 0.78rem; color: var(--accent-soft); }
+  .bt .bt-tool { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-mu); }
+  .bt b { font-weight: 600; }
+  .bt .bt-help { color: var(--fg-dim); font-size: 0.9rem; }
+  .bt .bt-cite { grid-column: 2; font-size: 0.74rem; color: var(--fg-dimmer); }
+  .bt .bt-cite a { color: var(--fg-dimmer); }
+  .bt code { font-family: var(--mono); font-size: 0.72rem; }
+
   footer { border-top: 1px solid var(--line); text-align: center; padding: 2rem 1.5rem 3rem;
            font-family: var(--mono); font-size: 0.75rem; color: var(--fg-dimmer); }
 
@@ -354,6 +364,38 @@
     <p class="section-sub">Keyword categories from 18,797 notes (a note can fall in more than one). Bubble area = count. Named people and places are grouped as "local contacts."</p>
   </div>
   <div class="viz" id="viz-bubbles"><div class="plot"><svg viewBox="0 0 900 360" role="img" aria-label="Bubble chart of note topics: trips and errands 878, calls and email 735, paperwork 572, bills 230, therapy 185, agency and payroll 140, taxes 107, thrift 99, food bank 95, local contacts 13"></svg><div class="tip" hidden></div></div></div>
+</section>
+
+<section class="band" id="breakthroughs">
+  <div class="section-head">
+    <p class="section-eyebrow">Breakthroughs</p>
+    <h2 class="section-title">Each coding step, and what it made possible for caregiving</h2>
+    <p class="section-sub">Built between care tasks with several AI assistants. Citations are commits in the private working repo and session IDs from the
+      session index; they resolve only for the owner until a public release.</p>
+  </div>
+  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of ten coding breakthroughs from April to September 2026, clustered in the last week of September"></svg><div class="tip" hidden></div></div></div>
+  <ol class="bt">
+    <li><span class="bt-date">2026-04-14</span><span class="bt-tool">ChatGPT</span><b>Coding pivot + AI certificate enrollment</b><span class="bt-help">Moved from chatting about the situation to building tools for it.</span>
+      <span class="bt-cite">session <code>chatgpt:a368cd55</code></span></li>
+    <li><span class="bt-date">2026-06-19</span><span class="bt-tool">ChatGPT</span><b>One caregiving catalog</b><span class="bt-help">Scattered documents became one catalog that later tools could read.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/ee882c1">ee882c1</a> · session <code>chatgpt:fdf700c9</code></span></li>
+    <li><span class="bt-date">2026-07-22</span><span class="bt-tool">Codex</span><b>Portable intake with checksums</b><span class="bt-help">Evidence could be pulled and verified the same way every time.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/da4ceec">da4ceec</a> · session <code>codex:019f88b5</code></span></li>
+    <li><span class="bt-date">2026-08-04</span><span class="bt-tool">Pi · Codex</span><b>Memory that survives long days</b><span class="bt-help">Assistants stopped losing the thread between caregiving interruptions.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/3ba0ddb">3ba0ddb</a> · <a href="https://github.com/the1truedan/grokcode/commit/e6ede46">e6ede46</a> · session <code>codex:019fcd1f</code></span></li>
+    <li><span class="bt-date">2026-08-12</span><span class="bt-tool">Codex</span><b>Browsing history made searchable</b><span class="bt-help">Past research on rules and offices could be found again in seconds.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/de6860f">de6860f</a> · session <code>codex:019ff902</code></span></li>
+    <li><span class="bt-date">2026-09-22</span><span class="bt-tool">Claude</span><b>Local search over the agency record</b><span class="bt-help">Any email or recording about the two companies became findable.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/3bc62e6">3bc62e6</a> · <a href="https://github.com/the1truedan/grokcode/commit/db1f3f9">db1f3f9</a> · session <code>f85d6f3f</code></span></li>
+    <li><span class="bt-date">2026-09-25</span><span class="bt-tool">Claude · Grok</span><b>Every agency call transcribed and summarized locally</b><span class="bt-help">Hours of calls turned into text that could be quoted, with dates.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/0452ae7">0452ae7</a> · <a href="https://github.com/the1truedan/grokcode/commit/b1833c4">b1833c4</a> · session <code>6985c5c0</code></span></li>
+    <li><span class="bt-date">2026-09-26</span><span class="bt-tool">Claude</span><b>Two-recorder cross-check, phone inventory, texts and call logs</b><span class="bt-help">The key meeting was verified from two devices; texts and calls joined the timeline.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/16384fb">16384fb</a> · <a href="https://github.com/the1truedan/grokcode/commit/aa50d77">aa50d77</a> · <a href="https://github.com/the1truedan/grokcode/commit/440372c">440372c</a> · <a href="https://github.com/the1truedan/grokcode/commit/518453f">518453f</a> · session <code>14aa5ea2</code></span></li>
+    <li><span class="bt-date">2026-09-27</span><span class="bt-tool">Claude</span><b>The caregiver's own log became the timing backbone</b><span class="bt-help">Minute-stamped notes, calendar and voicemail lined everything else up.</span>
+      <span class="bt-cite"><a href="https://github.com/the1truedan/grokcode/commit/8cb1dae">8cb1dae</a> · <a href="https://github.com/the1truedan/grokcode/commit/86170fe">86170fe</a> · session <code>93ba0bae</code></span></li>
+    <li><span class="bt-date">2026-09-29</span><span class="bt-tool">Claude</span><b>Keyword + meaning sweeps, true dates, trip context</b><span class="bt-help">Found the gap between hours promised and hours sent to payroll.</span>
+      <span class="bt-cite">session <code>52bdff7f</code></span></li>
+  </ol>
 </section>
 
 <section class="band" id="totals">
@@ -600,6 +642,20 @@ function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Ma
   MONTHS.forEach((r, i) => { const v = AIH[r[0]] || 0; if (v) bar(svg, f.x(i) - bw / 2, bw, f.y(0), f.y(v), "var(--series-log)", true); });
   el("text", { x: f.x(idx("2026-09")), y: f.y(11.5) - 6, "text-anchor": "middle", class: "lbl" }, svg, "~40 h total");
   hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${AIH[MONTHS[i][0]] || 0} h</b> active`);
+})();
+
+const BT = [["2026-04-14", "ChatGPT", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "ChatGPT", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"]];
+(function bt() {
+  const root = document.getElementById("viz-bt"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900;
+  const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-10-01"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
+  el("line", { x1: x0, x2: x1, y1: y, y2: y, stroke: "#273044", "stroke-width": 2 }, svg);
+  ["2026-04","2026-05","2026-06","2026-07","2026-08","2026-09"].forEach(m => el("text", { x: X(m + "-01"), y: y + 40, "text-anchor": "middle" }, svg, label(m).split(" ")[0]));
+  BT.forEach(([d, t, w], k) => { const cy = y - (k >= 5 ? (k - 5) * 7 : 0);
+    const c = el("circle", { cx: X(d), cy, r: 6, fill: "var(--series-log)", stroke: "#121722", "stroke-width": 2 }, svg);
+    c.addEventListener("pointermove", () => { const b = svg.getBoundingClientRect(); tip.innerHTML = `${d} · ${t}<br><b>${w}</b>`; tip.hidden = false;
+      tip.style.left = (X(d) / W * 100) + "%"; tip.style.top = (cy / W * b.width) + "px"; });
+    c.addEventListener("pointerleave", () => tip.hidden = true); });
+  el("text", { x: X("2026-09-26"), y: y - 44, "text-anchor": "middle", class: "lbl" }, svg, "5 in the last week");
 })();
 </script>
 
