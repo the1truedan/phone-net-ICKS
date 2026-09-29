@@ -71,6 +71,30 @@
                       font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
   .steps b { color: var(--fg); font-weight: 600; }
 
+  /* charts: series colors validated (dark band, CVD ΔE 21, contrast ≥3:1 on #121722) */
+  .viz { --series-log: #2a97c4; --series-appr: #c4841a; --grid: #1f2636; --ink-2: #8b97ad; --ink-3: #5c6880;
+         margin-top: 1.4rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 1.2rem 1.2rem 0.9rem; }
+  .viz-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .viz h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+  .legend { display: flex; gap: 1.1rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .sw { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
+  .sw-log { background: var(--series-log); }
+  .sw-appr { background: var(--series-appr); height: 3px; box-shadow: 0 3px 0 -1px transparent; }
+  .plot { position: relative; margin-top: 0.8rem; }
+  .plot svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .plot text { font-family: var(--mono); font-size: 11px; fill: var(--ink-3); }
+  .plot .lbl { fill: var(--fg); font-size: 11.5px; }
+  .tip { position: absolute; pointer-events: none; background: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 4px;
+         padding: 0.45rem 0.6rem; font-size: 0.78rem; color: var(--fg); white-space: nowrap; transform: translate(-50%, -110%); }
+  .tip b { font-family: var(--mono); font-weight: 600; }
+  .viz-note { margin: 0.6rem 0 0; font-size: 0.78rem; color: var(--ink-3); }
+  .viz-table { margin-top: 1rem; font-size: 0.82rem; color: var(--fg-dim); }
+  .viz-table summary { cursor: pointer; font-family: var(--mono); font-size: 0.76rem; color: var(--accent-soft); }
+  .viz-table table { width: 100%; border-collapse: collapse; margin-top: 0.6rem; font-variant-numeric: tabular-nums; }
+  .viz-table th, .viz-table td { text-align: right; padding: 0.25rem 0.5rem; border-bottom: 1px solid var(--line); }
+  .viz-table th:first-child, .viz-table td:first-child { text-align: left; }
+
   footer { border-top: 1px solid var(--line); text-align: center; padding: 2rem 1.5rem 3rem;
            font-family: var(--mono); font-size: 0.75rem; color: var(--fg-dimmer); }
 
@@ -168,11 +192,33 @@
     <p class="section-sub">Aggregate counts only. No names, no content.</p>
   </div>
   <div class="stats">
-    <div class="stat"><b>~750 h</b><span>audio transcribed locally</span></div>
-    <div class="stat"><b>2,047</b><span>recordings indexed</span></div>
-    <div class="stat"><b>1,119</b><span>true dates recovered</span></div>
-    <div class="stat"><b>79</b><span>agency emails indexed</span></div>
+    <div class="stat"><b>18,797</b><span>caregiving notes logged since Jan 2024</span></div>
+    <div class="stat"><b>~14.5 h</b><span>average day, first note to last (since Feb 2025)</span></div>
+    <div class="stat"><b>3.5–6.5 h</b><span>paid hours per day approved over the same period</span></div>
+    <div class="stat"><b>~750 h</b><span>audio transcribed locally · 2,047 recordings</span></div>
   </div>
+
+  <div class="viz" id="viz-hours">
+    <div class="viz-head">
+      <h3>Hours per day: the log vs. what was approved</h3>
+      <div class="legend">
+        <span><i class="sw sw-log"></i>Notes span (first to last note, monthly average)</span>
+        <span><i class="sw sw-appr"></i>Paid hours approved</span>
+      </div>
+    </div>
+    <div class="plot"><svg viewBox="0 0 900 320" role="img" aria-label="Line chart: average daily span of caregiving notes rises from about 3 to about 15 hours; approved paid hours step from 3.5 to 6.5 per day"></svg>
+      <div class="tip" hidden></div></div>
+    <p class="viz-note">Same unit on one scale: hours per day. "Notes span" is the time between the day's first and last logged note; it shows when the caregiver was active, not a timesheet.</p>
+  </div>
+
+  <div class="viz" id="viz-notes">
+    <div class="viz-head"><h3>Caregiving notes per month</h3></div>
+    <div class="plot"><svg viewBox="0 0 900 260" role="img" aria-label="Bar chart: caregiving notes per month from January 2024, peaking at 1,607 in April 2025"></svg>
+      <div class="tip" hidden></div></div>
+  </div>
+
+  <details class="viz-table"><summary>Show the numbers as a table</summary><table id="viz-tbl"><thead>
+    <tr><th>Month</th><th>Notes</th><th>Avg notes span (h/day)</th><th>Approved (h/day)</th></tr></thead><tbody></tbody></table></details>
 </section>
 
 <section class="band">
@@ -209,6 +255,83 @@
 </section>
 
 <footer>phone-net I.C.K.S. · private placeholder · 2026</footer>
+
+<script>
+// Aggregates from the first run (no names, no content). notes = entries/month; span = avg first-to-last note hours/day.
+const MONTHS = [["2024-01",144,5.7],["2024-02",99,3.0],["2024-03",84,4.2],["2024-04",72,4.3],["2024-05",92,3.0],["2024-06",169,6.8],
+ ["2024-07",258,8.8],["2024-08",234,10.2],["2024-09",183,5.6],["2024-10",257,4.9],["2024-11",349,7.8],["2024-12",260,4.3],
+ ["2025-01",435,6.4],["2025-02",1321,13.0],["2025-03",390,7.0],["2025-04",1607,15.1],["2025-05",851,13.6],["2025-06",611,14.5],
+ ["2025-07",639,14.1],["2025-08",800,13.4],["2025-09",996,14.4],["2025-10",759,13.1],["2025-11",766,14.8],["2025-12",723,14.5],
+ ["2026-01",595,13.2],["2026-02",623,13.8],["2026-03",893,14.5],["2026-04",989,15.9],["2026-05",1040,14.8],["2026-06",909,15.4],
+ ["2026-07",612,14.8],["2026-08",601,15.5],["2026-09",436,14.4]];
+// Approved paid hours/day, from dated notes and messages. Add rows as more dates are confirmed: [firstMonth, hours, label]
+const APPROVED = [["2025-03",3.5,"3.5 h/day"],["2026-05",4.4,"4.4"],["2026-08",4.25,"4.25"],["2026-09",6.5,"6.5 from Sep 1"]];
+const MARKERS = [["2024-06","Care begins"],["2025-03","Paid hours begin"]];
+const fmt = n => n.toLocaleString("en-US");
+const idx = m => MONTHS.findIndex(r => r[0] === m);
+const label = m => new Date(m + "-15").toLocaleString("en-US", { month: "short", year: "numeric" });
+function approvedAt(i) { let v = null; for (const [m, h] of APPROVED) if (i >= idx(m)) v = h; return v; }
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; parent.appendChild(e); return e; }
+
+function frame(svg, W, H, yMax, ticks, unit) {
+  const m = { l: 44, r: 16, t: 14, b: 30 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const x = i => m.l + (i + 0.5) * pw / MONTHS.length, y = v => m.t + ph - v / yMax * ph;
+  for (const t of ticks) { el("line", { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), stroke: "#1f2636", "stroke-width": 1 }, svg);
+    el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end" }, svg, t + unit); }
+  MONTHS.forEach((r, i) => { if (r[0].endsWith("-01") || i === 0) el("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, svg, r[0].slice(0, 4)); });
+  return { m, pw, ph, x, y };
+}
+function hover(svg, tip, W, f, html) {
+  const hit = el("rect", { x: f.m.l, y: f.m.t, width: f.pw, height: f.ph, fill: "transparent" }, svg);
+  const cross = el("line", { y1: f.m.t, y2: f.m.t + f.ph, stroke: "#5c6880", "stroke-width": 1, visibility: "hidden" }, svg);
+  const move = ev => { const b = svg.getBoundingClientRect(), px = (ev.clientX - b.left) * W / b.width;
+    const i = Math.max(0, Math.min(MONTHS.length - 1, Math.floor((px - f.m.l) / (f.pw / MONTHS.length))));
+    cross.setAttribute("x1", f.x(i)); cross.setAttribute("x2", f.x(i)); cross.setAttribute("visibility", "visible");
+    tip.innerHTML = html(i); tip.hidden = false; tip.style.left = (f.x(i) / W * 100) + "%"; tip.style.top = (f.m.t / W * b.width) + 30 + "px"; };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+}
+
+(function hours() {
+  const root = document.getElementById("viz-hours"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900, H = 320;
+  const f = frame(svg, W, H, 16, [0, 4, 8, 12, 16], "h");
+  for (const [m, t] of MARKERS) { const i = idx(m); el("line", { x1: f.x(i), x2: f.x(i), y1: f.m.t, y2: f.m.t + f.ph, stroke: "#273044", "stroke-dasharray": "3 4" }, svg);
+    el("text", { x: f.x(i) + 5, y: f.m.t + 10 }, svg, t); }
+  // approved: step line from first approved month
+  let d = "", prev = null;
+  MONTHS.forEach((r, i) => { const v = approvedAt(i); if (v == null) return; const x0 = f.x(i) - f.pw / MONTHS.length / 2, x1 = f.x(i) + f.pw / MONTHS.length / 2;
+    d += (prev == null ? `M${x0},${f.y(v)}` : `L${x0},${f.y(prev)} L${x0},${f.y(v)}`) + ` L${x1},${f.y(v)}`; prev = v; });
+  el("path", { d, fill: "none", stroke: "var(--series-appr)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  // log span line + markers
+  el("path", { d: MONTHS.map((r, i) => (i ? "L" : "M") + f.x(i) + "," + f.y(r[2])).join(" "), fill: "none", stroke: "var(--series-log)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  MONTHS.forEach((r, i) => el("circle", { cx: f.x(i), cy: f.y(r[2]), r: 3, fill: "var(--series-log)", stroke: "#121722", "stroke-width": 2 }, svg));
+  // selective direct labels
+  const last = MONTHS.length - 1;
+  const half = f.pw / MONTHS.length / 2;
+  el("text", { x: f.x(last) + half, y: f.y(MONTHS[last][2]) + 22, "text-anchor": "end", class: "lbl" }, svg, "notes span " + MONTHS[last][2] + " h");
+  el("text", { x: f.x(last) - half - 6, y: f.y(6.5) - 8, "text-anchor": "end", class: "lbl" }, svg, "approved 6.5 h");
+  el("text", { x: f.x(idx("2025-03")) + 6, y: f.y(3.5) + 16, class: "lbl" }, svg, "3.5 h");
+  hover(svg, tip, W, f, i => { const r = MONTHS[i], a = approvedAt(i);
+    return `${label(r[0])}<br>Notes span <b>${r[2]} h</b><br>Approved <b>${a == null ? "—" : a + " h"}</b>`; });
+})();
+
+(function notes() {
+  const root = document.getElementById("viz-notes"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900, H = 260;
+  const f = frame(svg, W, H, 1800, [0, 600, 1200, 1800], ""), bw = f.pw / MONTHS.length - 2;
+  MONTHS.forEach((r, i) => { const h = f.y(0) - f.y(r[1]), x = f.x(i) - bw / 2, top = f.y(r[1]), rad = Math.min(4, bw / 2, h);
+    el("path", { d: `M${x},${f.y(0)} V${top + rad} Q${x},${top} ${x + rad},${top} H${x + bw - rad} Q${x + bw},${top} ${x + bw},${top + rad} V${f.y(0)} Z`, fill: "var(--series-log)" }, svg); });
+  const pk = MONTHS.reduce((a, r, i) => r[1] > MONTHS[a][1] ? i : a, 0);
+  el("text", { x: f.x(pk), y: f.y(MONTHS[pk][1]) - 6, "text-anchor": "middle", class: "lbl" }, svg, fmt(MONTHS[pk][1]));
+  hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${fmt(MONTHS[i][1])}</b> notes`);
+})();
+
+(function table() {
+  const tb = document.querySelector("#viz-tbl tbody");
+  MONTHS.forEach((r, i) => { const a = approvedAt(i), tr = document.createElement("tr");
+    tr.innerHTML = `<td>${label(r[0])}</td><td>${fmt(r[1])}</td><td>${r[2]}</td><td>${a == null ? "—" : a}</td>`;
+    tb.appendChild(tr); });
+})();
+</script>
 
 </body>
 </html>
