@@ -65,9 +65,6 @@
   .rules strong { color: var(--fg); font-weight: 600; }
 
   .expand { margin: 0.9rem 0 0; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.18em; color: var(--fg-dimmer); }
-  .gap { margin: 0; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 1.2rem; }
-  .gap svg { width: 100%; height: auto; display: block; }
-  .gap figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--fg-dimmer); text-align: right; margin-top: 0.4rem; }
   .steps { max-width: 66ch; margin: 0 auto; padding: 0; list-style: none; counter-reset: s; }
   .steps li { counter-increment: s; position: relative; padding: 0.75rem 0 0.75rem 2.6rem; border-bottom: 1px solid var(--line); color: var(--fg-dim); }
   .steps li::before { content: counter(s, decimal-leading-zero); position: absolute; left: 0; top: 0.8rem;
@@ -95,7 +92,7 @@
   <div class="hero-inner">
     <p class="eyebrow">phone·tics · let your phone talk to you</p>
     <h1 class="wordmark">phone-net <span>I.C.K.S.</span></h1>
-    <p class="tagline">Your phone already heard it all: the visits, the calls, the promises. Plug it in and let it talk
+    <p class="tagline">Your phone already heard it all: the calls, the meetings, the promises. Plug it in and let it talk
       back, as an indexed, checksummed, searchable account of what was said, asked and answered, on hardware you own.</p>
     <p class="expand">Intake · Custody · Keywords · Synthesis</p>
 
@@ -140,30 +137,11 @@
 <section class="band">
   <div class="section-head">
     <p class="section-eyebrow">Why it exists</p>
-    <h2 class="section-title">The care keeps changing. The hours and the paycheck don't.</h2>
-    <p class="section-sub">Treatment starts, stops, lands someone in the hospital, then recovery, then a bad week. A family
-      caregiver, sometimes carrying their own PTSD, is on call through all of it. Meanwhile the self-directed-supports
-      hours and the payroll pattern sit flat. The answers to "why" are scattered across phone calls, visits, emails,
-      portals and letters, in systems that don't talk to each other.</p>
+    <h2 class="section-title">Life changes fast. Paperwork doesn't keep up.</h2>
+    <p class="section-sub">Family caregivers juggle calls, visits, emails, portals and letters across offices that don't talk
+      to each other. When something doesn't add up, the answer is usually already somewhere in your own phone. It's just
+      scattered. phone-net pulls it into one timeline you can search, so you can ask clear questions in writing.</p>
   </div>
-  <figure class="gap">
-    <svg viewBox="0 0 860 240" role="img" aria-label="Illustration: care needs rise and swing over time while authorized hours and pay stay flat">
-      <line x1="60" y1="200" x2="820" y2="200" stroke="#273044"/>
-      <line x1="60" y1="30" x2="60" y2="200" stroke="#273044"/>
-      <path d="M60 170 C150 160, 190 120, 250 110 S 340 60, 400 70 S 470 140, 520 120 S 600 40, 660 50 S 760 90, 820 60"
-            fill="none" stroke="#f0b429" stroke-width="3"/>
-      <path d="M60 150 L240 150 L240 142 L520 142 L520 134 L820 134" fill="none" stroke="#6ee7ff" stroke-width="3" stroke-dasharray="7 6"/>
-      <path d="M60 158 L820 158" fill="none" stroke="#8b97ad" stroke-width="2" stroke-dasharray="2 6"/>
-      <g font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1.5">
-        <text x="680" y="40" fill="#f0b429">CARE NEEDS</text>
-        <text x="680" y="126" fill="#6ee7ff">HOURS APPROVED</text>
-        <text x="680" y="176" fill="#8b97ad">PAY RECEIVED</text>
-        <text x="60" y="222" fill="#5c6880">treatment →</text>
-        <text x="820" y="222" fill="#5c6880" text-anchor="end">time</text>
-      </g>
-    </svg>
-    <figcaption>Illustration of the pattern, not real data.</figcaption>
-  </figure>
 </section>
 
 <section class="band">
@@ -201,14 +179,14 @@
   <div class="section-head">
     <p class="section-eyebrow">What we learned doing it</p>
     <h2 class="section-title">Getting complex systems to talk, one plain step at a time</h2>
-    <p class="section-sub">Worked out the hard way, by a caregiver with PTSD, on no sleep, between bathroom emergencies.</p>
+    <p class="section-sub">Worked out the hard way, by a family caregiver, on very little sleep.</p>
   </div>
   <ol class="steps">
     <li><b>Gather everything you already own.</b> Phone audio, SD cards, email, scanned letters and bills. Pull only what's new; verify every copy.</li>
     <li><b>Fix the dates.</b> Backups stamp files with the day they were copied. The audio itself usually knows when it was recorded.</li>
     <li><b>Hear each voice.</b> Level quiet speech, transcribe, and separate who's talking, so the TV isn't mistaken for a person.</li>
     <li><b>Search by word and by meaning.</b> Your own filenames are an index too, misspellings and all.</li>
-    <li><b>Put what changed next to what didn't.</b> Care needs, visits and treatment on one line; approved hours and pay on the other.</li>
+    <li><b>Put what changed next to what didn't.</b> What happened on one line; what was promised and paid on the other.</li>
     <li><b>Check the pattern before you believe it.</b> One exciting spike turned out to be TV and copy-day dates. Say so.</li>
     <li><b>Include your own worst moments.</b> A record that only shows one side isn't a record.</li>
     <li><b>Ask in writing, one question per office.</b> Certified mail, a deadline, then the free advocate. Fewer phone calls, fewer triggers.</li>
