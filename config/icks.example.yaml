@@ -1,0 +1,16 @@
+# Copy to config/icks.yaml (git-ignored) and fill in. No personal data belongs in this example.
+evidence_root: /Volumes/EVIDENCE/case        # where pulled audio and outputs live (local disk)
+devices:
+  - name: phone-1
+    roots: [/storage/emulated/0, /storage/XXXX-XXXX]   # SD card id varies
+gpu_host: gpu-box                              # ssh alias; work dir must be local disk on that host
+gpu_workdir: /srv/icks-work
+gpu_gate_mib: 6000                             # don't start an item above this VRAM use
+pause_file: /srv/icks-work/PAUSE               # touch to pause the queue
+models:
+  asr: large-v3
+  diarization: pyannote/speaker-diarization-community-1
+  summary: gemma4:12b
+  embed: nomic-embed-text-v2-moe:latest
+voiceprints: ${evidence_root}/voiceprints.json
+lexicon: ${evidence_root}/lexicon.yaml         # case keywords stay with the evidence, not in git

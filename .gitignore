@@ -1,0 +1,19 @@
+# Never track case data
+config/icks.yaml
+data/
+evidence/
+out/
+*.wav
+*.m4a
+*.mp3
+*.flac
+*.mp4
+*.jpg
+*.png
+!site/*.svg
+*.pdf
+*.json
+*.jsonl
+*.csv
+*.tsv
+.DS_Store

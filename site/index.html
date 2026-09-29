@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>phone-net I.C.K.S.</title>
+<meta name="description" content="Intake, Custody, Keywords, Synthesis. A local-only toolkit that turns a caregiver's own phone recordings into an indexed, checksummed record." />
+<meta name="robots" content="noindex" />
+<style>
+  :root {
+    --bg: #0a0d14; --bg-panel: #121722; --bg-panel-2: #181e2c; --line: #273044;
+    --fg: #e7eef8; --fg-dim: #8b97ad; --fg-dimmer: #5c6880;
+    --accent: #6ee7ff; --accent-soft: #9bdfff; --accent-mu: #f0b429;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+         line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  .hero { border-bottom: 1px solid var(--line); overflow: hidden; }
+  .hero-inner { max-width: 980px; margin: 0 auto; padding: 4.5rem 1.5rem 3.5rem; text-align: center; }
+  .eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase;
+             color: var(--accent-soft); margin: 0 0 1.2rem; }
+  .wordmark { margin: 0; font-family: var(--mono); font-weight: 700; font-size: clamp(2.2rem, 7vw, 4.2rem);
+              text-shadow: 0 0 8px rgba(110,231,255,0.45), 0 0 28px rgba(240,180,41,0.18); }
+  .wordmark span { color: var(--accent); }
+  .tagline { max-width: 50ch; margin: 1.2rem auto 0; font-size: 1.08rem; color: var(--fg-dim); text-wrap: balance; }
+  .private-chip { display: inline-block; margin-top: 1.6rem; font-family: var(--mono); font-size: 0.75rem;
+                  color: var(--accent-mu); border: 1px solid var(--line); border-radius: 3px; padding: 0.3rem 0.7rem; }
+
+  .flow { width: 100%; max-width: 860px; height: auto; margin: 2.6rem auto 0; display: block; }
+  .flow .cable { fill: none; stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
+  .flow .pulse { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round;
+                 stroke-dasharray: 10 22; animation: flow 1.6s linear infinite; }
+  .flow .packet { fill: var(--accent-mu); filter: drop-shadow(0 0 4px rgba(240,180,41,0.8)); }
+  .flow .label { font-family: var(--mono); font-size: 11px; fill: var(--fg-dimmer); letter-spacing: 0.12em; }
+  .flow .cube-glow { animation: glow 3.2s ease-in-out infinite; }
+  @keyframes flow { to { stroke-dashoffset: -32; } }
+  @keyframes glow { 0%,100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+
+  section.band { max-width: 980px; margin: 0 auto; padding: 4rem 1.5rem; }
+  .section-head { text-align: center; margin-bottom: 2.4rem; }
+  .section-eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+                     color: var(--fg-dimmer); margin: 0 0 0.6rem; }
+  .section-title { margin: 0; font-size: 1.5rem; font-weight: 600; text-wrap: balance; }
+  .section-sub { max-width: 56ch; margin: 0.7rem auto 0; color: var(--fg-dim); }
+
+  .stack-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line);
+                border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .stack-card { background: var(--bg-panel); padding: 1.4rem 1.2rem; display: flex; flex-direction: column; gap: 0.45rem; }
+  .stack-card .letter { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stack-card .role { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-soft); }
+  .stack-card p { margin: 0; font-size: 0.88rem; color: var(--fg-dim); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; }
+  .stat { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 6px; padding: 1.3rem; }
+  .stat b { display: block; font-family: var(--mono); font-size: 1.6rem; color: var(--fg); font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 0.82rem; color: var(--fg-dim); }
+
+  .rules { max-width: 62ch; margin: 0 auto; padding: 0; list-style: none; }
+  .rules li { color: var(--fg-dim); padding: 0.6rem 0 0.6rem 1.4rem; border-bottom: 1px solid var(--line); position: relative; }
+  .rules li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+  .rules strong { color: var(--fg); font-weight: 600; }
+
+  footer { border-top: 1px solid var(--line); text-align: center; padding: 2rem 1.5rem 3rem;
+           font-family: var(--mono); font-size: 0.75rem; color: var(--fg-dimmer); }
+
+  @media (max-width: 760px) {
+    .stack-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .hero-inner { padding: 3.2rem 1rem 2.6rem; }
+    section.band { padding: 3rem 1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flow .pulse, .flow .cube-glow { animation: none; }
+    .flow animateMotion { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">Intake · Custody · Keywords · Synthesis</p>
+    <h1 class="wordmark">phone-net <span>I.C.K.S.</span></h1>
+    <p class="tagline">Your phone already holds the record. Plug it in, and it becomes an indexed, checksummed, searchable
+      account of what was said, asked and answered. It stays on hardware you own.</p>
+
+    <svg class="flow" viewBox="0 0 860 260" role="img" aria-label="Data flows from a phone's USB-C port through a cable into a black cube">
+      <!-- phone -->
+      <rect x="40" y="30" width="120" height="210" rx="16" fill="#121722" stroke="#273044" stroke-width="2"/>
+      <rect x="54" y="48" width="92" height="160" rx="6" fill="#0a0d14" stroke="#273044"/>
+      <g stroke="#6ee7ff" stroke-width="2" opacity="0.8">
+        <line x1="68" y1="118" x2="68" y2="138"/><line x1="78" y1="108" x2="78" y2="148"/><line x1="88" y1="98" x2="88" y2="158"/>
+        <line x1="98" y1="112" x2="98" y2="144"/><line x1="108" y1="104" x2="108" y2="152"/><line x1="118" y1="120" x2="118" y2="136"/>
+        <line x1="128" y1="114" x2="128" y2="142"/>
+      </g>
+      <rect x="86" y="226" width="28" height="8" rx="4" fill="#0a0d14" stroke="#9bdfff" stroke-width="1.5"/>
+      <text class="label" x="100" y="22" text-anchor="middle">YOUR PHONE</text>
+
+      <!-- cable from USB-C port to cube -->
+      <path id="cable" class="cable" d="M100 234 C100 256, 300 256, 420 190 S 600 130, 650 130"/>
+      <path class="pulse" d="M100 234 C100 256, 300 256, 420 190 S 600 130, 650 130"/>
+      <circle class="packet" r="4"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#cable"/></animateMotion></circle>
+      <circle class="packet" r="3"><animateMotion dur="2.4s" begin="0.8s" repeatCount="indefinite"><mpath href="#cable"/></animateMotion></circle>
+      <circle class="packet" r="3.5"><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite"><mpath href="#cable"/></animateMotion></circle>
+      <text class="label" x="360" y="248" text-anchor="middle">USB-C · SHA-256</text>
+
+      <!-- black cube (isometric) -->
+      <g transform="translate(650 60)">
+        <polygon class="cube-glow" points="85,0 170,45 170,140 85,185 0,140 0,45" fill="none" stroke="#6ee7ff" stroke-width="10" opacity="0.4" filter="url(#blur)"/>
+        <polygon points="85,0 170,45 85,90 0,45" fill="#181e2c" stroke="#273044"/>
+        <polygon points="0,45 85,90 85,185 0,140" fill="#0d1119" stroke="#273044"/>
+        <polygon points="170,45 85,90 85,185 170,140" fill="#121722" stroke="#273044"/>
+        <g font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#5c6880" letter-spacing="2">
+          <text x="85" y="50" text-anchor="middle" fill="#9bdfff">I · C · K · S</text>
+        </g>
+      </g>
+      <text class="label" x="735" y="258" text-anchor="middle">LOCAL BLACK BOX</text>
+      <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
+    </svg>
+
+    <span class="private-chip">private placeholder · not yet public</span>
+  </div>
+</header>
+
+<section class="band">
+  <div class="section-head">
+    <p class="section-eyebrow">The four stages</p>
+    <h2 class="section-title">From a pocket full of recordings to questions you can put in writing</h2>
+  </div>
+  <div class="stack-grid">
+    <div class="stack-card"><span class="letter">I</span><span class="role">Intake</span>
+      <p>Pull only what's new over USB-C, diff against earlier backups, verify every file.</p></div>
+    <div class="stack-card"><span class="letter">C</span><span class="role">Custody</span>
+      <p>Checksums on every copy and output. True recording dates recovered from the audio itself.</p></div>
+    <div class="stack-card"><span class="letter">K</span><span class="role">Keywords</span>
+      <p>Level, transcribe, separate speakers, then keyword and meaning search across everything.</p></div>
+    <div class="stack-card"><span class="letter">S</span><span class="role">Synthesis</span>
+      <p>Dated index, honest summaries, and packets for family, care team, advocate or counsel.</p></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="section-head">
+    <p class="section-eyebrow">First run</p>
+    <h2 class="section-title">One caregiver, one phone, a lot of hours</h2>
+    <p class="section-sub">Aggregate counts only. No names, no content.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>~750 h</b><span>audio transcribed locally</span></div>
+    <div class="stat"><b>2,047</b><span>recordings indexed</span></div>
+    <div class="stat"><b>1,119</b><span>true dates recovered</span></div>
+    <div class="stat"><b>79</b><span>agency emails indexed</span></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="section-head">
+    <p class="section-eyebrow">Rules it runs on</p>
+    <h2 class="section-title">Local, honest, and yours to share</h2>
+  </div>
+  <ul class="rules">
+    <li><strong>Only your own devices.</strong> No one else's accounts or systems.</li>
+    <li><strong>Local by default.</strong> Nothing uploads, emails or publishes by itself.</li>
+    <li><strong>Honest by design.</strong> Speaker names are marked as automatic, low-confidence lines are flagged, and your own raised voice stays in.</li>
+    <li><strong>Built with free tools.</strong> WhisperX, pyannote, Ollama, ffmpeg, adb, open models.</li>
+    <li><strong>Check your state's recording law.</strong> This is a tool, not legal advice.</li>
+  </ul>
+</section>
+
+<footer>phone-net I.C.K.S. · private placeholder · 2026</footer>
+
+</body>
+</html>
