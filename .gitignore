@@ -17,3 +17,8 @@ out/
 *.csv
 *.tsv
 .DS_Store
+
+# stack data and secrets
+stack/evidence/
+stack/work/
+stack/secrets/

@@ -1,0 +1,3 @@
+# Search, indexing and packet building (CPU). Standard library covers hashing and CSV.
+requests      # talk to the local Ollama API
+pyyaml        # config/icks.yaml

@@ -1,0 +1,5 @@
+# Transcription + speaker separation (GPU). Pin exact versions after the first smoke test on your hardware.
+whisperx>=3.1          # first run used 3.8.6 with large-v3 fp16
+pyannote.audio>=3.1    # speaker-diarization-community-1 (Hugging Face gated)
+torch                  # install the CUDA build that matches your driver
+pandas

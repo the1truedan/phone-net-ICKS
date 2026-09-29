@@ -259,6 +259,14 @@
     <div class="stat"><b>14 · 40</b><span>days with a 911 call · days with a choking incident</span></div>
   </div>
 
+  <div class="viz" id="viz-ai">
+    <div class="viz-head"><h3>Computer-side caregiving work: AI-assisted admin time per month</h3></div>
+    <div class="plot"><svg viewBox="0 0 900 200" role="img" aria-label="Bar chart: active hours in caregiving-related AI sessions, April to September 2026, about 40 hours total"></svg><div class="tip" hidden></div></div>
+    <p class="viz-note">Active time in AI sessions about caregiving (10-minute windows with a message), from the session index. A conservative floor:
+      only sessions whose opening message is about caregiving are counted. The GPU's own hours (about 22 h of heavy use Sept 25–29, plus about 17 h of
+      job time in the last day) are the computer's work, not the caregiver's, and are listed separately. Whether any admin time is payable depends on the care plan.</p>
+  </div>
+
   <div class="viz" id="viz-emerg">
     <div class="viz-head"><h3>Days with an emergency incident, per month</h3>
       <div class="legend"><span><i class="sw sw-log"></i>911 / EMS called</span><span><i class="sw sw-appr"></i>Choking incident</span></div></div>
@@ -370,6 +378,7 @@
     <div><b>14 · 40</b><span>days with a 911 call · a choking incident</span></div>
     <div><b>32</b><span>days with a safety incident noted</span></div>
     <div><b>6</b><span>device pulls from 4 phones</span></div>
+    <div><b>~40 h · ~22 h</b><span>AI-assisted admin time · heavy GPU hours (Sep 25–29)</span></div>
     <div><b>1</b><span>portal records request planned</span></div>
   </div>
 
@@ -534,6 +543,7 @@ function hover(svg, tip, W, f, html) {
 const EMERG = {"2024-06":[1,0],"2024-10":[0,4],"2025-01":[0,1],"2025-02":[0,1],"2025-04":[3,1],"2025-05":[4,0],"2025-06":[0,1],"2025-07":[2,0],"2025-08":[0,7],"2025-09":[0,7],"2025-10":[0,2],"2025-11":[0,1],"2025-12":[1,1],"2026-02":[0,1],"2026-03":[0,1],"2026-04":[1,4],"2026-05":[1,2],"2026-06":[1,3],"2026-07":[0,2],"2026-08":[0,1]};
 // Emails with the two companies: [sent, received]
 const MAIL = {"2024-10":[0,0,6,0,0,4],"2024-11":[0,0,1,0,0,0],"2024-12":[0,0,2,0,0,1],"2025-01":[0,0,2,0,0,1],"2025-03":[0,0,0,0,2,0],"2025-04":[0,3,0,0,3,0],"2025-06":[0,0,0,0,1,0],"2025-08":[1,0,0,0,2,0],"2025-09":[9,4,0,7,1,0],"2025-10":[1,0,0,1,0,0],"2025-11":[4,2,0,3,0,0],"2025-12":[0,0,0,0,1,0],"2026-01":[0,0,0,0,1,0],"2026-02":[0,0,0,0,1,0],"2026-03":[0,0,0,0,1,0],"2026-05":[0,1,0,0,2,0],"2026-06":[3,2,3,0,2,1],"2026-07":[0,0,0,0,1,0],"2026-08":[1,0,0,1,0,0],"2026-09":[0,2,0,1,0,0]};  // [care-plan sent, payroll sent, social worker sent, care-plan recv, payroll recv, social worker recv]
+const AIH = {"2026-04":0.5,"2026-05":7.2,"2026-06":8.2,"2026-07":11.0,"2026-08":1.5,"2026-09":11.5};
 const TOPICS = [["Trips & errands",878],["Calls & email",735],["Paperwork",572],["Bills",230],["Therapy",185],["Agency & payroll",140],["Taxes",107],["Thrift",99],["Food bank",95],["Local contacts",13]];
 
 function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Math.abs(y1 - y0); if (h < 0.5) return;
@@ -582,6 +592,14 @@ function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Ma
       cx += r + gap; });
     y = cyBase + 56; });
   svg.setAttribute("viewBox", `0 0 ${W} ${y}`);
+})();
+
+(function ai() {
+  const root = document.getElementById("viz-ai"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900, H = 200;
+  const f = frame(svg, W, H, 12, [0, 6, 12], "h"), bw = f.pw / MONTHS.length - 3;
+  MONTHS.forEach((r, i) => { const v = AIH[r[0]] || 0; if (v) bar(svg, f.x(i) - bw / 2, bw, f.y(0), f.y(v), "var(--series-log)", true); });
+  el("text", { x: f.x(idx("2026-09")), y: f.y(11.5) - 6, "text-anchor": "middle", class: "lbl" }, svg, "~40 h total");
+  hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${AIH[MONTHS[i][0]] || 0} h</b> active`);
 })();
 </script>
 

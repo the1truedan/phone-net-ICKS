@@ -1,0 +1,8 @@
+# WhisperX + pyannote worker. CUDA runtime matches recent faster-whisper/CTranslate2 wheels.
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+ENV DEBIAN_FRONTEND=noninteractive PIP_NO_CACHE_DIR=1
+RUN apt-get update && apt-get install -y --no-install-recommends python3.11 python3-pip ffmpeg git && rm -rf /var/lib/apt/lists/*
+COPY requirements/asr.txt /tmp/asr.txt
+RUN python3.11 -m pip install -r /tmp/asr.txt
+WORKDIR /work
+CMD ["sleep", "infinity"]
