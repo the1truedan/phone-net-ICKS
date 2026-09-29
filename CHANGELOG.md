@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0 — 2026-09-29 (private) · payroll sniff level-up
+- **Workflow page** (`site/workflow.html`): phone → USB-C → local black box with four stages and every model/tool linked; cloud assistants
+  shown outside the box as "code only".
+- **Payroll truth from the payroll app itself:** breakthrough entry for the payroll company's shift exports and the first read-only on-device
+  audit of the payroll app. Groundwork for `cut.glass`.
+- **Official links** for all models, tools and AI assistants.
+- **Scrubbed:** no working-repo names, local paths, hostnames or account names; config example uses placeholders.
+
 ## v0.2.0 — 2026-09-29 (private)
 - **Full analytics page** (`site/analytics.html`): aligned daily strips for care notes, emergencies, safety incidents, AI sessions, and commits
   per project; AI-agent incident (CVE-FAUX) dots with agent letters and a zoomed panel; AI usage around hard days (cloud assistants vs local

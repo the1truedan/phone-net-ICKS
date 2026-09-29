@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>phone-net workflow</title>
+<meta name="description" content="How data flows from a caregiver's own phone into a local black box, and which models and tools run inside it." />
+<meta name="robots" content="noindex" />
+<style>
+  :root { --bg:#0a0d14; --panel:#121722; --panel2:#181e2c; --line:#273044; --fg:#e7eef8; --dim:#8b97ad; --dimmer:#5c6880;
+          --a:#2a97c4; --b:#c4841a; --c:#8a6fd1; --soft:#9bdfff; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  * { box-sizing: border-box; } html, body { margin:0; background:var(--bg); color:var(--fg); }
+  body { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; line-height:1.55; }
+  main { max-width: 1100px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+  .eyebrow { font-family:var(--mono); font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; color:var(--soft); margin:0 0 .6rem; }
+  h1 { margin:0; font-family:var(--mono); font-size:clamp(1.6rem,4vw,2.4rem); text-shadow: 0 0 8px rgba(110,231,255,.35); }
+  .sub { color:var(--dim); max-width:66ch; }
+  a { color: var(--soft); }
+  figure { margin: 2rem 0 0; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:1rem; }
+  svg { width:100%; height:auto; display:block; }
+  svg text { font-family: var(--mono); }
+  .t { font-size: 13px; fill: var(--fg); } .s { font-size: 11px; fill: var(--dim); } .h { font-size: 12px; letter-spacing: 2px; fill: var(--soft); }
+  svg a text { fill: var(--soft); text-decoration: underline; }
+  .flow { fill:none; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:9 14; animation: f 1.4s linear infinite; }
+  @keyframes f { to { stroke-dashoffset:-23; } }
+  @media (prefers-reduced-motion: reduce) { .flow { animation:none; } }
+  .legend { display:flex; gap:1.2rem; flex-wrap:wrap; font-size:.82rem; color:var(--dim); margin-top:.8rem; }
+  .legend i { display:inline-block; width:14px; height:4px; border-radius:2px; vertical-align:middle; margin-right:.4rem; }
+  footer { margin-top:2.5rem; font-family:var(--mono); font-size:.75rem; color:var(--dimmer); }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">phone-net I.C.K.S. · workflow · private</p>
+  <h1>From the phone to the black box</h1>
+  <p class="sub">Everything on the left is the caregiver's own data. Everything inside the box runs on hardware the caregiver owns. The cloud
+    assistants above helped write the code; they never see the case data. Every model and tool name links to its official page.
+    <a href="index.html">← summary</a> · <a href="analytics.html">analytics →</a></p>
+
+  <figure>
+    <svg viewBox="0 0 1100 700" role="img" aria-label="Workflow diagram: phone data sources flow over USB-C into a local black box with four stages (intake, custody, keywords, synthesis), each listing its tools and models, producing a dated index, charts and packets; cloud AI assistants sit outside the box and only helped build the code">
+      <defs>
+        <linearGradient id="box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10141d"/><stop offset="1" stop-color="#07090e"/></linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="7"/></filter>
+      </defs>
+
+      <!-- cloud assistants (outside the box) -->
+      <rect x="330" y="14" width="740" height="84" rx="8" fill="#121722" stroke="#273044" stroke-dasharray="5 4"/>
+      <text class="h" x="350" y="38">BUILT WITH (CLOUD) · NEVER SEES CASE DATA</text>
+      <g class="s">
+        <a href="https://docs.anthropic.com/en/docs/claude-code"><text x="350" y="64">Claude Code</text></a>
+        <a href="https://claude.ai/"><text x="450" y="64">Claude</text></a>
+        <a href="https://grok.com/"><text x="510" y="64">Grok</text></a>
+        <a href="https://chatgpt.com/"><text x="560" y="64">ChatGPT</text></a>
+        <a href="https://github.com/openai/codex"><text x="630" y="64">Codex CLI</text></a>
+        <a href="https://opencode.ai/"><text x="715" y="64">OpenCode</text></a>
+        <a href="https://github.com/badlogic/pi-mono"><text x="795" y="64">Pi</text></a>
+        <text x="830" y="64">Cowork</text>
+        <text x="350" y="86">writes and checks code · session history kept in a local index</text>
+      </g>
+      <line x1="700" y1="98" x2="700" y2="150" stroke="#5c6880" stroke-dasharray="3 5"/>
+      <text class="s" x="708" y="130">code only</text>
+
+      <!-- phone + sources -->
+      <rect x="30" y="200" width="150" height="270" rx="18" fill="#121722" stroke="#273044" stroke-width="2"/>
+      <rect x="44" y="220" width="122" height="222" rx="8" fill="#0a0d14" stroke="#273044"/>
+      <g class="s">
+        <text x="56" y="246">recordings</text><text x="56" y="268">texts · calls</text><text x="56" y="290">voicemail</text>
+        <text x="56" y="312">photos · video</text><text x="56" y="334">notes · to-dos</text><text x="56" y="356">calendar</text>
+        <text x="56" y="378">email</text><text x="56" y="400">scanned letters</text><text x="56" y="422">payroll app</text>
+      </g>
+      <rect x="92" y="458" width="26" height="8" rx="4" fill="#0a0d14" stroke="#9bdfff"/>
+      <text class="h" x="42" y="190">YOUR PHONE</text>
+
+      <!-- cable -->
+      <path id="cbl" d="M105 466 C105 560, 230 560, 262 420" fill="none" stroke="#273044" stroke-width="7" stroke-linecap="round"/>
+      <path class="flow" d="M105 466 C105 560, 230 560, 262 420" stroke="#2a97c4"/>
+      <circle r="4.5" fill="#c4841a"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#cbl"/></animateMotion></circle>
+      <text class="s" x="120" y="590">USB-C · adb · SHA-256</text>
+
+      <!-- black box -->
+      <rect x="262" y="150" width="810" height="470" rx="14" fill="#2a97c4" opacity=".18" filter="url(#glow)"/>
+      <rect x="262" y="150" width="810" height="470" rx="14" fill="url(#box)" stroke="#2a97c4" stroke-width="1.5"/>
+      <text class="h" x="284" y="178">THE BLACK BOX · LOCAL HARDWARE ONLY</text>
+
+      <!-- stages -->
+      <g>
+        <rect x="284" y="196" width="180" height="330" rx="8" fill="#121722" stroke="#273044"/><rect x="284" y="196" width="180" height="5" rx="2" fill="#2a97c4"/>
+        <text class="t" x="298" y="226">I · Intake</text>
+        <g class="s">
+          <a href="https://developer.android.com/tools/adb"><text x="298" y="254">adb</text></a><text x="330" y="254">only what's new</text>
+          <a href="https://takeout.google.com/"><text x="298" y="278">account export</text></a>
+          <a href="https://rclone.org/"><text x="298" y="302">rclone</text></a><text x="350" y="302">own cloud drive</text>
+          <a href="https://github.com/tesseract-ocr/tesseract"><text x="298" y="326">Tesseract</text></a><text x="372" y="326">scans → text</text>
+          <a href="https://github.com/Genymobile/scrcpy"><text x="298" y="350">scrcpy</text></a><text x="350" y="350">(planned)</text>
+          <text x="298" y="382">cut.glass: read-only</text><text x="298" y="400">app audit (planned)</text>
+        </g>
+      </g>
+      <g>
+        <rect x="480" y="196" width="180" height="330" rx="8" fill="#121722" stroke="#273044"/><rect x="480" y="196" width="180" height="5" rx="2" fill="#8a6fd1"/>
+        <text class="t" x="494" y="226">C · Custody</text>
+        <g class="s">
+          <text x="494" y="254">SHA-256 every copy</text>
+          <a href="https://ffmpeg.org/"><text x="494" y="278">ffprobe</text></a><text x="552" y="278">true dates</text>
+          <text x="494" y="302">originals read-only</text>
+          <text x="494" y="326">queue logs + retries</text>
+          <text x="494" y="350">GPU gate + pause</text>
+        </g>
+      </g>
+      <g>
+        <rect x="676" y="196" width="180" height="330" rx="8" fill="#121722" stroke="#273044"/><rect x="676" y="196" width="180" height="5" rx="2" fill="#c4841a"/>
+        <text class="t" x="690" y="226">K · Keywords</text>
+        <g class="s">
+          <a href="https://ffmpeg.org/"><text x="690" y="254">FFmpeg</text></a><text x="742" y="254">level audio</text>
+          <a href="https://huggingface.co/openai/whisper-large-v3"><text x="690" y="278">Whisper large-v3</text></a>
+          <a href="https://github.com/SYSTRAN/faster-whisper"><text x="690" y="302">faster-whisper</text></a>
+          <a href="https://github.com/m-bain/whisperX"><text x="690" y="326">WhisperX</text></a><text x="756" y="326">+ wav2vec2</text>
+          <a href="https://huggingface.co/pyannote/speaker-diarization-community-1"><text x="690" y="350">pyannote</text></a><text x="756" y="350">who spoke</text>
+          <a href="https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe"><text x="690" y="374">nomic-embed</text></a><text x="780" y="374">meaning</text>
+          <text x="690" y="398">keyword sweeps</text>
+        </g>
+      </g>
+      <g>
+        <rect x="872" y="196" width="180" height="330" rx="8" fill="#121722" stroke="#273044"/><rect x="872" y="196" width="180" height="5" rx="2" fill="#9bdfff"/>
+        <text class="t" x="886" y="226">S · Synthesis</text>
+        <g class="s">
+          <a href="https://ai.google.dev/gemma"><text x="886" y="254">Gemma</text></a><text x="930" y="254">summaries</text>
+          <a href="https://ollama.com/"><text x="886" y="278">Ollama</text></a><text x="938" y="278">runs models</text>
+          <a href="https://github.com/BerriAI/litellm"><text x="886" y="302">LiteLLM</text></a><text x="946" y="302">gateway</text>
+          <a href="https://github.com/asciimoo/hister"><text x="886" y="326">Hister</text></a><text x="938" y="326">history search</text>
+          <text x="886" y="350">dated index</text>
+          <text x="886" y="374">packets by audience</text>
+        </g>
+      </g>
+      <g stroke="#5c6880" stroke-width="2" fill="none">
+        <path d="M464 360 H480"/><path d="M660 360 H676"/><path d="M856 360 H872"/>
+      </g>
+
+      <!-- outputs -->
+      <text class="h" x="284" y="560">OUT</text>
+      <g class="s">
+        <text x="330" y="560">dated evidence index · charts · one-page letters · audience packets</text>
+        <text x="330" y="584">family · care team · advocate · counsel — sharing is always the caregiver's decision</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i style="background:#2a97c4"></i>Intake</span><span><i style="background:#8a6fd1"></i>Custody</span>
+      <span><i style="background:#c4841a"></i>Keywords</span><span><i style="background:#9bdfff"></i>Synthesis</span>
+      <span>dashed box = cloud assistants (code only)</span>
+    </div>
+  </figure>
+  <footer>phone-net I.C.K.S. · workflow · private placeholder · 2026</footer>
+</main>
+</body>
+</html>

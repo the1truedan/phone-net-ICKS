@@ -1,4 +1,4 @@
-# phone-net I.C.K.S. — one local stack (reference, v0.2.0). Nothing here reaches the internet except model downloads.
+# phone-net I.C.K.S. — one local stack (reference, v0.3.0). Nothing here reaches the internet except model downloads.
 # Requires: Docker 24+, docker compose v2; NVIDIA driver + nvidia-container-toolkit on the GPU host.
 # Data never goes in the image: mount your evidence folder at ./evidence (read-only for originals).
 name: icks

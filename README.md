@@ -26,4 +26,4 @@ writing and show how each answer was found.
 | `site/index.html` | placeholder single page for a later public release |
 | `scripts/` | empty until working scripts are ported **after sanitization** |
 
-Port order and design notes: `grokcode/docs/roadmap/CASE_RECON_TOOLKIT_PACKAGING_2026-09-29.md`.
+Port order and design notes live in the owner's private working notes; see `docs/PIPELINE.md` for the summary.
