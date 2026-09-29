@@ -1,4 +1,4 @@
-# Build and run (v0.1.0, reference)
+# Build and run (v0.2.0, reference)
 
 ## Requirements by part
 | Part | Runs on | Needs |
