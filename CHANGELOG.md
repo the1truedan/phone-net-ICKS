@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.3 — 2026-09-30 · SDS context with official sources
+- **New section: "Who holds which piece of the record".** It explains the roles in self-directed Medicaid care (the member as
+  employer, the managed care organization, the fiscal employer agent, the county, the caregiver) and the gap between them.
+  It uses roles only and names no agency or company.
+- **Government citations only:** Medicaid.gov Self-Directed Services; Wisconsin DHS P-00088N and P-00593; the WI DHS IRIS page;
+  the WI DHS member rights and appeals page. Every link was checked (medicaid.gov was confirmed by fetch, because it blocks scripted checks).
+
 ## v0.4.2 — 2026-09-30 · citation
 - **AgentsView cited:** every mention now links to https://github.com/kenn-io/agentsview, the local-first session index
   used to check breakthrough citations (session IDs). README lists it too.

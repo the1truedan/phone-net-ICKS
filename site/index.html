@@ -160,7 +160,7 @@
   .mu-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem; align-items: baseline; }
   .mu-mark { font-family: var(--mono); font-size: 0.8rem; color: var(--fg-dimmer); }
   .mu-mark span { color: var(--accent-mu); text-transform: none; }
-  .sib a, .mu-footer nav a { color: var(--accent, #6ee7ff); }
+  .sib a, .mu-footer nav a, #sds .section-sub a { color: var(--accent, #6ee7ff); }
   .mu-lc { color: var(--accent-mu); text-transform: none; }
   .mu-footer nav a { font-family: var(--mono); font-size: 0.8rem; margin-left: 0.9rem; }
 </style>
@@ -210,7 +210,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">public release · v0.4.2 · 2026-09-30</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
+    <span class="private-chip">public release · v0.4.3 · 2026-09-30</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
   </div>
 </header>
 
@@ -418,7 +418,7 @@
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.4.2 · public release 2026-09-30</p>
+    <p class="section-eyebrow">By the numbers · v0.4.3 · public release 2026-09-30</p>
     <h2 class="section-title">Everything in one place</h2>
     <p class="section-sub">Totals from the first run, Jan 2024 to Sep 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
@@ -499,7 +499,7 @@
   </div>
 
   <div class="tools">
-    <h3>Models, tools and AI assistants (all links official) · as of v0.4.2</h3>
+    <h3>Models, tools and AI assistants (all links official) · as of v0.4.3</h3>
     <p><b>On-device models:</b>
       <a href="https://huggingface.co/openai/whisper-large-v3">Whisper large-v3</a> via <a href="https://github.com/SYSTRAN/faster-whisper">faster-whisper</a> and
       <a href="https://github.com/m-bain/whisperX">WhisperX</a> (word timing with <a href="https://pytorch.org/audio/stable/generated/torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.html">wav2vec2</a>) ·
@@ -516,6 +516,29 @@
       <a href="https://opencode.ai/">OpenCode</a> · <a href="https://github.com/badlogic/pi-mono">Pi coding agent</a> · Cowork, with session history from an <a href="https://github.com/kenn-io/agentsview">AgentsView</a> index.</p>
     <p class="ai">Case audio and transcripts were processed only by the on-device models above, never sent to the cloud assistants.</p>
   </div>
+</section>
+
+<section class="band" id="sds">
+  <div class="section-head">
+    <p class="section-eyebrow">Context · self-directed services (SDS)</p>
+    <h2 class="section-title">Who holds which piece of the record</h2>
+    <p class="section-sub">In self-directed Medicaid long-term care, a person can hire their own caregiver, often a family member. The work runs through several separate organizations, and each keeps its own part of the record. This page names none of them; it describes roles only.</p>
+  </div>
+  <div class="sibs">
+    <div class="sib"><b>The member</b><p>The person receiving care. In the fiscal/employer agent model, the member is the legal employer of their caregiver.</p></div>
+    <div class="sib"><b>The managed care organization (MCO)</b><p>Its care team assesses needs and authorizes services and hours. In Wisconsin Family Care, self-directed supports is an option inside that plan.</p></div>
+    <div class="sib"><b>The fiscal employer agent (F/EA)</b><p>A financial management services provider that runs payroll, tax filing and timesheets for the member-employer, paid from the budget the MCO authorizes.</p></div>
+    <div class="sib"><b>The county or benefits office</b><p>Handles eligibility and any monthly cost share, on its own records and its own appeal route.</p></div>
+    <div class="sib"><b>The caregiver</b><p>Does the work and logs the hours, often in the payroll app, and ends up the only one holding all the pieces, mostly on their own phone.</p></div>
+    <div class="sib"><b>The gap phone<span class="tp">+</span>net<span class="tp">+</span>tics fills</b><p>There is often no shared system joining these records. The caregiver's own dated, checksummed copy lets each written question name exactly which piece is missing, and from whom.</p></div>
+  </div>
+  <p class="section-sub" style="margin-top:1rem">Official sources:
+    <a href="https://www.medicaid.gov/medicaid/long-term-services-supports/self-directed-services">Medicaid.gov: Self-Directed Services</a> ·
+    <a href="https://www.dhs.wisconsin.gov/publications/p0/p00088n.pdf">Wisconsin DHS: Self-Directed Supports FAQ (P-00088N)</a> ·
+    <a href="https://www.dhs.wisconsin.gov/publications/p0/p00593.pdf">Wisconsin DHS: Self-Directed Supports in Family Care (P-00593)</a> ·
+    <a href="https://www.dhs.wisconsin.gov/iris/index.htm">Wisconsin DHS: IRIS (Include, Respect, I Self-Direct)</a> ·
+    <a href="https://www.dhs.wisconsin.gov/familycare/fullpartner.htm">Wisconsin DHS: member rights, grievances and appeals</a>
+  </p>
 </section>
 
 <section class="band" id="lab">
@@ -539,7 +562,7 @@
 </section>
 
 <footer><div class="mu-footer">
-  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.4.2 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC</span>
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.4.3 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC</span>
   <nav>
     <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
     <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>

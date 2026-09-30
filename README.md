@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.4.2 · public release 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.4.3 · public release 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -49,6 +49,15 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 | `CHANGELOG.md` | What changed in each version, including the breakthroughs |
 
 Working scripts are ported into `scripts/` only after sanitization.
+
+## Self-directed services: official sources
+
+The page explains the roles (the member, the managed care organization, the fiscal employer agent, the county, the caregiver) without naming any organization. Sources:
+[Medicaid.gov: Self-Directed Services](https://www.medicaid.gov/medicaid/long-term-services-supports/self-directed-services) ·
+[WI DHS SDS FAQ, P-00088N](https://www.dhs.wisconsin.gov/publications/p0/p00088n.pdf) ·
+[WI DHS SDS in Family Care, P-00593](https://www.dhs.wisconsin.gov/publications/p0/p00593.pdf) ·
+[WI DHS IRIS](https://www.dhs.wisconsin.gov/iris/index.htm) ·
+[WI DHS member rights and appeals](https://www.dhs.wisconsin.gov/familycare/fullpartner.htm)
 
 ## The larger µlab (M.A.N.A.G.E.R. LLC)
 
