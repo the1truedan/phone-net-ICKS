@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.4.0 — 2026-09-30 · public release
+- **Public.** The repo is public and the pages are hosted on GitHub Pages (`site/` deployed by `.github/workflows/pages.yml`).
+  Before the switch, every file in all 18 earlier commits was scanned for names, addresses, phone numbers, emails, agency and
+  facility names, local paths, hostnames and keys. None were found, and there are no binary files in the history.
+- **Breakthrough: a self-healing overnight GPU chain.** Stages are now resumable and gated per item on GPU memory, with a pause file.
+  A second AI agent (Grok Build) added a silent watcher: it reports only failures or completion, relaunches a dead chain once, and
+  latches on VRAM, memory, SSH or stalls. The chain ran unattended overnight: 159 of 882 deep-inspection files, plus a
+  marker-correlation stage.
+- **Second-device intake.** 39 new recordings from a second phone (Sep 26–29) were queued and 35 processed. Three unreadable WAV
+  files are logged as custody items and left unrepaired.
+- **Primary-source rule.** A figure that comes from an AI summary is written as "our notes refer to" until it is checked against
+  the primary record. This caught two errors before they reached a letter: a pay stub's service period, and the date a handout
+  was received.
+- **Proof of delivery.** Fax-service confirmations are cross-checked against sent mail, to show which document actually went where.
+  This corrected one claim before it went into a letter.
+- **Consent-first packet workflow.** The person the records are about hears or reads each letter before signing, and approves
+  letter by letter. Phone participation is recorded as a note, not a signature. Requests are split by recipient and purpose
+  (records, payroll, a communication accommodation). Appeal deadlines are tracked separately from records requests. A second AI
+  assistant reviews the wording before anything is signed.
+- **Session index repaired.** A sync failure in the local session index was isolated to one provider and bypassed, so breakthrough
+  citations stay checkable.
+- Stats refreshed (`docs/STATS.md`). Version labels on every page updated; "private placeholder" labels removed.
+
 ## v0.3.1 — 2026-09-29 (private) · source attribution fix
 - **Breakthrough citations corrected.** The 2026-04-14 and 2026-06-19 entries were labeled ChatGPT, but both were grok.com chats. The
   session index had filed early grok.com conversations as ChatGPT; each citation is now checked against three independent records
