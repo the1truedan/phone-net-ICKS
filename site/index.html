@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>phone-net I.C.K.S.</title>
+<title>phone+net+tics · phone-net · I.C.K.S.</title>
 <meta name="description" content="Intake, Custody, Keywords, Synthesis. A local-only toolkit that turns a caregiver's own phone recordings into an indexed, checksummed record." />
 <meta name="robots" content="noindex" />
 <style>
@@ -149,14 +149,29 @@
     .flow .pulse, .flow .cube-glow { animation: none; }
     .flow animateMotion { display: none; }
   }
+
+  .tp { font-size: 0.62em; vertical-align: 0.35em; color: var(--accent-mu); margin: 0 0.06em; }
+  .wordmark-sub { font-family: var(--mono); font-size: 0.95rem; color: var(--fg-dim); margin-top: 0.3rem; }
+  .sibs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.8rem; margin-top: 1rem; }
+  .sib { border: 1px solid var(--line); background: var(--bg-panel); border-radius: 10px; padding: 0.8rem 0.9rem; }
+  .sib b { display: block; color: var(--fg); }
+  .sib p { margin: 0.3rem 0 0.5rem; color: var(--fg-dim); font-size: 0.88rem; }
+  .sib a { font-family: var(--mono); font-size: 0.8rem; margin-right: 0.8rem; }
+  .mu-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem; align-items: baseline; }
+  .mu-mark { font-family: var(--mono); font-size: 0.8rem; color: var(--fg-dimmer); }
+  .mu-mark span { color: var(--accent-mu); text-transform: none; }
+  .sib a, .mu-footer nav a { color: var(--accent, #6ee7ff); }
+  .mu-lc { color: var(--accent-mu); text-transform: none; }
+  .mu-footer nav a { font-family: var(--mono); font-size: 0.8rem; margin-left: 0.9rem; }
 </style>
 </head>
 <body>
 
 <header class="hero">
   <div class="hero-inner">
-    <p class="eyebrow">phone·tics · let your phone talk to you</p>
-    <h1 class="wordmark">phone-net <span>I.C.K.S.</span></h1>
+    <p class="eyebrow">phone<span class="tp">+</span>net<span class="tp">+</span>tics · let your phone talk to you</p>
+    <h1 class="wordmark">phone-net · <span>I.C.K.S.</span></h1>
+    <p class="wordmark-sub">(phone + net + I.C.K.S.)</p>
     <p class="tagline">Your phone already heard it all: the calls, the meetings, the promises. Plug it in and let it talk
       back, as an indexed, checksummed, searchable account of what was said, asked and answered, on hardware you own.</p>
     <p class="expand">Intake · Custody · Keywords · Synthesis</p>
@@ -195,7 +210,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">public release · v0.4.0 · 2026-09-30</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
+    <span class="private-chip">public release · v0.4.1 · 2026-09-30</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
   </div>
 </header>
 
@@ -403,7 +418,7 @@
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.4.0 · public release 2026-09-30</p>
+    <p class="section-eyebrow">By the numbers · v0.4.1 · public release 2026-09-30</p>
     <h2 class="section-title">Everything in one place</h2>
     <p class="section-sub">Totals from the first run, Jan 2024 to Sep 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
@@ -484,7 +499,7 @@
   </div>
 
   <div class="tools">
-    <h3>Models, tools and AI assistants (all links official) · as of v0.4.0</h3>
+    <h3>Models, tools and AI assistants (all links official) · as of v0.4.1</h3>
     <p><b>On-device models:</b>
       <a href="https://huggingface.co/openai/whisper-large-v3">Whisper large-v3</a> via <a href="https://github.com/SYSTRAN/faster-whisper">faster-whisper</a> and
       <a href="https://github.com/m-bain/whisperX">WhisperX</a> (word timing with <a href="https://pytorch.org/audio/stable/generated/torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.html">wav2vec2</a>) ·
@@ -503,7 +518,35 @@
   </div>
 </section>
 
-<footer>phone-net I.C.K.S. v0.4.0 · public release 2026-09-30 · <a href="https://github.com/the1truedan/phone-net-ICKS">source</a></footer>
+<section class="band" id="lab">
+  <div class="section-head">
+    <p class="section-eyebrow">The larger <span class="mu-lc">µ</span>lab · M.A.N.A.G.E.R. LLC</p>
+    <h2 class="section-title">Sibling public repos</h2>
+    <p class="section-sub">phone<span class="tp">+</span>net<span class="tp">+</span>tics is one door. These are the others, all public and MIT-licensed, all built the same way: local first, with AI coding assistants writing the code.</p>
+  </div>
+  <div class="sibs">
+    <div class="sib"><b>ai-gateway</b><p>Home LLM gateway: route models across machines, keep chat and tools portable. The local gateway these pages refer to.</p><a href="https://github.com/the1truedan/ai-gateway">repo</a><a href="https://the1truedan.github.io/ai-gateway/">page</a></div>
+    <div class="sib"><b>mok-tua</b><p>Script → storyboard stills → optional video, on your own GPU.</p><a href="https://github.com/the1truedan/mok-tua">repo</a><a href="https://the1truedan.github.io/mok-tua/">page</a></div>
+    <div class="sib"><b>fast-models</b><p>Two spare NVMe drives turned into one fast, deduped storage pool for local models.</p><a href="https://github.com/the1truedan/fast-models">repo</a><a href="https://the1truedan.github.io/fast-models/">page</a></div>
+    <div class="sib"><b>grok-tua-tok-tua</b><p>Launch coding CLIs next to a live health and spend pane.</p><a href="https://github.com/the1truedan/grok-tua-tok-tua">repo</a><a href="https://the1truedan.github.io/grok-tua-tok-tua/">page</a></div>
+    <div class="sib"><b>johnny-appleseed-chipper</b><p>Johnny Appleseed + C.H.I.P.P.E.R.S. + C.H.A.I.N.S.: artifact manifests and custody receipts.</p><a href="https://github.com/the1truedan/johnny-appleseed-chipper">repo</a><a href="https://the1truedan.github.io/johnny-appleseed-chipper/">page</a></div>
+    <div class="sib"><b>aida-complex-doc-lab</b><p>A.I.D.A. complex-document lab: a synthetic accessibility harness.</p><a href="https://github.com/the1truedan/aida-complex-doc-lab">repo</a><a href="https://the1truedan.github.io/aida-complex-doc-lab/">page</a></div>
+    <div class="sib"><b>ada-doc-check</b><p>Prepare-only ADA/WCAG-style document triage (a first pass, not certification).</p><a href="https://github.com/the1truedan/ada-doc-check">repo</a></div>
+    <div class="sib"><b>cmip-terpene-db</b><p>Schema ideas for cannabis and hemp chemistry and cultivars.</p><a href="https://github.com/the1truedan/cmip-terpene-db">repo</a><a href="https://the1truedan.github.io/cmip-terpene-db/">page</a></div>
+    <div class="sib"><b>all-in-one-home-food-bank-tank-rank</b><p>Local-first home food bank: stock locations, recipe match, tank-rank.</p><a href="https://github.com/the1truedan/all-in-one-home-food-bank-tank-rank">repo</a></div>
+    <div class="sib"><b>shreddit</b><p>Userscript that flattens modern Reddit into a wide, fast reading view.</p><a href="https://github.com/the1truedan/shreddit">repo</a><a href="https://greasyfork.org/en/scripts/589405-shreddit">page</a></div>
+  </div>
+</section>
+
+<footer><div class="mu-footer">
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.4.1 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC</span>
+  <nav>
+    <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
+    <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>
+    <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/LICENSE">MIT</a>
+  </nav>
+</div></footer>
 
 <script>
 // Aggregates from the first run (no names, no content). notes = entries/month; span = avg first-to-last note hours/day.

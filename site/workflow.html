@@ -27,11 +27,26 @@
   .legend { display:flex; gap:1.2rem; flex-wrap:wrap; font-size:.82rem; color:var(--dim); margin-top:.8rem; }
   .legend i { display:inline-block; width:14px; height:4px; border-radius:2px; vertical-align:middle; margin-right:.4rem; }
   footer { margin-top:2.5rem; font-family:var(--mono); font-size:.75rem; color:var(--dimmer); }
+
+  :root { --accent-mu: #f0b429; --fg-dimmer: #5c6880; }
+  .tp { font-size: 0.62em; vertical-align: 0.35em; color: var(--accent-mu); margin: 0 0.06em; }
+  .wordmark-sub { font-family: var(--mono); font-size: 0.95rem; color: var(--fg-dim); margin-top: 0.3rem; }
+  .sibs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.8rem; margin-top: 1rem; }
+  .sib { border: 1px solid var(--line); background: var(--bg-panel); border-radius: 10px; padding: 0.8rem 0.9rem; }
+  .sib b { display: block; color: var(--fg); }
+  .sib p { margin: 0.3rem 0 0.5rem; color: var(--fg-dim); font-size: 0.88rem; }
+  .sib a { font-family: var(--mono); font-size: 0.8rem; margin-right: 0.8rem; }
+  .mu-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem; align-items: baseline; }
+  .mu-mark { font-family: var(--mono); font-size: 0.8rem; color: var(--fg-dimmer); }
+  .mu-mark span { color: var(--accent-mu); text-transform: none; }
+  .sib a, .mu-footer nav a { color: var(--accent, #6ee7ff); }
+  .mu-lc { color: var(--accent-mu); text-transform: none; }
+  .mu-footer nav a { font-family: var(--mono); font-size: 0.8rem; margin-left: 0.9rem; }
 </style>
 </head>
 <body>
 <main>
-  <p class="eyebrow">phone-net I.C.K.S. v0.4.0 · workflow</p>
+  <p class="eyebrow">phone<span class="tp">+</span>net<span class="tp">+</span>tics · phone-net · I.C.K.S. v0.4.1 · workflow</p>
   <h1>From the phone to the black box</h1>
   <p class="sub">Everything on the left is the caregiver's own data. Everything inside the box runs on hardware the caregiver owns. The cloud
     assistants above helped write the code; they never see the case data. Every model and tool name links to its official page.
@@ -149,7 +164,15 @@
       <span>dashed box = cloud assistants (code only)</span>
     </div>
   </figure>
-  <footer>phone-net I.C.K.S. v0.4.0 · workflow · 2026</footer>
+  <footer><div class="mu-footer">
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · workflow v0.4.1 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC</span>
+  <nav>
+    <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
+    <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>
+    <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/LICENSE">MIT</a>
+  </nav>
+</div></footer>
 </main>
 </body>
 </html>

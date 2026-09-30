@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.1 — 2026-09-30 · name, lab links, license
+- **Name:** phone-net · I.C.K.S. (phone + net + I.C.K.S.). The page header now reads "phone⁺net⁺tics · let your phone talk to
+  you", with small plus signs.
+- **The larger µlab:** a new section links the sibling public repos and their pages (ai-gateway, mok-tua, fast-models,
+  grok-tua-tok-tua, johnny-appleseed-chipper, aida-complex-doc-lab, ada-doc-check, cmip-terpene-db,
+  all-in-one-home-food-bank-tank-rank, shreddit).
+- **Footer:** every page now has the same µ mark as the sibling pages: "one door in a larger µlab · © 2026 M.A.N.A.G.E.R. LLC",
+  with links to source, README, Changelog and MIT.
+- **MIT License** added (`LICENSE`), matching the sibling repos.
+
 ## v0.4.0 — 2026-09-30 · public release
 - **Public.** The repo is public and the pages are hosted on GitHub Pages (`site/` deployed by `.github/workflows/pages.yml`).
   Before the switch, every file in all 18 earlier commits was scanned for names, addresses, phone numbers, emails, agency and

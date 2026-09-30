@@ -1,8 +1,10 @@
 # phone-net · I.C.K.S.
 
+**(phone + net + I.C.K.S.)** · phone<sup>+</sup>net<sup>+</sup>tics · *let your phone talk to you*
+
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.4.0 · public release 2026-09-30
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.4.1 · public release 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -46,3 +48,24 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 | `CHANGELOG.md` | What changed in each version, including the breakthroughs |
 
 Working scripts are ported into `scripts/` only after sanitization.
+
+## The larger µlab (M.A.N.A.G.E.R. LLC)
+
+phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
+
+| Repo | Page | What it is |
+|---|---|---|
+| [ai-gateway](https://github.com/the1truedan/ai-gateway) | [page](https://the1truedan.github.io/ai-gateway/) | Home LLM gateway: routes models across machines. The local gateway these pages refer to |
+| [mok-tua](https://github.com/the1truedan/mok-tua) | [page](https://the1truedan.github.io/mok-tua/) | Script → storyboard stills → optional video, on your own GPU |
+| [fast-models](https://github.com/the1truedan/fast-models) | [page](https://the1truedan.github.io/fast-models/) | Two spare NVMe drives turned into one fast, deduped model pool |
+| [grok-tua-tok-tua](https://github.com/the1truedan/grok-tua-tok-tua) | [page](https://the1truedan.github.io/grok-tua-tok-tua/) | Coding CLIs next to a live health and spend pane |
+| [johnny-appleseed-chipper](https://github.com/the1truedan/johnny-appleseed-chipper) | [page](https://the1truedan.github.io/johnny-appleseed-chipper/) | Artifact manifests (C.H.I.P.P.E.R.S.) and custody receipts (C.H.A.I.N.S.) |
+| [aida-complex-doc-lab](https://github.com/the1truedan/aida-complex-doc-lab) | [page](https://the1truedan.github.io/aida-complex-doc-lab/) | A.I.D.A. complex-document accessibility harness |
+| [ada-doc-check](https://github.com/the1truedan/ada-doc-check) | – | Prepare-only ADA/WCAG-style document triage |
+| [cmip-terpene-db](https://github.com/the1truedan/cmip-terpene-db) | [page](https://the1truedan.github.io/cmip-terpene-db/) | Schema ideas for cannabis and hemp chemistry |
+| [all-in-one-home-food-bank-tank-rank](https://github.com/the1truedan/all-in-one-home-food-bank-tank-rank) | – | Local-first home food bank |
+| [shreddit](https://github.com/the1truedan/shreddit) | [Greasy Fork](https://greasyfork.org/en/scripts/589405-shreddit) | Userscript: modern Reddit as a wide, fast reading view |
+
+## License
+
+[MIT](LICENSE) · © 2026 M.A.N.A.G.E.R. LLC
