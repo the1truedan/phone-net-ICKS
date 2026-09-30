@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.2 — 2026-09-30 · citation
+- **AgentsView cited:** every mention now links to https://github.com/kenn-io/agentsview, the local-first session index
+  used to check breakthrough citations (session IDs). README lists it too.
+
 ## v0.4.1 — 2026-09-30 · name, lab links, license
 - **Name:** phone-net · I.C.K.S. (phone + net + I.C.K.S.). The page header now reads "phone⁺net⁺tics · let your phone talk to
   you", with small plus signs.

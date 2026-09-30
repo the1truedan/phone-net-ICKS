@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.4.1 · public release 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.4.2 · public release 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -45,6 +45,7 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 | `docs/PRIVACY.md` | What never goes in this repo |
 | `docs/EARMARK_*.md` | Next modules: `cut.glass` (a consent-based, read-only audit of a caregiver app) and the real hours-gap chart |
 | `config/icks.example.yaml` | Paths template. The real `icks.yaml` is git-ignored |
+| Session history | Breakthrough citations are checked against a local [AgentsView](https://github.com/kenn-io/agentsview) index |
 | `CHANGELOG.md` | What changed in each version, including the breakthroughs |
 
 Working scripts are ported into `scripts/` only after sanitization.
