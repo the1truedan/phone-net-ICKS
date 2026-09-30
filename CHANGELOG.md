@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.1 — 2026-09-29 (private) · source attribution fix
+- **Breakthrough citations corrected.** The 2026-04-14 and 2026-06-19 entries were labeled ChatGPT, but both were grok.com chats. The
+  session index had filed early grok.com conversations as ChatGPT; each citation is now checked against three independent records
+  (session index, Grok export, chat-history import).
+- 2026-04-14 now cites grok.com chat `a368cd55` (first build question). 2026-06-19 now cites grok.com chat `7dc00839` (catalog naming,
+  00:01) with commit `ee882c1` (00:52); the coding agent for that commit was not recorded and is marked so.
+- The other eight citations were re-verified (3 Codex, 5 Claude Code).
+
 ## v0.3.0 — 2026-09-29 (private) · payroll sniff level-up
 - **Workflow page** (`site/workflow.html`): phone → USB-C → local black box with four stages and every model/tool linked; cloud assistants
   shown outside the box as "code only".

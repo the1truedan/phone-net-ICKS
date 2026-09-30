@@ -372,14 +372,14 @@
     <p class="section-eyebrow">Breakthroughs</p>
     <h2 class="section-title">Each coding step, and what it made possible for caregiving</h2>
     <p class="section-sub">Built between care tasks with several AI assistants. Citations are commit IDs and session IDs from the owner's private records;
-      they are listed so each step can be traced, not as public links.</p>
+      they are listed so each step can be traced, not as public links. Sources were checked against three records (session index, Grok export, chat-history import); the session index had filed early grok.com chats as ChatGPT, and these entries use the corrected source.</p>
   </div>
   <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of ten coding breakthroughs from April to September 2026, clustered in the last week of September"></svg><div class="tip" hidden></div></div></div>
   <ol class="bt">
-    <li><span class="bt-date">2026-04-14</span><span class="bt-tool">ChatGPT</span><b>Coding pivot + AI certificate enrollment</b><span class="bt-help">Moved from chatting about the situation to building tools for it.</span>
-      <span class="bt-cite">session <code>chatgpt:a368cd55</code></span></li>
-    <li><span class="bt-date">2026-06-19</span><span class="bt-tool">ChatGPT</span><b>One caregiving catalog</b><span class="bt-help">Scattered documents became one catalog that later tools could read.</span>
-      <span class="bt-cite">commit <code>ee882c1</code> · session <code>chatgpt:fdf700c9</code></span></li>
+    <li><span class="bt-date">2026-04-14</span><span class="bt-tool">Grok (grok.com)</span><b>Coding pivot + AI certificate enrollment</b><span class="bt-help">Moved from chatting about the situation to building tools for it.</span>
+      <span class="bt-cite">grok.com chat <code>a368cd55</code> (first build question: a Dockerfile) · AI/ML certificate acceptance, same night</span></li>
+    <li><span class="bt-date">2026-06-19</span><span class="bt-tool">Grok (grok.com)</span><b>One caregiving catalog</b><span class="bt-help">Scattered documents became one catalog that later tools could read.</span>
+      <span class="bt-cite">grok.com chat <code>7dc00839</code> (catalog naming, 00:01) · commit <code>ee882c1</code> (00:52; coding agent not recorded)</span></li>
     <li><span class="bt-date">2026-07-22</span><span class="bt-tool">Codex</span><b>Portable intake with checksums</b><span class="bt-help">Evidence could be pulled and verified the same way every time.</span>
       <span class="bt-cite">commit <code>da4ceec</code> · session <code>codex:019f88b5</code></span></li>
     <li><span class="bt-date">2026-08-04</span><span class="bt-tool">Pi · Codex</span><b>Memory that survives long days</b><span class="bt-help">Assistants stopped losing the thread between caregiving interruptions.</span>
@@ -403,7 +403,7 @@
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.3.0 · private launch 2026-09-29</p>
+    <p class="section-eyebrow">By the numbers · v0.3.1 · private launch 2026-09-29</p>
     <h2 class="section-title">Everything in one place</h2>
     <p class="section-sub">Totals from the first run, Jan 2024 to Sep 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
@@ -484,7 +484,7 @@
   </div>
 
   <div class="tools">
-    <h3>Models, tools and AI assistants (all links official) · as of v0.3.0</h3>
+    <h3>Models, tools and AI assistants (all links official) · as of v0.3.1</h3>
     <p><b>On-device models:</b>
       <a href="https://huggingface.co/openai/whisper-large-v3">Whisper large-v3</a> via <a href="https://github.com/SYSTRAN/faster-whisper">faster-whisper</a> and
       <a href="https://github.com/m-bain/whisperX">WhisperX</a> (word timing with <a href="https://pytorch.org/audio/stable/generated/torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.html">wav2vec2</a>) ·
@@ -503,7 +503,7 @@
   </div>
 </section>
 
-<footer>phone-net I.C.K.S. v0.3.0 · private placeholder · 2026</footer>
+<footer>phone-net I.C.K.S. v0.3.1 · private placeholder · 2026</footer>
 
 <script>
 // Aggregates from the first run (no names, no content). notes = entries/month; span = avg first-to-last note hours/day.
@@ -655,7 +655,7 @@ function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Ma
   hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${AIH[MONTHS[i][0]] || 0} h</b> active`);
 })();
 
-const BT = [["2026-04-14", "ChatGPT", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "ChatGPT", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"]];
+const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"]];
 (function bt() {
   const root = document.getElementById("viz-bt"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900;
   const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-10-01"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
