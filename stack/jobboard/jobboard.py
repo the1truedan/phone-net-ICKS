@@ -26,7 +26,8 @@ class Redactor:
     Terms come from a local, git-ignored file (one per line; lines starting with 'cs:' are matched case-sensitively),
     plus built-in patterns for phone numbers, emails, street addresses, SSNs and long digit runs."""
     PATTERNS = [r"\b\d{3}[-.)\s]{1,2}\d{3}[-.\s]\d{4}\b", r"[\w.+-]+@[\w-]+\.[\w.]+", r"\b\d{3}-\d{2}-\d{4}\b",
-                r"\b\d{3,6}\s+\d{0,3}\w*\s+(Ave|Avenue|St|Street|Rd|Road|Lot|Dr|Drive|Blvd)\b[\w .,#]*", r"\b\d{6,}\b"]
+                r"\b\d{3,6}\s+\d{0,3}\w*\s+(Ave|Avenue|St|Street|Rd|Road|Lot|Dr|Drive|Blvd)\b[\w .,#]*", r"\b\d{6,}\b",
+                r"(?<![\w/])/(Volumes|Users|home|mnt|MCP_WIP)/[^\s<>\"']*"]   # absolute local paths
 
     def __init__(self, path):
         self.rx = []
@@ -36,7 +37,8 @@ class Redactor:
                 continue
             cs = ln.startswith("cs:")
             term = ln[3:].strip() if cs else ln
-            self.rx.append(re.compile(r"(?<![\w])" + re.escape(term) + r"(?![\w])", 0 if cs else re.I))
+            # letters/digits only as boundaries, so names inside file names (A_B_C.md) are caught too
+            self.rx.append(re.compile(r"(?<![A-Za-z0-9])" + re.escape(term) + r"(?![A-Za-z0-9])", 0 if cs else re.I))
         self.rx += [re.compile(p, re.I) for p in self.PATTERNS]
 
     def __call__(self, text):
@@ -125,7 +127,8 @@ class Board:
                         "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
                         "last_done": time.strftime("%m-%d %H:%M", time.localtime(max(done_t))) if done_t else "",
                         "purpose": reg.get("purpose", ""), "gain": reg.get("gain", ""), "source": reg.get("source", ""),
-                        "outputs": reg.get("outputs", "")})
+                        "outputs": reg.get("outputs", ""),
+                        "flag": reg.get(self.c.get("flag_field", "flag"), ""), "flag_party": reg.get(self.c.get("flag_party_field", "flag_party"), "")})
         return out
 
     # ---------- processes and hosts ----------
@@ -267,7 +270,7 @@ class Board:
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
                 "local": self.local_host(), "speed": round(sp, 3) if sp else None, "queues": qs, "runners": runners,
                 "recent": recent, "logs": self.logs(),
-                "reports": [r.get("name", "") for r in self.c.get("reports", [])]}
+                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
     def _run(self, argv, detach=False):
@@ -355,7 +358,7 @@ table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:5px 6px;
 button{font:inherit;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;border-radius:10px;border:1px solid var(--line);white-space:nowrap}
 .paused{color:var(--warn)}.bad{color:var(--bad)}pre{white-space:pre-wrap;margin:4px 0 10px;font-size:12px}.stats{display:flex;gap:18px;flex-wrap:wrap}
-.stats div{min-width:150px}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
+.stats div{min-width:150px}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
 <section id="gpu"></section><section><b>On the GPU now</b><table id="cur"></table></section>
@@ -384,8 +387,8 @@ ${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted sm
 const cur=(g.current||[]);document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
 document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+s.queues.map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
 const act=run?'<span class="pill">running</span>':q.in_chain?'<span class="pill muted">waiting in chain</span>':(q.done<q.total?`<button onclick="event.stopPropagation();if(confirm('Start ${esc(q.queue)}?'))post('/api/start',{queue:'${esc(q.queue)}'})">Start</button>`:'');
-return `<tr onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b></td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
-<tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
+return `<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
+<tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}</td><td>${esc(r.elapsed)}</td><td><button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}

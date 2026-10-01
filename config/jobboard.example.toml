@@ -23,3 +23,6 @@ auto_clear_stale = true      # remove GPU-host staging copies of finished/abando
 stale_after_s = 28800       # an item staged this long without a running worker counts as abandoned
 redact = false                 # or start with --redact: block out (█) the terms in redact_file plus phones/emails/addresses/SSNs
 redact_file = "config/redact.txt" # one term per line, git-ignored; prefix cs: for case-sensitive (e.g. cs:CC)
+flag_field = "flag"              # optional registry field that highlights a queue (e.g. "led to findings for review")
+flag_party_field = "flag_party"  # optional registry field shown next to the highlight
+flag_label = "flagged"

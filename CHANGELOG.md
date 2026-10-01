@@ -9,6 +9,8 @@
 - **Automatic cleanup** of the GPU host's staging copies of finished or abandoned items, only when no worker uses them (never originals).
 - **Per-queue notes and report links** come from local files named in the git-ignored config; Markdown reports render as formatted pages (pandoc).
 - **Redacted mode** (`--redact`) blocks out names and identifiers from a local list for demos.
+- **Highlighted queues:** an optional registry field marks queues whose results need review (e.g. ⚖ legal lead · party).
+- **Public example:** `docs/examples/case-job-history.example.html` (roles and categories, redacted) and `stack/jobboard/redact_file.py`.
 - **Requirements:** `stack/requirements/jobboard.txt`. Standard library only (Python 3.11+); pandoc, ssh and ffprobe are optional tools.
 
 ## v0.4.3 — 2026-09-30 · SDS context with official sources
