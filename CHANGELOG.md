@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.1 — 2026-10-01 · numbers refreshed
+- **"By the numbers" updated to Oct 1, 2026:** recordings indexed 2,073 (~760 h); 1,488 fully speaker-separated; 12,572 texts/calls/voicemails
+  (incl. 1,756 call/text records read from 3 phones); 14,867 files hashed; 10 device pulls and reads from 5 phones; 55 payroll records exported;
+  3,786 h logged vs 2,018 h paid; a 557-day ledger; 36 of 40 stubs exact. Notes, calendar and day counts are unchanged (same account export).
+- Version labels on all pages.
+
 ## v0.5.0 — 2026-10-01 · local job board
 - **New: `stack/jobboard/`.** A local page (127.0.0.1 only) for the GPU transcription queues: GPU host CPU, memory, GPU memory,
   load and temperature; the items on the GPU now, with an estimated progress bar; done/total for every queue; recently finished items;
