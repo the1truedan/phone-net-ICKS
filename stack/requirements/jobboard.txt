@@ -1,0 +1,7 @@
+# Job board (stack/jobboard/jobboard.py): Python standard library only. Nothing to pip install.
+# Needs: Python >= 3.11 (tomllib)
+# Optional, not pip:
+#   pandoc   - renders Markdown reports as formatted pages (falls back to plain text without it)
+#   ssh      - key-based access to the GPU host (remote_host in config/jobboard.toml)
+#   on the GPU host: nvidia-smi, ffprobe, free, top, ps (standard on a Linux CUDA box)
+#   on this computer: ps, lsof, ffprobe (to estimate progress from audio length)

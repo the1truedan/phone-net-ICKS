@@ -22,3 +22,7 @@ out/
 stack/evidence/
 stack/work/
 stack/secrets/
+
+# job board local config (real paths)
+config/jobboard.toml
+config/redact.txt

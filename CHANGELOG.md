@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0 — 2026-10-01 · local job board
+- **New: `stack/jobboard/`.** A local page (127.0.0.1 only) for the GPU transcription queues: GPU host CPU, memory, GPU memory,
+  load and temperature; the items on the GPU now, with an estimated progress bar; done/total for every queue; recently finished items;
+  runner processes and the queue each one reads; status-only log lines.
+- **Controls:** pause, resume, start a queue, stop a runner. Each call needs a per-run token and a localhost Host header. Queues that a
+  running chain script will start on its own can't be started twice. `--dry-run` shows the command instead of running it.
+- **Automatic cleanup** of the GPU host's staging copies of finished or abandoned items, only when no worker uses them (never originals).
+- **Per-queue notes and report links** come from local files named in the git-ignored config; Markdown reports render as formatted pages (pandoc).
+- **Redacted mode** (`--redact`) blocks out names and identifiers from a local list for demos.
+- **Requirements:** `stack/requirements/jobboard.txt`. Standard library only (Python 3.11+); pandoc, ssh and ffprobe are optional tools.
+
 ## v0.4.3 — 2026-09-30 · SDS context with official sources
 - **New section: "Who holds which piece of the record".** It explains the roles in self-directed Medicaid care (the member as
   employer, the managed care organization, the fiscal employer agent, the county, the caregiver) and the gap between them.

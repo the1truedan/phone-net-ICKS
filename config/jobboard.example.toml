@@ -1,0 +1,25 @@
+# Copy to config/jobboard.toml (git-ignored) and fill in your own paths. Nothing here is case data.
+dry_run = false                      # true = buttons only report the command they would run
+remote_host = "gpu-host"             # ssh alias of the GPU box
+pause_flag = "/work/PAUSE"           # runners don't start a new item while this file exists
+remote_worker_match = "fine_comb_visit.py"
+remote_cache_s = 15
+
+queue_glob = "/path/to/work/AV_QUEUE_*.tsv"   # one item per line: label<TAB>source
+queue_name_regex = "^AV_QUEUE_(EARMARK_)?"    # stripped from file names to get the queue name
+results_dir = "/path/to/work/finecomb"        # finished items land here
+result_pattern = "FINECOMB_{label}.json"
+runner_script = "/path/to/scripts/finecomb_gated_run.sh"   # started as: Q=<queue file> runner_script
+runner_match = "finecomb_gated_run|chain_|_after_"         # regex for runner processes shown in the table
+log_dir = "/path/to/work/logs"
+log_files = ["/path/to/work/queue.log"]       # only status lines (time label: ok|FAIL|SKIP_LONG, STAGE, *_DONE) are shown
+chain_match = "chain_|_after_"            # scripts that run several queues in order
+chained_queues = ["QUEUE_A", "QUEUE_B"]    # queues those scripts will start on their own (no Start button while a chain runs)
+remote_inprogress_glob = "/work/in/*.orig48k.wav"   # files staged on the GPU host while an item runs
+registry_file = "/path/to/jobboard_registry.toml"  # optional per-queue notes: [queue.NAME] purpose / source / gain / outputs
+recent_n = 15
+reports = [ { name = "My report", path = "/path/to/report.html" } ]   # local files linked at the top of the page
+auto_clear_stale = true      # remove GPU-host staging copies of finished/abandoned items (never originals) when no worker uses them
+stale_after_s = 28800       # an item staged this long without a running worker counts as abandoned
+redact = false                 # or start with --redact: block out (█) the terms in redact_file plus phones/emails/addresses/SSNs
+redact_file = "config/redact.txt" # one term per line, git-ignored; prefix cs: for case-sensitive (e.g. cs:CC)
