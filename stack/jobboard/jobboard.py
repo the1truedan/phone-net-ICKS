@@ -143,6 +143,7 @@ class Board:
                         "too_long": sum(1 for lb in labels if lb not in res and lb in longs),
                         "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
                         "last_done": time.strftime("%m-%d %H:%M", time.localtime(max(done_t))) if done_t else "",
+                        "last_done_ts": max(done_t) if done_t else 0,
                         "first_done": time.strftime("%m-%d %H:%M", time.localtime(min(done_t))) if done_t else "",
                         "span_s": int(max(done_t) - min(done_t)) if len(done_t) > 1 else 0,
                         "purpose": reg.get("purpose", ""), "gain": reg.get("gain", ""), "source": reg.get("source", ""),
@@ -327,8 +328,13 @@ class Board:
         chain_up = any(re.search(self.c.get("chain_match", r"^$"), r["script"]) for r in runners)
         chained = set(self.c.get("chained_queues", [])) if chain_up else set()
         qs = self.queues(res)
+        busy = {r["queue"] for r in runners if r["queue"]}
         for q in qs:
             q["in_chain"] = q["queue"] in chained
+            q["todo"] = q["total"] - q["done"] - q["too_long"] > 0
+        # queues with work left first (running, then waiting in the chain, then idle); finished queues after, latest finished on top
+        qs.sort(key=lambda q: (0, 0 if q["queue"] in busy else 1 if q["in_chain"] else 2, q["queue"]) if q["todo"]
+                else (1, -q["last_done_ts"], q["queue"]))
         rem = self.remote()
         sp = self.speed(res, lm)
         now = time.time()
@@ -539,7 +545,7 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
 <div id="pri"></div><section id="gpu"></section><section><b>On the GPU now</b><table id="cur"></table></section>
-<section><b>Queues</b> <span class="muted small">(click a row for purpose and expected gain)</span><table id="q"></table></section>
+<section><b>Queues</b> <span class="muted small">(to do first, then finished with the latest on top · click a row for purpose and expected gain)</span><table id="q"></table></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
 <section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section>
 <script>
@@ -585,7 +591,8 @@ const fin=!rs.length&&q.done>=q.total?'<span class="pill">✓ complete</span>'+s
  :!rs.length&&!q.in_chain&&left>0?`<span class="pill muted">idle · ${left} left</span> `:"";
 const pri=(q.in_chain||!rs.length)&&left>0&&!s.priority?` <button title="Run this queue now and hold the other runners until it ends" onclick="event.stopPropagation();if(confirm('Give ${qn} priority? It starts now; every other runner pauses after its current item and resumes when ${qn} finishes.'))post('/api/priority',{queue:'${qn}'})">⇧ Priority</button>`:"";
 const act=fin+st+pri+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)</div>`:"");
-return `<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
+const head=q.todo!==s.queues[0].todo&&q===s.queues.find(x=>!x.todo)?`<tr><td colspan="6" class="muted small" style="padding-top:12px"><b>Finished</b> · latest first</td></tr>`:q===s.queues[0]&&q.todo?`<tr><td colspan="6" class="muted small"><b>To do</b></td></tr>`:"";
+return head+`<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
 <tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");

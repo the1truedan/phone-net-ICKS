@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.5 — 2026-10-02 · overnight numbers, job board order
+- **Job board order:** queues with work left are listed first (running, then waiting in a chain, then idle), under a "To do" heading;
+  finished queues follow under "Finished", latest finish on top and oldest at the bottom.
+- **By the numbers (overnight):** 2,483 recordings and long-file chunks fully speaker-separated (2,010 recordings + 473 chunks), up from 1,960.
+  `docs/STATS.md` has a new column; 421 low-signal long-file pieces are not queued yet.
+- **Fixed on the GPU host (lesson for anyone running two runners on one list):** when the front and from-end runners reached the same item,
+  both submitted it, and the first to finish removed the shared "done" marker, so the other waited forever. The submit step now leaves the
+  marker in place, accepts only one written after its own submit, and gives up after 4 hours.
+
 ## v0.5.4 — 2026-10-02 · resident-worker queue handling, screenshot
 - **Job board screenshot** (redacted demo mode) in the README and `stack/jobboard/README.md` (`docs/img/jobboard.png`).
 - **Resident workers:** the board reads an optional spool (`remote_spool_dir`) and shows how many workers have their models loaded, how many items
