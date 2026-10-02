@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.5.6 — 2026-10-02 · two computers on the job board, quick first pass, saturation watch
+- **Active jobs** (was "On the GPU now"): the GPU host's deep pass and the Mac's work in one table, each row with a host badge
+  (🍎 Mac, 🐧 Linux GPU host, 🗄 storage server) and a progress bar. Mac progress is real where it can be measured (bytes of a piece
+  being cut, lines of a batch script's log) and marked "estimated" otherwise (quick triage, silence check).
+- **Per-host CPU, GPU and network**, including the Mac's GPU (read from the graphics driver's statistics, no sudo) and the storage
+  server's 1 GbE link, with a plain-language **saturation** line (GPU memory > 90 %, RAM < 10 % free, CPU > 90 %, a link above
+  about 95 MB/s, or server load above its thread count).
+- **Quick first pass on long recordings** (60 min and up): a small model (whisper.cpp `small.en`) on the Mac's GPU scores each
+  15-minute piece; pieces with case terms or real talk go to the deep pass, the rest are listed for later and never dropped.
+  On a 16-hour recording, 12 of 65 pieces needed the deep pass.
+- **Fixed:** ⇧ Priority could pause a runner's own subshell (its per-item pipeline), which froze the queue it was meant to
+  speed up. The board now ignores subshells when it lists runners.
+- **Redacted demo mode** keeps the page's script intact and blocks host names in the host badges; new screenshot
+  (`docs/img/jobboard.png`), checked with OCR for every blocked term.
+- **By the numbers:** 2,568 recordings and long-file chunks fully speaker-separated (2,015 + 553 chunks), up from 2,483; 37 new
+  recordings pulled from two phones today; 243 low-signal pieces of long files re-queued (181 more were silent).
+- **Models and tools:** whisper.cpp and the ggml `small.en` model added to the official-links list.
+- **Roadmap:** `docs/EARMARK_DUAL_HOST_FAST_HASH.md` (both computers working at once; XXH128 as a fast check at each copy hop,
+  SHA-256 unchanged as the custody hash).
+
 ## v0.5.5 — 2026-10-02 · overnight numbers, job board order
 - **Job board order:** queues with work left are listed first (running, then waiting in a chain, then idle), under a "To do" heading;
   finished queues follow under "Finished", latest finish on top and oldest at the bottom.

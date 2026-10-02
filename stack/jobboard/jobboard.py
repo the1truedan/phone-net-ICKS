@@ -48,7 +48,12 @@ class Redactor:
             for r in self.rx:
                 seg = r.sub(lambda m: "█" * len(m.group(0)), seg)
             return seg
-        return re.sub(r"(>)([^<]+)(<)|^([^<]+)$", lambda m: (m.group(1) + fix(m.group(2)) + m.group(3)) if m.group(1) else fix(m.group(4)), text, flags=re.M)
+        # 2026-10-02: leave <script> blocks alone (a blocked word such as a host name must not break the page's code); the data the
+        # script renders arrives through /api/status, which is redacted separately, and host badges are blocked in the page itself
+        parts = re.split(r"(<script\b.*?</script>)", text, flags=re.S | re.I)
+        return "".join(x if x.lower().startswith("<script") else
+                       re.sub(r"(>)([^<]+)(<)|^([^<]+)$", lambda m: (m.group(1) + fix(m.group(2)) + m.group(3)) if m.group(1) else fix(m.group(4)), x, flags=re.M)
+                       for x in parts)
 
     def json(self, obj):
         if isinstance(obj, str):
@@ -156,10 +161,16 @@ class Board:
         rx = re.compile(self.c["runner_match"])
         qdir = os.path.dirname(self.c["queue_glob"])
         rows = []
-        for ln in sh(["ps", "-axo", "pid=,stat=,etime=,command="]).splitlines():
-            parts = ln.strip().split(None, 3)
-            if len(parts) == 4 and rx.search(parts[3]) and "jobboard" not in parts[3]:
-                pid, stat, et, cmd = parts
+        procs = []
+        for ln in sh(["ps", "-axo", "pid=,ppid=,stat=,etime=,command="]).splitlines():
+            parts = ln.strip().split(None, 4)
+            if len(parts) == 5 and rx.search(parts[4]) and "jobboard" not in parts[4]:
+                procs.append(parts)
+        mine = {p[0] for p in procs}
+        for pid, ppid, stat, et, cmd in procs:
+            if ppid in mine:   # 2026-10-02: a bash subshell of a runner (its per-item pipeline), not a second runner
+                continue
+            if True:
                 # macOS hides other processes' environment, so read the queue file the runner holds open
                 held = [x[1:] for x in sh(["lsof", "-Fn", "-p", pid]).splitlines() if x.startswith("n" + qdir) and x.endswith(".tsv")]
                 rows.append({"pid": int(pid), "elapsed": et, "script": os.path.basename(cmd.split()[-1]),
@@ -167,9 +178,115 @@ class Board:
                              "from_end": bool(held) and os.path.dirname(held[0]) == self.rev_dir()})
         return rows
 
+    def _rate(self, key, rx, tx):
+        """Bytes/s since the previous sample of the same counter (None on the first sample)."""
+        now = time.time(); prev = getattr(self, "_net", {}).get(key)
+        self._net = dict(getattr(self, "_net", {}), **{key: (now, rx, tx)})
+        if not prev or now - prev[0] < 1:
+            return None, None
+        dt = now - prev[0]
+        return max(0, (rx - prev[1]) / dt), max(0, (tx - prev[2]) / dt)
+
     def local_host(self):
-        la = os.getloadavg()
-        return {"load1": round(la[0], 2), "cpus": os.cpu_count()}
+        """This computer: load, CPU %, and network rate on the busiest interface. It cuts pieces and runs the quick triage pass."""
+        la = os.getloadavg(); n = os.cpu_count()
+        cpu = sum(float(x) for x in sh(["ps", "-A", "-o", "%cpu="]).split() if x.replace(".", "", 1).isdigit()) / n
+        best = (0, 0)
+        for ln in sh(["netstat", "-ib"]).splitlines()[1:]:
+            f = ln.split()
+            if len(f) >= 10 and f[0].startswith("en") and "<Link#" in f[2]:
+                try:
+                    best = max(best, (int(f[6]), int(f[9])))
+                except ValueError:
+                    pass
+        rxr, txr = self._rate("m4rv", *best)
+        # Apple GPU (no sudo): the graphics driver's own statistics. Quick triage (whisper.cpp, Metal) runs here, so the GPU is the busy part.
+        io = sh(["ioreg", "-r", "-d", "1", "-w", "0", "-c", "IOAccelerator"])
+        gm = re.search(r'"Device Utilization %"=(\d+)', io); um = re.search(r'"In use system memory"=(\d+)', io)
+        tri = [p for p in glob.glob(os.path.join(self.c["results_dir"], "TRIAGE_*.json")) if time.time() - os.path.getmtime(p) < 600]
+        return {"load1": round(la[0], 2), "cpus": n, "cpu_pct": round(min(100, cpu), 1), "rx_mbs": rxr and round(rxr / 1e6, 1),
+                "tx_mbs": txr and round(txr / 1e6, 1), "triage_10min": len(tri),
+                "gpu_pct": int(gm.group(1)) if gm else None, "gpu_mem_gb": round(int(um.group(1)) / 2**30, 1) if um else None}
+
+    def hosts(self):
+        """Host badges: [icon, "name · role"]. Names come from host_labels in the config (defaults are generic)."""
+        h = {"mac": ["🍎", "Mac · this computer"], "linux": ["🐧", "GPU host · Linux"], "unraid": ["🗄", "Server · Unraid"], "win": ["🪟", "PC · Windows"]}
+        for k, v in self.c.get("host_labels", {}).items():
+            if k in h: h[k][1] = v
+        return h
+
+    @staticmethod
+    def _etime(et):
+        d, _, rest = et.rpartition("-"); parts = [int(x) for x in rest.split(":")]
+        while len(parts) < 3: parts.insert(0, 0)
+        return (int(d) if d else 0) * 86400 + parts[0] * 3600 + parts[1] * 60 + parts[2]
+
+    def local_jobs(self, lm, by_hash):
+        """Work running on this computer, read from the process list: cutting pieces, quick triage, silence checks, uploads, batch scripts.
+        Progress is real where a file or log can be measured (piece bytes, batch lines) and an estimate otherwise."""
+        jobs, PIECE = [], 900 * 48000 * 2   # a 15-min 48 kHz mono 16-bit piece
+        for ln in sh(["ps", "-axo", "pid=,etime=,command="]).splitlines():
+            f = ln.strip().split(None, 2)
+            if len(f) < 3:
+                continue
+            pid, el, cmd = int(f[0]), self._etime(f[1]), f[2]
+            m = re.search(r"quick_triage\.py (\S+)", cmd)
+            if m and "python" in cmd:
+                jobs.append({"label": m.group(1), "stage": "quick triage (whisper.cpp small.en)", "elapsed_s": el, "pct": min(95, int(100 * el / 12)), "est": True}); continue
+            if cmd.startswith(("ffmpeg", "/opt/homebrew/bin/ffmpeg", "nice")) and "ffmpeg" in cmd:
+                out = re.search(r"(\S+/(?:auto_chunks|long_chunks_[\w-]+)/([\w]+)\.wav)\s*$", cmd)
+                if out and " -ss " in cmd:
+                    size = os.path.getsize(out.group(1)) if os.path.exists(out.group(1)) else 0
+                    jobs.append({"label": out.group(2), "stage": "cutting 15-min piece", "elapsed_s": el, "pct": min(99, int(100 * size / PIECE)), "est": False}); continue
+                if "silencedetect" in cmd:
+                    w = re.search(r"-i (\S+/([\w]+)\.wav)", cmd)
+                    jobs.append({"label": w.group(2) if w else "?", "stage": "silence check", "elapsed_s": el, "pct": min(95, int(100 * el / 4)), "est": True}); continue
+            m = re.search(r"scp .*?/([\w]+)(?:\.orig48k)?\.wav \S*:", cmd)
+            if m and cmd.startswith("scp"):
+                jobs.append({"label": m.group(1), "stage": "upload to GPU host", "elapsed_s": el, "pct": None, "est": True}); continue
+        for name, log, total in self.c.get("batch_jobs", []):   # [name, log file, expected lines]
+            if os.path.exists(log) and time.time() - os.path.getmtime(log) < 3600:
+                lines = [x for x in open(log, errors="ignore").read().splitlines() if x.strip()]
+                done = any("DONE" in x for x in lines[-2:])
+                if not done:
+                    jobs.append({"label": name, "stage": f"batch: {len(lines)} of {total} pieces", "elapsed_s": int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log))),
+                                 "pct": int(100 * len(lines) / total), "est": False})
+        for j in jobs:
+            j["host"] = "mac"; j["queue"] = self.queue_of(j["label"], lm, by_hash) if j["label"] not in (b[0] for b in self.c.get("batch_jobs", [])) else "batch"
+        return jobs
+
+    def storage(self):
+        """Storage server link: the one 1 GbE link the GPU host and this computer share for file access. Cached like the GPU host."""
+        t, v = getattr(self, "_storage", (0, {}))
+        if time.time() - t < self.c["remote_cache_s"] or not self.c.get("storage_host"):
+            return v
+        out = sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", self.c["storage_host"],
+                  "cat /proc/loadavg; nproc; awk 'NR>2{gsub(\":\",\" \"); print $1, $2, $10}' /proc/net/dev"], timeout=15).splitlines()
+        v = {"reachable": bool(out)}
+        try:
+            v["load1"] = float(out[0].split()[0]); v["cpus"] = int(out[1])
+            nics = [(int(b), int(c), a) for a, b, c in (x.split() for x in out[2:]) if re.match(r"(eth|bond|br)\d", a)]
+            rx, tx, name = max(nics)
+            v["nic"] = name; v["rx_mbs"], v["tx_mbs"] = [x and round(x / 1e6, 1) for x in self._rate("storage", rx, tx)]
+        except (IndexError, ValueError):
+            pass
+        self._storage = (time.time(), v)
+        return v
+
+    def saturation(self, rem, loc, tw):
+        """Plain-language warnings when a host is near a limit (1 GbE ~ 117 MB/s)."""
+        w = []
+        if rem.get("gpu_total_mib") and rem.get("gpu_used_mib", 0) > 0.9 * rem["gpu_total_mib"]:
+            w.append(f"GPU memory {rem['gpu_used_mib']}/{rem['gpu_total_mib']} MiB (out-of-memory risk)")
+        if rem.get("mem_total_mib") and rem.get("mem_avail_mib", 1e9) < 0.1 * rem["mem_total_mib"]:
+            w.append("GPU host RAM under 10% free")
+        if (rem.get("cpu_pct") or 0) > 90: w.append(f"GPU host CPU {rem['cpu_pct']}%")
+        if (loc.get("cpu_pct") or 0) > 90: w.append(f"this Mac CPU {loc['cpu_pct']}%")
+        for name, h in (("GPU host", rem), ("this Mac", loc), ("storage server link", tw)):
+            for k in ("rx_mbs", "tx_mbs"):
+                if (h.get(k) or 0) > 95: w.append(f"{name} network {h[k]} MB/s ({'in' if k == 'rx_mbs' else 'out'}) — near the 1 GbE limit")
+        if tw.get("load1") and tw.get("cpus") and tw["load1"] > tw["cpus"]: w.append(f"storage server load {tw['load1']} over {tw['cpus']} threads")
+        return w
 
     def remote(self):
         t, cached = self._remote
@@ -184,6 +301,7 @@ class Board:
                f"pgrep -fc {shlex.quote(self.c.get('remote_worker_match', 'fine_comb_visit.py'))} || true; "
                "nproc; cat /proc/loadavg; free -m | awk '/^Mem:/{print $2, $7}'; "
                "top -bn1 | awk -F',' '/Cpu\\(s\\)/{for(i=1;i<=NF;i++) if($i ~ /id/){gsub(/[^0-9.]/,\"\",$i); print 100-$i}}'; "
+               "awk 'NR>2{gsub(\":\",\" \"); if($1 !~ /^(lo|docker|veth|br-)/) {r+=$2; t+=$10}} END{print \"NET\", r, t}' /proc/net/dev; "
                f"echo ---; for f in {inprog}; do [ -e \"$f\" ] && stat -c '%Y %n' \"$f\" && ffprobe -v error -show_entries format=duration -of csv=p=0 \"$f\"; done 2>/dev/null; "
                f"echo +++; ps -eo args | grep {shlex.quote('[p]ython.*' + self.c.get('remote_worker_match', 'fine_comb_visit.py'))} | grep -oE -- '--label [A-Za-z0-9_]+' | cut -d' ' -f2 | sort -u; "
                # stage of each staged item (1 leveling, 2 loading models, 3 transcribing, 4 separating speakers, 5 naming speakers),
@@ -207,6 +325,10 @@ class Board:
             r["cpus"] = int(out[3]); r["load1"] = float(out[4].split()[0])
             mt, ma = out[5].split(); r["mem_total_mib"], r["mem_avail_mib"] = int(mt), int(ma)
             r["cpu_pct"] = round(float(out[6]), 1) if out[6].strip() else None
+            nl = next((x for x in out if x.startswith("NET ")), None)
+            if nl:
+                _, a, b = nl.split(); rxr, txr = self._rate("mrgpu", int(a), int(b))
+                r["rx_mbs"], r["tx_mbs"] = rxr and round(rxr / 1e6, 1), txr and round(txr / 1e6, 1)
             sep = out.index("---")
             sep2 = out.index("+++") if "+++" in out else len(out)
             sep3 = out.index("@@@") if "@@@" in out else len(out)
@@ -368,12 +490,13 @@ class Board:
             if est:
                 c["est_total_s"] = int(est)
                 c["pct"] = int(min(c["hi"], max(c["lo"], 100 * c["elapsed_s"] / est)))
+        mac_jobs = self.local_jobs(lm, by_hash)
         recent = [{"label": lb, "queue": self.queue_of(lb, lm, by_hash), "finished": time.strftime("%m-%d %H:%M", time.localtime(t))}
                   for lb, t in sorted(res.items(), key=lambda x: -x[1])[: self.c.get("recent_n", 15)]]
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
-                "local": self.local_host(), "speed": round(sp, 3) if sp else None,
+                "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "runners": runners,
-                "recent": recent, "logs": self.logs(), "priority": self.priority,
+                "recent": recent, "mac_jobs": mac_jobs, "logs": self.logs(), "priority": self.priority,
                 "reports": [r.get("name", "") for r in self.c.get("reports", [])], "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
@@ -544,44 +667,50 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 .stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
-<div id="pri"></div><section id="gpu"></section><section><b>On the GPU now</b><table id="cur"></table></section>
+<div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table></section>
 <section><b>Queues</b> <span class="muted small">(to do first, then finished with the latest on top · click a row for purpose and expected gain)</span><table id="q"></table></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
 <section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section>
 <script>
-const TOKEN="__TOKEN__";
+const TOKEN="__TOKEN__",REDACT=__REDACT__;
 async function post(p,b){const r=await fetch(p,{method:"POST",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:JSON.stringify(b||{})});alert(JSON.stringify(await r.json()));load();}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function mins(s){if(s==null)return"?";const m=Math.round(s/60);return m>=60?`${Math.floor(m/60)}h ${m%60}m`:`${m}m`}
 function bar(p){return `<div class="bar"><i style="width:${p||0}%"></i></div>`}
 function ubar(p,w=30){p=Math.max(0,Math.min(100,p||0));const f=p/100*w,n=Math.floor(f),h=(f-n)>=.5&&n<w;return `<span class="ub"><span class="ubd">${"━".repeat(n)}${h?"╸":""}</span><span class="ubr">${"━".repeat(w-n-(h?1:0))}</span></span>`}
+// 2026-10-02: host badges (runner + cutting + quick triage on the Mac; deep pass on the Linux GPU host; storage on the Unraid server)
+const HOST=__HOSTS__;
+function hb(k){const h=HOST[k];if(!h)return"";const n=h[1].split(" · ")[0];return REDACT?`<span class="pill small">${h[0]} ${"█".repeat(n.length)}</span>`:`<span class="pill small" title="${h[1]}">${h[0]} ${n}</span>`}
 function secs(s){s=Math.max(0,Math.round(s));const m=Math.floor(s/60);return m?`${m}m ${String(s%60).padStart(2,"0")}s`:`${s}s`}
-let CUR=[],T0=Date.now();
-function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").innerHTML=CUR.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>"+CUR.map(c=>{
- if(c.stale)return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td></td><td><span class="pill paused">stale leftover (not running)</span></td></tr>`;
- if(c.stage===0)return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">in line</span></td><td style="white-space:nowrap">${ubar(0)} <span class="small muted">waiting for the resident worker · staged ${secs(c.elapsed_s+dt)} ago</span></td></tr>`;
+let CUR=[],MAC=[],T0=Date.now();
+function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").innerHTML=CUR.length?"<tr><th>Item</th><th>Host</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>"+CUR.map(c=>{
+ if(c.stale)return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td></td><td><span class="pill paused">stale leftover (not running)</span></td></tr>`;
+ if(c.stage===0)return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">in line</span></td><td style="white-space:nowrap">${ubar(0)} <span class="small muted">waiting for the resident worker · staged ${secs(c.elapsed_s+dt)} ago</span></td></tr>`;
  const el=c.elapsed_s+dt,raw=c.est_total_s?100*el/c.est_total_s:null,p=raw==null?(c.lo+c.hi)/2:Math.min(c.hi,Math.max(c.lo,raw));
  const left=c.est_total_s?c.est_total_s-el:null,eta=left==null?"estimating…":raw>c.hi?`finishing ${esc(c.stage_name)}…`:`~${secs(left)} left`;
- return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span></td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";}
+ return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span></td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
+ document.getElementById("cur").innerHTML+=MAC.map(j=>{const el=j.elapsed_s+dt;return `<tr><td>${esc(j.label)}</td><td>${hb('mac')}</td><td>${esc(j.queue)}</td><td></td><td><span class="pill small">${esc(j.stage)}</span></td><td style="white-space:nowrap">${j.pct==null?'<span class="small muted">in progress</span>':ubar(j.pct)+` <b>${j.pct}%</b>`} <span class="small muted">${secs(el)}${j.est?" · estimated":""}</span></td></tr>`}).join("");}
 async function load(){const s=await (await fetch("/api/status")).json();
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
 document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>`<a href="/report/${i}" target="_blank">${esc(n)}</a>`).join(" · "):"";
 const g=s.remote,L=s.local;
 document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
-<div><div class="muted small">GPU memory</div><div class="big">${g.gpu_used_mib} / ${g.gpu_total_mib} MiB</div>${bar(100*g.gpu_used_mib/g.gpu_total_mib)}</div>
+<div><div class="muted small">${hb('linux')} GPU memory</div><div class="big">${g.gpu_used_mib} / ${g.gpu_total_mib} MiB</div>${bar(100*g.gpu_used_mib/g.gpu_total_mib)}</div>
 <div><div class="muted small">GPU busy · temp</div><div class="big">${g.gpu_util}% · ${g.gpu_temp}°C</div>${bar(g.gpu_util)}</div>
 <div><div class="muted small">GPU host CPU</div><div class="big">${g.cpu_pct??"?"}% · load ${g.load1} / ${g.cpus}</div>${bar(g.cpu_pct)}</div>
 <div><div class="muted small">GPU host memory</div><div class="big">${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(1)} / ${(g.mem_total_mib/1024).toFixed(0)} GiB</div>${bar(100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib)}</div>
-<div><div class="muted small">This computer</div><div class="big">load ${L.load1} / ${L.cpus}</div></div>
+<div><div class="muted small">GPU host network</div><div class="big">${g.rx_mbs??"…"} ↓ · ${g.tx_mbs??"…"} ↑ MB/s</div>${bar(100*Math.max(g.rx_mbs||0,g.tx_mbs||0)/117)}</div>
+<div><div class="muted small">${hb('mac')} cutting + quick triage</div><div class="big">GPU ${L.gpu_pct??"?"}% · CPU ${L.cpu_pct}%</div>${bar(L.gpu_pct)}${bar(L.cpu_pct)}<div class="small muted">Apple GPU (Metal) runs quick triage · GPU memory ${L.gpu_mem_gb??"?"} GB · load ${L.load1} / ${L.cpus}</div><div class="small muted">${L.rx_mbs??"…"} ↓ · ${L.tx_mbs??"…"} ↑ MB/s · ${L.triage_10min} triaged in 10 min</div></div>
+<div><div class="muted small">${hb('unraid')} ${esc(s.storage.nic||"NIC")} (shared 1 GbE)</div><div class="big">${s.storage.reachable?`${s.storage.rx_mbs??"…"} ↓ · ${s.storage.tx_mbs??"…"} ↑ MB/s`:"not reachable"}</div>${bar(100*Math.max(s.storage.rx_mbs||0,s.storage.tx_mbs||0)/117)}<div class="small muted">load ${s.storage.load1??"?"} / ${s.storage.cpus??"?"}</div></div>
 <div><div class="muted small">State</div><div class="big"><span class="pill ${g.paused?"paused":""}">${g.paused?"PAUSED":"running"}</span> ${g.workers} item${g.workers==1?"":"s"} processing${(g.resident_workers||[]).length?` · ${g.resident_workers.length} resident worker${g.resident_workers.length==1?"":"s"} (models loaded)${(g.spool_queued||[]).length?` · ${g.spool_queued.length} waiting`:""}`:""}</div>
 <button onclick="post('/api/pause')">Pause all</button> <button onclick="post('/api/resume')">Resume all</button></div></div>
-${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}${s.est_model?(s.est_model.per_audio_min_s?` · estimate per item: ${s.est_model.fixed_s}s fixed + ${s.est_model.per_audio_min_s}s per audio minute (fit on ${s.est_model.n} recent items)`:` · estimate per item: average ${s.est_model.fixed_s}s (last ${s.est_model.n} items)`):""}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
-CUR=(g.current||[]);T0=Date.now();drawCur();const cur=[];if(0)document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
+${(s.saturation||[]).length?`<div class="bad small"><b>Saturation:</b> ${s.saturation.map(esc).join(" · ")}</div>`:`<div class="small muted">No host near a limit (GPU memory, RAM, CPU, 1 GbE links).</div>`}${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}${s.est_model?(s.est_model.per_audio_min_s?` · estimate per item: ${s.est_model.fixed_s}s fixed + ${s.est_model.per_audio_min_s}s per audio minute (fit on ${s.est_model.n} recent items)`:` · estimate per item: average ${s.est_model.fixed_s}s (last ${s.est_model.n} items)`):""}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
+CUR=(g.current||[]);MAC=(s.mac_jobs||[]);T0=Date.now();drawCur();const cur=[];if(0)document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
 document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+s.queues.map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
 const rs=s.runners.filter(r=>r.queue==q.queue),left=q.total-q.done-(q.too_long||0),qn=esc(q.queue);
 const ctl=r=>`<button onclick="event.stopPropagation();post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="event.stopPropagation();if(confirm('Stop ${qn} runner ${r.pid}? The item already on the GPU finishes.'))post('/api/stop',{pid:${r.pid}})">Stop</button>`;
-const st=rs.map(r=>`<div style="margin:2px 0"><span class="pill ${r.paused?"paused":""}">${r.paused?"paused":"running"}${r.from_end?" · from end":""}</span> ${ctl(r)}</div>`).join("");
+const st=rs.map(r=>`<div style="margin:2px 0"><span class="pill ${r.paused?"paused":""}">${r.paused?"paused":"running"}${r.from_end?" · from end":""}</span> ${hb('mac')}→${hb('linux')} ${ctl(r)}</div>`).join("");
 const can=left>0&&!rs.some(r=>r.from_end),fromEnd=rs.length||q.in_chain;
 const btn=can?`<button onclick="event.stopPropagation();if(confirm('${fromEnd?(rs.length?`Start a second ${qn} runner from the END of the list? (the other one works from the front)`:`Start ${qn} now? It works from the end of the list; when the chain reaches ${qn} it works from the front, and they meet in the middle.`):`Start ${qn}?`}'))post('/api/start',{queue:'${qn}'})">${rs.length?"Start from end":q.in_chain?"Start now":"Start"}</button>`:"";
 const rate=q.span_s>0?`${(q.done/(q.span_s/3600)).toFixed(1)}/h`:"";
@@ -595,7 +724,7 @@ const head=q.todo!==s.queues[0].todo&&q===s.queues.find(x=>!x.todo)?`<tr><td col
 return head+`<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
 <tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
-document.getElementById("r").innerHTML="<tr><th>PID</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
+document.getElementById("r").innerHTML="<tr><th>PID</th><th>Host</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${hb('mac')} → ${hb('linux')}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
 load();setInterval(load,15000);setInterval(drawCur,1000);
 </script></body></html>"""
@@ -621,7 +750,7 @@ def make_handler(board):
             if self.headers.get("Host", "").split(":")[0] not in ("127.0.0.1", "localhost"):
                 return self._send(403, {"error": "forbidden"})
             if self.path == "/":
-                return self._send(200, PAGE.replace("__TOKEN__", TOKEN), "text/html; charset=utf-8")
+                return self._send(200, PAGE.replace("__TOKEN__", TOKEN).replace("__REDACT__", "true" if board.redact else "false").replace("__HOSTS__", json.dumps(board.hosts())), "text/html; charset=utf-8")
             if self.path == "/api/status":
                 return self._send(200, board.status())
             m = re.fullmatch(r"/report/(\d+)", self.path)

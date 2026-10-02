@@ -18,6 +18,13 @@ python3 stack/jobboard/jobboard.py                     # live
 - **Runners:** the queue-runner processes on this computer and the queue each one is reading.
 - **Recent log lines:** only status lines (`time label: ok | FAIL | SKIP_LONG`, `STAGE …`, `…_DONE`). Lines with paths or file names are never shown.
 
+## Two computers (v0.5.6)
+- **Active jobs** lists the GPU host's items and this computer's work (cutting pieces, quick triage, silence checks, uploads, and
+  any long scripts listed in `batch_jobs`), each with a host badge and a progress bar.
+- **Saturation line:** CPU, GPU and network per host (`storage_host` adds the storage server's link) with a warning when one is near
+  its limit. The Mac's GPU is read from `ioreg` (no sudo).
+- Redacted mode (`--redact`) leaves the page's script untouched and blocks host names in the badges.
+
 ## Automatic staging cleanup
 With `auto_clear_stale = true`, the board removes the GPU host's **staging copies** (`<label>.orig48k.wav`, `<label>.lev.wav`) of items that
 already finished, or that have sat longer than `stale_after_s` (default 8 h) with **no worker process using them**. It checks the running

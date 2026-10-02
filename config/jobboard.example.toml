@@ -33,3 +33,8 @@ flag_label = "flagged"
 # long_skip_file = "/path/to/LONG_FILES_FOR_EXCERPT.tsv"
 # Optional: where "Start from end" writes reversed queue copies (default: from_end/ beside the queues)
 # reverse_dir = "/path/to/queues/from_end"
+
+# v0.5.6
+storage_host = "storage-host"   # optional: ssh host of the storage server, for its network rate in the saturation line
+batch_jobs = []               # optional: [[name, log file, expected lines], ...] long scripts on this computer shown under Active jobs
+host_labels = {}              # optional badge names, e.g. { mac = "Desk Mac · macOS", linux = "GPU box · Linux", unraid = "NAS · Unraid" }
