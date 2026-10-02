@@ -30,10 +30,34 @@ workers' `--label` first. Originals are never touched. In dry-run it only report
 ## Controls
 | Button | What it does |
 |---|---|
-| Pause | creates the pause flag on the GPU host. Runners finish the item they are on and start nothing new. |
-| Resume | removes the pause flag. |
-| Start | starts the runner for one queue in the background, logging to `log_dir`. Refused if that queue already has a runner, or if it is waiting in a running chain script (`chained_queues`). |
-| Stop | stops one runner process (only processes matching `runner_match`). The item already on the GPU finishes. |
+| Pause all / Resume all | creates or removes every pause flag on the GPU host (`pause_flag` plus `extra_pause_flags`). Runners finish the item they are on and start nothing new. |
+| Start | starts the runner for one queue in the background, logging to `log_dir`. Refused when every remaining item is over the length limit (listed in `long_skip_file`); the row shows "N too long (excerpt route)". |
+| Start from end | shown when a queue is already running or waiting in a chain script. Starts a second runner on a reversed copy of the list (in `reverse_dir`, default `from_end/` next to the queues). Runners skip finished items, so the two meet in the middle and at most one item is done twice. One from-end runner per queue. |
+| Pause / Resume (per runner) | stops or continues one runner process (SIGSTOP / SIGCONT). The item already on the GPU finishes; that runner starts nothing new until resumed. |
+| Stop | ends one runner process (only processes matching `runner_match`). The item already on the GPU finishes. |
+
+Note: each runner checks free GPU memory only before it starts an item, so two runners can start at the same moment and together exceed the card. Add workers one at a time and watch the peak.
+
+## How many jobs at once (measured on a 16 GB card)
+WhisperX large-v3 (float16, batch 8) plus pyannote, one process per item. Measured 2026-10-01 by sampling `nvidia-smi` every 5–10 s:
+
+| Jobs at once | Peak GPU memory | Result |
+|---|---|---|
+| 1–2 | ~6 GB | fine |
+| 3 | 12.4 GB | works; one item failed with CUDA out-of-memory when two items started within 10 s of each other |
+| 4 | 14.3 GB | CUDA out-of-memory within 4 minutes |
+
+**Recommendation: at most 3 jobs at once on a 16 GB card.** About 2.2 GB per job once it is running; the peaks come when an item starts.
+
+**Short items vs long items**
+- **GPU memory does not depend much on audio length.** Audio is transcribed in 30-second windows, a batch at a time, and every item loads the models fresh, so a 15-minute chunk peaks about as high as a 3-hour recording. Both failures above happened in the first seconds of 15-minute chunks (one while loading the model, one in the first batch).
+- **Main memory does depend on length.** A 22-hour file reached 51 GB of system RAM and was killed. Keep the runner's length guard (default 4 h) and send longer files to 15-minute chunks.
+- **Short items are still the better default:** a failure loses minutes, not hours; a paused or stopped runner gives the GPU back sooner; progress estimates are steadier.
+- **But short items mean more model loads,** and each load is a peak. With many short items, start collisions are common (here, 1 in 3 items started within 60 s of another). So with short items keep to 3 jobs, and run at most one job with items over an hour, so long items do not hold memory while the others start up.
+
+**Other things on the same GPU** (a local LLM server, image or video tools) take memory without warning. Count them before adding a job, or stop them while a batch runs.
+
+**Failed items are not lost.** A runner skips only items whose result file exists, so the next Start of that queue retries them.
 
 ## Safety
 - Listens on **127.0.0.1 only**. Not reachable from the network.

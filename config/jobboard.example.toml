@@ -26,3 +26,10 @@ redact_file = "config/redact.txt" # one term per line, git-ignored; prefix cs: f
 flag_field = "flag"              # optional registry field that highlights a queue (e.g. "led to findings for review")
 flag_party_field = "flag_party"  # optional registry field shown next to the highlight
 flag_label = "flagged"
+
+# Optional: more pause flags your runners check (Pause all sets/removes every one)
+# extra_pause_flags = ["/path/on/gpu/host/PAUSE_OTHER"]
+# Optional: tab-separated list whose first column is labels the runner skipped as too long
+# long_skip_file = "/path/to/LONG_FILES_FOR_EXCERPT.tsv"
+# Optional: where "Start from end" writes reversed queue copies (default: from_end/ beside the queues)
+# reverse_dir = "/path/to/queues/from_end"

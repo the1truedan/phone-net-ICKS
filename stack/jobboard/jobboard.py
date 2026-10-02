@@ -97,6 +97,17 @@ class Board:
     def queue_files(self):
         return {self.qname(q): q for q in glob.glob(self.c["queue_glob"])}
 
+    def long_skipped(self):
+        """Labels the runner's length guard sent to the excerpt route (first column of long_skip_file)."""
+        p = self.c.get("long_skip_file", "")
+        try:
+            return {ln.split("\t", 1)[0] for ln in open(p, errors="ignore") if ln.strip()}
+        except OSError:
+            return set()
+
+    def rev_dir(self):
+        return self.c.get("reverse_dir") or os.path.join(os.path.dirname(self.c["queue_glob"]), "from_end")
+
     def label_map(self):
         m = {}
         for name, q in self.queue_files().items():
@@ -123,9 +134,13 @@ class Board:
             created = getattr(st_, "st_birthtime", st_.st_mtime)
             done_t = [res[lb] for lb in labels if lb in res]
             reg = self.registry.get(name, {})
+            longs = self.long_skipped()
             out.append({"queue": name, "total": len(labels), "done": len(done_t),
+                        "too_long": sum(1 for lb in labels if lb not in res and lb in longs),
                         "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
                         "last_done": time.strftime("%m-%d %H:%M", time.localtime(max(done_t))) if done_t else "",
+                        "first_done": time.strftime("%m-%d %H:%M", time.localtime(min(done_t))) if done_t else "",
+                        "span_s": int(max(done_t) - min(done_t)) if len(done_t) > 1 else 0,
                         "purpose": reg.get("purpose", ""), "gain": reg.get("gain", ""), "source": reg.get("source", ""),
                         "outputs": reg.get("outputs", ""),
                         "flag": reg.get(self.c.get("flag_field", "flag"), ""), "flag_party": reg.get(self.c.get("flag_party_field", "flag_party"), "")})
@@ -136,14 +151,15 @@ class Board:
         rx = re.compile(self.c["runner_match"])
         qdir = os.path.dirname(self.c["queue_glob"])
         rows = []
-        for ln in sh(["ps", "-axo", "pid=,etime=,command="]).splitlines():
-            parts = ln.strip().split(None, 2)
-            if len(parts) == 3 and rx.search(parts[2]) and "jobboard" not in parts[2]:
-                pid, et, cmd = parts
+        for ln in sh(["ps", "-axo", "pid=,stat=,etime=,command="]).splitlines():
+            parts = ln.strip().split(None, 3)
+            if len(parts) == 4 and rx.search(parts[3]) and "jobboard" not in parts[3]:
+                pid, stat, et, cmd = parts
                 # macOS hides other processes' environment, so read the queue file the runner holds open
                 held = [x[1:] for x in sh(["lsof", "-Fn", "-p", pid]).splitlines() if x.startswith("n" + qdir) and x.endswith(".tsv")]
                 rows.append({"pid": int(pid), "elapsed": et, "script": os.path.basename(cmd.split()[-1]),
-                             "queue": self.qname(held[0]) if held else ""})
+                             "queue": self.qname(held[0]) if held else "", "paused": stat.startswith("T"),
+                             "from_end": bool(held) and os.path.dirname(held[0]) == self.rev_dir()})
         return rows
 
     def local_host(self):
@@ -281,25 +297,42 @@ class Board:
             return {"started": True}
         return {"output": sh(argv)}
 
+    def flags(self):
+        return " ".join(shlex.quote(f) for f in [self.c["pause_flag"]] + self.c.get("extra_pause_flags", []))
+
     def pause(self):
         self._remote = (0, {})
-        return self._run(["ssh", "-o", "BatchMode=yes", self.c["remote_host"], f"touch {shlex.quote(self.c['pause_flag'])}"])
+        return self._run(["ssh", "-o", "BatchMode=yes", self.c["remote_host"], f"touch {self.flags()}"])
 
     def resume(self):
         self._remote = (0, {})
-        return self._run(["ssh", "-o", "BatchMode=yes", self.c["remote_host"], f"rm -f {shlex.quote(self.c['pause_flag'])}"])
+        return self._run(["ssh", "-o", "BatchMode=yes", self.c["remote_host"], f"rm -f {self.flags()}"])
 
     def start(self, queue):
         qs = self.queue_files()
         if queue not in qs:
             return {"error": "unknown queue"}
-        if any(r["queue"] == queue for r in self.runners()):
-            return {"error": "a runner for this queue is already active"}
-        if next(q for q in self.status()["queues"] if q["queue"] == queue)["in_chain"]:
-            return {"error": "this queue is waiting in a running chain script; starting it now would run it twice"}
-        log = os.path.join(self.c["log_dir"], f"jobboard_{queue}_{time.strftime('%Y%m%d_%H%M%S')}.log")
-        cmd = f"Q={shlex.quote(qs[queue])} {shlex.quote(self.c['runner_script'])} >> {shlex.quote(log)} 2>&1"
-        return self._run(["/bin/bash", "-c", cmd], detach=True)
+        q = next(x for x in self.status()["queues"] if x["queue"] == queue)
+        if q["total"] - q["done"] - q["too_long"] <= 0:
+            return {"error": f"nothing left that can run: {q['too_long']} remaining item(s) are over the length limit and go to the excerpt route"}
+        mine = [r for r in self.runners() if r["queue"] == queue]
+        if any(r["from_end"] for r in mine):
+            return {"error": "this queue already has a runner working from the end"}
+        # A queue that is running, or waiting in a chain, gets a second runner that works through the list from the end.
+        # Runners skip items whose result exists, so the two meet in the middle and at most one item is done twice.
+        src = qs[queue]
+        from_end = bool(mine) or q["in_chain"]
+        if from_end:
+            os.makedirs(self.rev_dir(), exist_ok=True)
+            src = os.path.join(self.rev_dir(), os.path.basename(qs[queue]))
+            lines = [ln for ln in open(qs[queue], errors="ignore") if ln.strip()]
+            if not self.c["dry_run"]:
+                with open(src, "w") as f:
+                    f.writelines(ln if ln.endswith("\n") else ln + "\n" for ln in reversed(lines))
+        tag = "_from_end" if from_end else ""
+        log = os.path.join(self.c["log_dir"], f"jobboard_{queue}{tag}_{time.strftime('%Y%m%d_%H%M%S')}.log")
+        cmd = f"Q={shlex.quote(src)} {shlex.quote(self.c['runner_script'])} >> {shlex.quote(log)} 2>&1"
+        return dict(self._run(["/bin/bash", "-c", cmd], detach=True), from_end=from_end)
 
     def clear_staging(self, labels):
         """Remove the GPU-host staging copies (<label>.orig48k.wav / .lev.wav) of finished or abandoned items. Originals are never touched."""
@@ -317,6 +350,12 @@ class Board:
         if pid not in {r["pid"] for r in self.runners()}:
             return {"error": "not a job-board runner pid"}
         return self._run(["kill", str(pid)])
+
+    def hold(self, pid, on):
+        """Pause (SIGSTOP) or resume (SIGCONT) one runner. The item already on the GPU finishes; the runner starts nothing new until resumed."""
+        if pid not in {r["pid"] for r in self.runners()}:
+            return {"error": "not a job-board runner pid"}
+        return self._run(["kill", "-STOP" if on else "-CONT", str(pid)])
 
     def report(self, i):
         reps = self.c.get("reports", [])
@@ -382,15 +421,25 @@ document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <div><div class="muted small">GPU host memory</div><div class="big">${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(1)} / ${(g.mem_total_mib/1024).toFixed(0)} GiB</div>${bar(100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib)}</div>
 <div><div class="muted small">This computer</div><div class="big">load ${L.load1} / ${L.cpus}</div></div>
 <div><div class="muted small">State</div><div class="big"><span class="pill ${g.paused?"paused":""}">${g.paused?"PAUSED":"running"}</span> ${g.workers} item${g.workers==1?"":"s"} processing</div>
-<button onclick="post('/api/pause')">Pause</button> <button onclick="post('/api/resume')">Resume</button></div></div>
+<button onclick="post('/api/pause')">Pause all</button> <button onclick="post('/api/resume')">Resume all</button></div></div>
 ${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
 const cur=(g.current||[]);document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
 document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+s.queues.map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
-const act=run?'<span class="pill">running</span>':q.in_chain?'<span class="pill muted">waiting in chain</span>':(q.done<q.total?`<button onclick="event.stopPropagation();if(confirm('Start ${esc(q.queue)}?'))post('/api/start',{queue:'${esc(q.queue)}'})">Start</button>`:'');
+const rs=s.runners.filter(r=>r.queue==q.queue),left=q.total-q.done-(q.too_long||0),qn=esc(q.queue);
+const ctl=r=>`<button onclick="event.stopPropagation();post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="event.stopPropagation();if(confirm('Stop ${qn} runner ${r.pid}? The item already on the GPU finishes.'))post('/api/stop',{pid:${r.pid}})">Stop</button>`;
+const st=rs.map(r=>`<div style="margin:2px 0"><span class="pill ${r.paused?"paused":""}">${r.paused?"paused":"running"}${r.from_end?" · from end":""}</span> ${ctl(r)}</div>`).join("");
+const can=left>0&&!rs.some(r=>r.from_end),fromEnd=rs.length||q.in_chain;
+const btn=can?`<button onclick="event.stopPropagation();if(confirm('${fromEnd?(rs.length?`Start a second ${qn} runner from the END of the list? (the other one works from the front)`:`Start ${qn} now? It works from the end of the list; when the chain reaches ${qn} it works from the front, and they meet in the middle.`):`Start ${qn}?`}'))post('/api/start',{queue:'${qn}'})">${rs.length?"Start from end":q.in_chain?"Start now":"Start"}</button>`:"";
+const rate=q.span_s>0?`${(q.done/(q.span_s/3600)).toFixed(1)}/h`:"";
+const summ=q.done?`<div class="small muted">${esc(q.first_done)} → ${esc(q.last_done)}${q.span_s?` · ${mins(q.span_s)} · ${rate}`:""}</div>`:"";
+const fin=!rs.length&&q.done>=q.total?'<span class="pill">✓ complete</span>'+summ
+ :!rs.length&&left<=0&&q.done<q.total?`<span class="pill">✓ complete</span><div class="small muted">${q.done} done · ${q.too_long} too long → excerpt route</div>`+summ.replace('<div class="small muted">','<div class="small muted">')
+ :!rs.length&&!q.in_chain&&left>0?`<span class="pill muted">idle · ${left} left</span> `:"";
+const act=fin+st+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)</div>`:"");
 return `<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
 <tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
-document.getElementById("r").innerHTML="<tr><th>PID</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}</td><td>${esc(r.elapsed)}</td><td><button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
+document.getElementById("r").innerHTML="<tr><th>PID</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
 load();setInterval(load,15000);
 </script></body></html>"""
@@ -435,7 +484,9 @@ def make_handler(board):
                 body = {}
             routes = {"/api/pause": lambda: board.pause(), "/api/resume": lambda: board.resume(),
                       "/api/start": lambda: board.start(str(body.get("queue", ""))),
-                      "/api/stop": lambda: board.stop(int(body.get("pid", 0)))}
+                      "/api/stop": lambda: board.stop(int(body.get("pid", 0))),
+                      "/api/hold": lambda: board.hold(int(body.get("pid", 0)), True),
+                      "/api/release": lambda: board.hold(int(body.get("pid", 0)), False)}
             if self.path not in routes:
                 return self._send(404, {"error": "not found"})
             self._send(200, routes[self.path]())
