@@ -172,13 +172,21 @@ class Board:
             return cached
         flag = shlex.quote(self.c["pause_flag"])
         inprog = self.c.get("remote_inprogress_glob", "")
+        outd = self.c.get("remote_out_dir") or os.path.join(os.path.dirname(os.path.dirname(inprog)), "out")
         cmd = ("nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader,nounits; "
                f"test -e {flag} && echo PAUSED || echo RUNNING; "
                f"pgrep -fc {shlex.quote(self.c.get('remote_worker_match', 'fine_comb_visit.py'))} || true; "
                "nproc; cat /proc/loadavg; free -m | awk '/^Mem:/{print $2, $7}'; "
                "top -bn1 | awk -F',' '/Cpu\\(s\\)/{for(i=1;i<=NF;i++) if($i ~ /id/){gsub(/[^0-9.]/,\"\",$i); print 100-$i}}'; "
                f"echo ---; for f in {inprog}; do [ -e \"$f\" ] && stat -c '%Y %n' \"$f\" && ffprobe -v error -show_entries format=duration -of csv=p=0 \"$f\"; done 2>/dev/null; "
-               f"echo +++; ps -eo args | grep {shlex.quote('[p]ython.*' + self.c.get('remote_worker_match', 'fine_comb_visit.py'))} | grep -oE -- '--label [A-Za-z0-9_]+' | cut -d' ' -f2 | sort -u")
+               f"echo +++; ps -eo args | grep {shlex.quote('[p]ython.*' + self.c.get('remote_worker_match', 'fine_comb_visit.py'))} | grep -oE -- '--label [A-Za-z0-9_]+' | cut -d' ' -f2 | sort -u; "
+               # stage of each staged item (1 leveling, 2 loading models, 3 transcribing, 4 separating speakers, 5 naming speakers),
+               # judged by the worker log and cache files written after the item was staged; then recent worker run times for the estimate
+               f"echo @@@; for f in {inprog}; do case \"$f\" in *.orig48k.wav) ;; *) continue;; esac; [ -e \"$f\" ] || continue; "
+               f"l=$(basename \"$f\" .orig48k.wav); o={shlex.quote(outd)}; s=1; [ \"$o/$l.log\" -nt \"$f\" ] && s=2; "
+               f"[ $s = 2 ] && grep -qs 'voice activity' \"$o/$l.log\" && s=3; [ \"$o/FINECOMB_$l.asr_cache.json\" -nt \"$f\" ] && s=4; "
+               f"[ \"$o/FINECOMB_$l.diar_cache.json\" -nt \"$f\" ] && s=5; echo \"$l $s\"; done; "
+               f"echo %%%; ls -t {shlex.quote(outd)}/*.log 2>/dev/null | head -60 | xargs -r stat -c '%W %Y %n'")
         out = sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", self.c["remote_host"], cmd], timeout=25).splitlines()
         r = {"reachable": bool(out)}
         try:
@@ -191,7 +199,11 @@ class Board:
             r["cpu_pct"] = round(float(out[6]), 1) if out[6].strip() else None
             sep = out.index("---")
             sep2 = out.index("+++") if "+++" in out else len(out)
-            r["running_labels"] = [x.strip() for x in out[sep2 + 1:] if x.strip()]
+            sep3 = out.index("@@@") if "@@@" in out else len(out)
+            sep4 = out.index("%%%") if "%%%" in out else len(out)
+            r["running_labels"] = [x.strip() for x in out[sep2 + 1:sep3] if x.strip()]
+            r["stages"] = {a: int(b) for a, b in (x.split() for x in out[sep3 + 1:sep4] if len(x.split()) == 2)}
+            r["recent_runs"] = [(int(a), int(b), os.path.basename(c)[:-4]) for a, b, c in (x.split(" ", 2) for x in out[sep4 + 1:] if x.count(" ") >= 2) if int(a) > 0]
             r["workers"] = len(r["running_labels"])   # distinct items being processed, not raw process count
             cur, rest = [], out[sep + 1:sep2]
             for i in range(0, len(rest) - 1, 2):
@@ -238,6 +250,37 @@ class Board:
         self._speed = (time.time(), v)
         return v
 
+    def est_model(self, rem, lm):
+        """Fit run seconds = a + b * audio seconds on recent finished items (worker log birth -> last write). Cached 2 min."""
+        t, v = getattr(self, "_est", (0, None))
+        if time.time() - t < 120 or not rem.get("recent_runs"):
+            return v
+        pts = []
+        for born, last, lab in rem["recent_runs"]:
+            if lab in rem.get("running_labels", []):
+                continue
+            if re.match(r"c15_", lab):
+                a = 900.0
+            else:
+                src = lm.get(lab, (None, None))[1]
+                if not src or not os.path.exists(src):
+                    continue
+                if src not in self._dur:
+                    self._dur[src] = ffprobe_s(src)
+                a = self._dur[src]
+            d = last - born
+            if a and 0 < d < 4 * 3600:
+                pts.append((a, d))
+        runs = [last - born for born, last, lab in rem["recent_runs"] if lab not in rem.get("running_labels", []) and 0 < last - born < 4 * 3600]
+        v = (statistics.median(runs), 0.0, len(runs)) if runs else None   # fallback: average run time per item, no audio length needed
+        if len(pts) >= 5:
+            n = len(pts); mx = sum(p[0] for p in pts) / n; my = sum(p[1] for p in pts) / n
+            sxx = sum((p[0] - mx) ** 2 for p in pts)
+            b = max(0.0, sum((p[0] - mx) * (p[1] - my) for p in pts) / sxx) if sxx else 0.0
+            v = (max(10.0, my - b * mx), b, n)
+        self._est = (time.time(), v)
+        return v
+
     def logs(self, n=10):
         res = {}
         for p in self.c.get("log_files", []):
@@ -274,17 +317,29 @@ class Board:
             self.cleared_note = self.clear_staging(clear)
             cur = [c for c in cur if c["label"] not in clear]
         rem = dict(rem, current=cur)
+        model = self.est_model(rem, lm)
+        STG = {1: ("leveling audio", 0, 8), 2: ("loading models", 3, 20), 3: ("transcribing", 10, 65),
+               4: ("separating speakers", 55, 92), 5: ("naming speakers", 88, 99)}
         for c in cur:
             c["queue"] = lm.get(c["label"], ("?",))[0]
+            if c["label"].startswith("c15_"):
+                c["queue"] = "chunk of " + c["label"].split("_")[1]
             c["elapsed_s"] = int(now - c["started"])
-            if sp and c.get("audio_s"):
+            st_ = rem.get("stages", {}).get(c["label"], 1)
+            c["stage"], c["stage_name"], c["lo"], c["hi"] = st_, *STG.get(st_, STG[1])
+            est = None
+            if model:   # fitted (fixed + per audio second), or the recent average when the fit is not ready
+                est = model[0] + model[1] * (c.get("audio_s") or 0) + 5 + 0.01 * (c.get("audio_s") or 0)   # + leveling before the worker starts
+            elif sp and c.get("audio_s"):
                 est = c["audio_s"] * sp
+            if est:
                 c["est_total_s"] = int(est)
-                c["pct"] = min(99, int(100 * c["elapsed_s"] / est)) if est else None
+                c["pct"] = int(min(c["hi"], max(c["lo"], 100 * c["elapsed_s"] / est)))
         recent = [{"label": lb, "queue": lm.get(lb, ("?",))[0], "finished": time.strftime("%m-%d %H:%M", time.localtime(t))}
                   for lb, t in sorted(res.items(), key=lambda x: -x[1])[: self.c.get("recent_n", 15)]]
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
-                "local": self.local_host(), "speed": round(sp, 3) if sp else None, "queues": qs, "runners": runners,
+                "local": self.local_host(), "speed": round(sp, 3) if sp else None,
+                "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "runners": runners,
                 "recent": recent, "logs": self.logs(),
                 "reports": [r.get("name", "") for r in self.c.get("reports", [])], "flag_label": self.c.get("flag_label", "flagged")}
 
@@ -397,7 +452,7 @@ table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:5px 6px;
 button{font:inherit;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
 button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;border-radius:10px;border:1px solid var(--line);white-space:nowrap}
 .paused{color:var(--warn)}.bad{color:var(--bad)}pre{white-space:pre-wrap;margin:4px 0 10px;font-size:12px}.stats{display:flex;gap:18px;flex-wrap:wrap}
-.stats div{min-width:150px}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
+.stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
 <section id="gpu"></section><section><b>On the GPU now</b><table id="cur"></table></section>
@@ -410,6 +465,14 @@ async function post(p,b){const r=await fetch(p,{method:"POST",headers:{"X-Token"
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function mins(s){if(s==null)return"?";const m=Math.round(s/60);return m>=60?`${Math.floor(m/60)}h ${m%60}m`:`${m}m`}
 function bar(p){return `<div class="bar"><i style="width:${p||0}%"></i></div>`}
+function ubar(p,w=30){p=Math.max(0,Math.min(100,p||0));const f=p/100*w,n=Math.floor(f),h=(f-n)>=.5&&n<w;return `<span class="ub"><span class="ubd">${"━".repeat(n)}${h?"╸":""}</span><span class="ubr">${"━".repeat(w-n-(h?1:0))}</span></span>`}
+function secs(s){s=Math.max(0,Math.round(s));const m=Math.floor(s/60);return m?`${m}m ${String(s%60).padStart(2,"0")}s`:`${s}s`}
+let CUR=[],T0=Date.now();
+function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").innerHTML=CUR.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>"+CUR.map(c=>{
+ if(c.stale)return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td></td><td><span class="pill paused">stale leftover (not running)</span></td></tr>`;
+ const el=c.elapsed_s+dt,raw=c.est_total_s?100*el/c.est_total_s:null,p=raw==null?(c.lo+c.hi)/2:Math.min(c.hi,Math.max(c.lo,raw));
+ const left=c.est_total_s?c.est_total_s-el:null,eta=left==null?"estimating…":raw>c.hi?`finishing ${esc(c.stage_name)}…`:`~${secs(left)} left`;
+ return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span></td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";}
 async function load(){const s=await (await fetch("/api/status")).json();
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>`<a href="/report/${i}" target="_blank">${esc(n)}</a>`).join(" · "):"";
@@ -422,8 +485,8 @@ document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <div><div class="muted small">This computer</div><div class="big">load ${L.load1} / ${L.cpus}</div></div>
 <div><div class="muted small">State</div><div class="big"><span class="pill ${g.paused?"paused":""}">${g.paused?"PAUSED":"running"}</span> ${g.workers} item${g.workers==1?"":"s"} processing</div>
 <button onclick="post('/api/pause')">Pause all</button> <button onclick="post('/api/resume')">Resume all</button></div></div>
-${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
-const cur=(g.current||[]);document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
+${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}${s.est_model?(s.est_model.per_audio_min_s?` · estimate per item: ${s.est_model.fixed_s}s fixed + ${s.est_model.per_audio_min_s}s per audio minute (fit on ${s.est_model.n} recent items)`:` · estimate per item: average ${s.est_model.fixed_s}s (last ${s.est_model.n} items)`):""}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
+CUR=(g.current||[]);T0=Date.now();drawCur();const cur=[];if(0)document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
 document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+s.queues.map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
 const rs=s.runners.filter(r=>r.queue==q.queue),left=q.total-q.done-(q.too_long||0),qn=esc(q.queue);
 const ctl=r=>`<button onclick="event.stopPropagation();post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="event.stopPropagation();if(confirm('Stop ${qn} runner ${r.pid}? The item already on the GPU finishes.'))post('/api/stop',{pid:${r.pid}})">Stop</button>`;
@@ -441,7 +504,7 @@ return `<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
-load();setInterval(load,15000);
+load();setInterval(load,15000);setInterval(drawCur,1000);
 </script></body></html>"""
 
 
