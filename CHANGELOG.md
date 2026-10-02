@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.3 — 2026-10-01 · processing numbers refreshed
+- **"By the numbers":** 1,808 recordings and long-file chunks fully speaker-separated (1,681 recordings + 127 chunks), up from 1,488.
+- **README and `docs/STATS.md`** brought to Oct 1, 2026 (a new column), including 425 silent or background-sound stretches checked
+  against the timeline (counts only).
+- **Job board:** ⇧ Priority starts a waiting queue now and holds the other runners until it ends (released automatically, also after a
+  board restart).
+
 ## v0.5.2 — 2026-10-01 · job board controls, progress bars, capacity guidance
 - **Start any queue.** Queues waiting in a chain script get **Start now**; running queues get **Start from end**. The second runner works
   through a reversed copy of the list (`reverse_dir`), and the runners meet in the middle, so at most one item is done twice.

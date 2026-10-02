@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.5.2 (2026-10-01) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.5.3 (2026-10-01) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,7 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Job board (v0.5.0, updated v0.5.2)
+## Job board (v0.5.0, updated v0.5.3)
 A local page (127.0.0.1 only) to watch and steer the GPU transcription queues: GPU host CPU/memory/GPU and temperature,
 items on the GPU with uv-style progress bars (real stage + time left), Start now / Start from end for any queue, Pause/Stop per runner, done/total per queue, recently finished items, pause/resume/start/stop, automatic
 cleanup of abandoned staging copies, highlighted queues (e.g. ⚖ legal lead), and formatted local reports.
@@ -29,9 +29,9 @@ Standard library only. See `stack/jobboard/README.md`, `stack/requirements/jobbo
 | **Keywords** | Level the audio, transcribe it (WhisperX), label speakers (pyannote plus your own voiceprints), run a keyword sweep, then meaning search |
 | **Synthesis** | Local summaries, a dated index, packets tiered by audience (family, care team, advocate, counsel), and a methods note |
 
-## By the numbers (2026-09-30)
+## By the numbers (2026-10-01)
 
-2,047 recordings indexed · ~750 hours transcribed on local hardware · 707 deep-pass reports · 2,380 embedding files · an overnight queue on one 16 GB GPU. Full table: `docs/STATS.md`.
+2,073 recordings indexed · ~760 hours transcribed on local hardware · 1,808 recordings and long-file chunks fully speaker-separated · 425 silent or background-sound stretches checked against the timeline · one 16 GB GPU, up to 4 jobs at once. Full table: `docs/STATS.md`.
 
 ## Pages
 
