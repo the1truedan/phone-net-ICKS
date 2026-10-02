@@ -51,9 +51,9 @@ WhisperX large-v3 (float16, batch 8) plus pyannote, one process per item. Measur
 
 **Short items vs long items**
 - **GPU memory does not depend much on audio length.** Audio is transcribed in 30-second windows, a batch at a time, and every item loads the models fresh, so a 15-minute chunk peaks about as high as a 3-hour recording. Both failures above happened in the first seconds of 15-minute chunks (one while loading the model, one in the first batch).
-- **Main memory does depend on length.** A 22-hour file reached 51 GB of system RAM and was killed. Keep the runner's length guard (default 4 h) and send longer files to 15-minute chunks.
+- **Main memory does depend on length.** A 22-hour file reached 51 GB of system RAM and was killed. Set the runner's length guard to 60 minutes (`MAXMIN=60`): every recording over an hour goes to 15-minute chunks and never runs whole.
 - **Short items are still the better default:** a failure loses minutes, not hours; a paused or stopped runner gives the GPU back sooner; progress estimates are steadier.
-- **But short items mean more model loads,** and each load is a peak. With many short items, start collisions are common (here, 1 in 3 items started within 60 s of another). So with short items keep to 3 jobs, and run at most one job with items over an hour, so long items do not hold memory while the others start up.
+- **But short items mean more model loads,** and each load is a peak. With many short items, start collisions are common (here, 1 in 3 items started within 60 s of another). So keep to 3 jobs, and **let only one 15-minute chunk be on the GPU at a time**: the runner gate waits while another chunk (labels `lNN_…`) is processing, so the other jobs are short files.
 
 **Other things on the same GPU** (a local LLM server, image or video tools) take memory without warning. Count them before adding a job, or stop them while a batch runs.
 
