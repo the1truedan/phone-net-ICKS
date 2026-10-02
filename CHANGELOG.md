@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.2 — 2026-10-01 · job board controls, progress bars, capacity guidance
+- **Start any queue.** Queues waiting in a chain script get **Start now**; running queues get **Start from end**. The second runner works
+  through a reversed copy of the list (`reverse_dir`), and the runners meet in the middle, so at most one item is done twice.
+- **Per-runner Pause / Resume and Stop** beside each running job (SIGSTOP / SIGCONT; the item already on the GPU finishes).
+  **Pause all** sets every configured pause flag (`extra_pause_flags`).
+- **Queue status:** complete / idle rows show first → last finish, time span and items per hour. Items the length guard routed away
+  are counted (`long_skip_file`), and Start explains instead of exiting silently.
+- **uv-style progress bars** for each item on the GPU. The stage comes from the worker log and cache files (leveling audio, loading models,
+  transcribing, separating speakers, naming speakers). Time left comes from a fit on recent items (fixed seconds + seconds per audio
+  minute), or their average run time. The bars tick every second.
+- **README: how many jobs at once,** measured on a 16 GB card: at most 3 (4 hit CUDA out-of-memory). Chunk recordings over 60 minutes
+  into 15-minute pieces, and run one such chunk at a time. Every item's memory peak is the model load, whatever the audio length.
+
 ## v0.5.1 — 2026-10-01 · numbers refreshed
 - **"By the numbers" updated to Oct 1, 2026:** recordings indexed 2,073 (~760 h); 1,488 fully speaker-separated; 12,572 texts/calls/voicemails
   (incl. 1,756 call/text records read from 3 phones); 14,867 files hashed; 10 device pulls and reads from 5 phones; 55 payroll records exported;
