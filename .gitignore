@@ -26,3 +26,6 @@ stack/secrets/
 # job board local config (real paths)
 config/jobboard.toml
 config/redact.txt
+
+# public, redacted job board screenshot (checked for PII/PHI 2026-10-02)
+!docs/img/jobboard.png

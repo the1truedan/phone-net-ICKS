@@ -177,6 +177,7 @@ class Board:
         flag = shlex.quote(self.c["pause_flag"])
         inprog = self.c.get("remote_inprogress_glob", "")
         outd = self.c.get("remote_out_dir") or os.path.join(os.path.dirname(os.path.dirname(inprog)), "out")
+        spool = self.c.get("remote_spool_dir") or "/nonexistent"
         cmd = ("nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader,nounits; "
                f"test -e {flag} && echo PAUSED || echo RUNNING; "
                f"pgrep -fc {shlex.quote(self.c.get('remote_worker_match', 'fine_comb_visit.py'))} || true; "
@@ -190,7 +191,11 @@ class Board:
                f"l=$(basename \"$f\" .orig48k.wav); o={shlex.quote(outd)}; s=1; [ \"$o/$l.log\" -nt \"$f\" ] && s=2; "
                f"[ $s = 2 ] && grep -qs 'voice activity' \"$o/$l.log\" && s=3; [ \"$o/FINECOMB_$l.asr_cache.json\" -nt \"$f\" ] && s=4; "
                f"[ \"$o/FINECOMB_$l.diar_cache.json\" -nt \"$f\" ] && s=5; echo \"$l $s\"; done; "
-               f"echo %%%; ls -t {shlex.quote(outd)}/*.log 2>/dev/null | head -60 | xargs -r stat -c '%W %Y %n'")
+               f"echo %%%; ls -t {shlex.quote(outd)}/*.log 2>/dev/null | head -60 | xargs -r stat -c '%W %Y %n'; "
+               # resident workers (optional): jobs waiting in the spool, jobs a worker has claimed, live workers
+               f"echo ^^^; ls {shlex.quote(spool)}/queue 2>/dev/null | sed -n 's/\\.job$//p' | sed 's/^/Q /'; "
+               f"ls {shlex.quote(spool)}/work 2>/dev/null | sed -n 's/\\.job\\..*$//p' | sed 's/^/W /'; "
+               f"now=$(date +%s); for h in {shlex.quote(spool)}/workers/*; do [ -f \"$h\" ] && set -- $(cat \"$h\") && [ $((now - $2)) -lt 60 ] && echo \"A $(basename $h)\"; done")
         out = sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", self.c["remote_host"], cmd], timeout=25).splitlines()
         r = {"reachable": bool(out)}
         try:
@@ -205,9 +210,15 @@ class Board:
             sep2 = out.index("+++") if "+++" in out else len(out)
             sep3 = out.index("@@@") if "@@@" in out else len(out)
             sep4 = out.index("%%%") if "%%%" in out else len(out)
+            sep5 = out.index("^^^") if "^^^" in out else len(out)
+            sp = [x.split(" ", 1) for x in out[sep5 + 1:] if " " in x]
+            r["spool_queued"] = [b for a, b in sp if a == "Q"]
+            r["spool_working"] = [b for a, b in sp if a == "W"]
+            r["resident_workers"] = [b for a, b in sp if a == "A"]
             r["running_labels"] = [x.strip() for x in out[sep2 + 1:sep3] if x.strip()]
             r["stages"] = {a: int(b) for a, b in (x.split() for x in out[sep3 + 1:sep4] if len(x.split()) == 2)}
-            r["recent_runs"] = [(int(a), int(b), os.path.basename(c)[:-4]) for a, b, c in (x.split(" ", 2) for x in out[sep4 + 1:] if x.count(" ") >= 2) if int(a) > 0]
+            r["recent_runs"] = [(int(a), int(b), os.path.basename(c)[:-4]) for a, b, c in (x.split(" ", 2) for x in out[sep4 + 1:sep5] if x.count(" ") >= 2) if int(a) > 0]
+            r["running_labels"] = sorted(set(r["running_labels"]) | set(r["spool_working"]))   # resident workers have no --label
             r["workers"] = len(r["running_labels"])   # distinct items being processed, not raw process count
             cur, rest = [], out[sep + 1:sep2]
             for i in range(0, len(rest) - 1, 2):
@@ -295,9 +306,23 @@ class Board:
             res[os.path.basename(p)] = [ln for ln in lines if SAFE_LOG.match(ln)][-n:]
         return res
 
+    def queue_of(self, lab, lm, by_hash):
+        """Queue name for a label; 15-min pieces (c15_<hash>_<min>) take their parent recording's queue."""
+        if lab in lm:
+            return lm[lab][0]
+        m = re.fullmatch(r"c15_([0-9a-f]{12})_(\d{4})", lab)
+        if m:
+            return f"{by_hash.get(m.group(1), '?')} · piece {int(m.group(2))}–{int(m.group(2)) + 15} min"
+        return "?"
+
     def status(self):
         res = self.results()
         lm = self.label_map()
+        by_hash = {}
+        for lab_, (qn_, _src) in lm.items():
+            mm = re.search(r"([0-9a-f]{12})$", lab_)
+            if mm:
+                by_hash.setdefault(mm.group(1), qn_)
         runners = self.runners()
         chain_up = any(re.search(self.c.get("chain_match", r"^$"), r["script"]) for r in runners)
         chained = set(self.c.get("chained_queues", [])) if chain_up else set()
@@ -322,14 +347,12 @@ class Board:
             cur = [c for c in cur if c["label"] not in clear]
         rem = dict(rem, current=cur)
         model = self.est_model(rem, lm)
-        STG = {1: ("leveling audio", 0, 8), 2: ("loading models", 3, 20), 3: ("transcribing", 10, 65),
+        STG = {0: ("waiting for worker", 0, 2), 1: ("leveling audio", 0, 8), 2: ("loading models", 3, 20), 3: ("transcribing", 10, 65),
                4: ("separating speakers", 55, 92), 5: ("naming speakers", 88, 99)}
         for c in cur:
-            c["queue"] = lm.get(c["label"], ("?",))[0]
-            if c["label"].startswith("c15_"):
-                c["queue"] = "chunk of " + c["label"].split("_")[1]
+            c["queue"] = self.queue_of(c["label"], lm, by_hash)
             c["elapsed_s"] = int(now - c["started"])
-            st_ = rem.get("stages", {}).get(c["label"], 1)
+            st_ = 0 if c["label"] in rem.get("spool_queued", []) else rem.get("stages", {}).get(c["label"], 1)
             c["stage"], c["stage_name"], c["lo"], c["hi"] = st_, *STG.get(st_, STG[1])
             est = None
             if model:   # fitted (fixed + per audio second), or the recent average when the fit is not ready
@@ -339,7 +362,7 @@ class Board:
             if est:
                 c["est_total_s"] = int(est)
                 c["pct"] = int(min(c["hi"], max(c["lo"], 100 * c["elapsed_s"] / est)))
-        recent = [{"label": lb, "queue": lm.get(lb, ("?",))[0], "finished": time.strftime("%m-%d %H:%M", time.localtime(t))}
+        recent = [{"label": lb, "queue": self.queue_of(lb, lm, by_hash), "finished": time.strftime("%m-%d %H:%M", time.localtime(t))}
                   for lb, t in sorted(res.items(), key=lambda x: -x[1])[: self.c.get("recent_n", 15)]]
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
                 "local": self.local_host(), "speed": round(sp, 3) if sp else None,
@@ -530,6 +553,7 @@ function secs(s){s=Math.max(0,Math.round(s));const m=Math.floor(s/60);return m?`
 let CUR=[],T0=Date.now();
 function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").innerHTML=CUR.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>"+CUR.map(c=>{
  if(c.stale)return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td></td><td><span class="pill paused">stale leftover (not running)</span></td></tr>`;
+ if(c.stage===0)return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">in line</span></td><td style="white-space:nowrap">${ubar(0)} <span class="small muted">waiting for the resident worker · staged ${secs(c.elapsed_s+dt)} ago</span></td></tr>`;
  const el=c.elapsed_s+dt,raw=c.est_total_s?100*el/c.est_total_s:null,p=raw==null?(c.lo+c.hi)/2:Math.min(c.hi,Math.max(c.lo,raw));
  const left=c.est_total_s?c.est_total_s-el:null,eta=left==null?"estimating…":raw>c.hi?`finishing ${esc(c.stage_name)}…`:`~${secs(left)} left`;
  return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span></td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";}
@@ -544,7 +568,7 @@ document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <div><div class="muted small">GPU host CPU</div><div class="big">${g.cpu_pct??"?"}% · load ${g.load1} / ${g.cpus}</div>${bar(g.cpu_pct)}</div>
 <div><div class="muted small">GPU host memory</div><div class="big">${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(1)} / ${(g.mem_total_mib/1024).toFixed(0)} GiB</div>${bar(100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib)}</div>
 <div><div class="muted small">This computer</div><div class="big">load ${L.load1} / ${L.cpus}</div></div>
-<div><div class="muted small">State</div><div class="big"><span class="pill ${g.paused?"paused":""}">${g.paused?"PAUSED":"running"}</span> ${g.workers} item${g.workers==1?"":"s"} processing</div>
+<div><div class="muted small">State</div><div class="big"><span class="pill ${g.paused?"paused":""}">${g.paused?"PAUSED":"running"}</span> ${g.workers} item${g.workers==1?"":"s"} processing${(g.resident_workers||[]).length?` · ${g.resident_workers.length} resident worker${g.resident_workers.length==1?"":"s"} (models loaded)${(g.spool_queued||[]).length?` · ${g.spool_queued.length} waiting`:""}`:""}</div>
 <button onclick="post('/api/pause')">Pause all</button> <button onclick="post('/api/resume')">Resume all</button></div></div>
 ${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}${s.est_model?(s.est_model.per_audio_min_s?` · estimate per item: ${s.est_model.fixed_s}s fixed + ${s.est_model.per_audio_min_s}s per audio minute (fit on ${s.est_model.n} recent items)`:` · estimate per item: average ${s.est_model.fixed_s}s (last ${s.est_model.n} items)`):""}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
 CUR=(g.current||[]);T0=Date.now();drawCur();const cur=[];if(0)document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";

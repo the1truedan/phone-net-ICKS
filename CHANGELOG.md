@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.4 — 2026-10-02 · resident-worker queue handling, screenshot
+- **Job board screenshot** (redacted demo mode) in the README and `stack/jobboard/README.md` (`docs/img/jobboard.png`).
+- **Resident workers:** the board reads an optional spool (`remote_spool_dir`) and shows how many workers have their models loaded, how many items
+  are processing and how many wait; items in line show "in line" instead of a time estimate.
+- **Labels:** 15-minute pieces of longer recordings show their parent queue and position (e.g. "V29 · piece 15–30 min").
+- **README:** resident-worker results (identical output on a 10-file test, 2.6× faster; run one worker on 16 GB and free the GPU cache per item).
+- **Analytics chart markers:** "start" is now "AI work begins (Mar 22)"; a new marker at the left edge shows when paid home caregiving was
+  approved (paid from Mar 25, 2025, before the chart's June 2025 start). Labels sit on three levels so they do not overlap.
+- **By the numbers:** 1,960 recordings and long-file chunks fully speaker-separated (1,782 + 178 chunks).
+
 ## v0.5.3 — 2026-10-01 · processing numbers refreshed
 - **"By the numbers":** 1,808 recordings and long-file chunks fully speaker-separated (1,681 recordings + 127 chunks), up from 1,488.
 - **README and `docs/STATS.md`** brought to Oct 1, 2026 (a new column), including 425 silent or background-sound stretches checked

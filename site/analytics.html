@@ -48,7 +48,7 @@
 </head>
 <body>
 <main>
-  <p class="eyebrow">phone<span class="tp">+</span>net<span class="tp">+</span>tics · phone-net · I.C.K.S. v0.5.3 · full analytics</p>
+  <p class="eyebrow">phone<span class="tp">+</span>net<span class="tp">+</span>tics · phone-net · I.C.K.S. v0.5.4 · full analytics</p>
   <h1>Every day, side by side</h1>
   <p class="sub">One column per day from June 2025 to September 2026. Each strip is one signal, so a crisis day, a build day and a quiet day line up
     vertically. Darker = more. Counts only; no names or content. <a href="index.html">← back to the summary page</a></p>
@@ -90,7 +90,7 @@
   <p class="note">"Hours covered" is the active window between the day's first and last note, not a timesheet: it shows when the caregiver was on duty and
     writing things down. The paid cap and the hours logged in the payroll app come from the payroll company's shift-status exports.</p>
 <footer><div class="mu-footer">
-  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · analytics v0.5.3 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC</span>
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · analytics v0.5.4 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC</span>
   <nav>
     <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
     <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>
@@ -108,7 +108,7 @@ const ROWS = [
   ["supafix commits", "c_supafix", "#2a97c4", 3], ["BOOKSMAX commits", "c_BOOKSMAX", "#2a97c4", 3], ["URLLM commits", "c_URLLM", "#2a97c4", 3],
   ["tok-tua commits", "c_grok-tua-tok-tua", "#2a97c4", 3], ["AI-agent incidents", "__cve", "#c4841a", 1], ["Game sessions", null, "#2a97c4", 1]];
 const CVE = [["0815", "2026-08-02", "?", "Agents lost continuity (context pit)"], ["0816", "2026-08-16", "?", "Appdata single point of failure"], ["0818", "2026-08-19", "G", "Pool status misreported"], ["0820", "2026-08-19", "G", "Batch-tagging incident (book library)"], ["0821", "2026-08-19", "?", "Session incident"], ["0822", "2026-08-10", "?", "Orchestration audit finding"], ["0823", "2026-08-03", "?", "Gateway audit finding"], ["0824", "2026-08-19", "G", "Coordination breach"], ["0825", "2026-08-19", "G", "Coordination breach"], ["0826", "2026-08-20", "?", "Mixed-agent incident"], ["0827", "2026-08-20", "G", "Coordination breach"], ["0831", "2026-08-20", "G", "Stopping a container is not disabling a guard"], ["0833", "2026-08-05", "?", "Unbounded storage walk"], ["0834", "2026-08-22", "?", "Briefing incident"], ["0838", "2026-08-03", "?", "Stale 'no Python on server' claim"], ["0839", "2026-08-26", "?", "Allow-all is not the network card"], ["0840", "2026-09-01", "C", "The crash that wasn't"], ["0841", "2026-09-02", "?", "Nobody signed off on deleting a cache"], ["0842", "2026-09-04", "W", "Assistant VM bundle ate 12 GB of boot disk"], ["0843", "2026-09-05", "G", "Wrong Python environment"], ["0843b", "2026-09-18", "?", "Orchestration sidestep"], ["0844", "2026-09-08", "?", "Silent API-key failure"], ["0847", "2026-09-10", "?", "Infra incident"], ["0848", "2026-09-14", "C", "Treated the local machine as remote"], ["0849", "2026-09-14", "?", "Four-day detour"], ["0850", "2026-09-26", "C", "Ignored the infra docs; wrong machine"], ["0851", "2026-09-27", "?", "Health probes collided with GPU jobs"]];
-const MARKS = [["2026-03-22","start"],["2026-04-20","LLC"],["2026-07-31","submission"],["2026-09-01","hours change"]];
+const MARKS = [["2025-03-25","◂ home caregiving approved (paid from Mar 25, 2025)"],["2026-03-22","AI work begins (Mar 22)"],["2026-04-20","LLC"],["2026-07-31","submission"],["2026-09-01","hours change"]];
 const NS = "http://www.w3.org/2000/svg", svg = document.querySelector("svg"), tip = document.querySelector(".tip"), W = 1000;
 const el = (t, a, p, x) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (x != null) e.textContent = x; p.appendChild(e); return e; };
 const L = 160, R = 10, TOP = 46, rh = 44, n = D.days.length, cw = (W - L - R) / n, X = i => L + i * cw;
@@ -126,9 +126,9 @@ ROWS.forEach(([name, key, col, max], r) => { const y = TOP + r * rh;
     el("rect", { x: X(i), y: y + 6, width: Math.max(cw, 1.2), height: rh - 12, fill: col, "fill-opacity": Math.min(1, 0.25 + 0.75 * Math.min(v, max) / max) }, svg); }); });
 D.days.forEach((d, i) => { if (d.endsWith("-01") && (d.slice(5, 7) === "01" || d.slice(5, 7) === "07"))
   el("text", { x: X(i), y: TOP + ROWS.length * rh + 16, "text-anchor": "start" }, svg, d.slice(0, 7)); });
-MARKS.forEach(([d, t], k) => { const i = D.days.indexOf(d); if (i < 0) return;
+MARKS.forEach(([d, t], k) => { let i = D.days.indexOf(d); if (i < 0 && d < D.days[0]) i = 0; if (i < 0) return;   // dates before the chart sit at its left edge
   el("line", { x1: X(i), x2: X(i), y1: TOP - 6, y2: TOP + ROWS.length * rh, stroke: "#5c6880", "stroke-dasharray": "3 3" }, svg);
-  el("text", { x: X(i) + (k === 3 ? -3 : 3), y: TOP - 10 - (k % 2) * 12, "text-anchor": k === 3 ? "end" : "start" }, svg, t); });
+  const end = X(i) > W - 260; el("text", { x: X(i) + (end ? -3 : 3), y: TOP - 8 - (k % 3) * 11, "text-anchor": end ? "end" : "start" }, svg, t); });
 const cross = el("line", { y1: TOP, y2: TOP + ROWS.length * rh, stroke: "#e7eef8", "stroke-opacity": .5, visibility: "hidden" }, svg);
 const hit = el("rect", { x: L, y: TOP, width: W - L - R, height: ROWS.length * rh, fill: "transparent" }, svg);
 hit.addEventListener("pointermove", ev => { const b = svg.getBoundingClientRect(), px = (ev.clientX - b.left) * W / b.width, i = Math.max(0, Math.min(n - 1, Math.floor((px - L) / cw)));

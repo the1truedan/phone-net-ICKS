@@ -10,6 +10,8 @@ python3 stack/jobboard/jobboard.py                     # live
 # open http://127.0.0.1:8797/
 ```
 
+![Job board (redacted demo mode): live GPU stats, one resident worker transcribing, three items in line, queue rows with status and controls](../../docs/img/jobboard.png)
+
 ## What it shows
 - **GPU host:** memory used, utilization, number of workers running, and whether the pause flag is set (read over ssh, cached 15 s).
 - **Queues:** done / total for every queue file, worked out from which result files exist.
@@ -56,6 +58,11 @@ WhisperX large-v3 (float16, batch 8) plus pyannote, one process per item. Measur
 - **But short items mean more model loads,** and each load is a peak. With many short items, start collisions are common (here, 1 in 3 items started within 60 s of another). So keep to 3 jobs, and **let only one 15-minute chunk be on the GPU at a time**: the runner gate waits while another chunk (labels `lNN_…`) is processing, so the other jobs are short files.
 
 **Other things on the same GPU** (a local LLM server, image or video tools) take memory without warning. Count them before adding a job, or stop them while a batch runs.
+
+**Resident workers (measured 2026-10-02).** Loading the models costs about a third of a short item's time. A long-running worker that
+loads them once and takes items from a spool (`remote_spool_dir`) produced byte-identical transcripts, word timing, speakers and names on a
+10-file test, 2.6× faster. Run **one** resident worker on a 16 GB card, and free the GPU cache after every item: a resident process otherwise
+keeps its peak (~7 GB), and two of them ran the card out of memory. The board shows items waiting for the worker as "in line".
 
 **Failed items are not lost.** A runner skips only items whose result file exists, so the next Start of that queue retries them.
 
