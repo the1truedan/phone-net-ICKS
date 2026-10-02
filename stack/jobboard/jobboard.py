@@ -7,7 +7,8 @@ any local report pages come from files that config points at, so nothing case-sp
 
     python3 stack/jobboard/jobboard.py [--config config/jobboard.toml] [--port 8797] [--dry-run]
 """
-import argparse, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
+import argparse
+import threading, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,6 +88,9 @@ class Board:
         self._dur = {}
         self.registry = {}
         self.redact = Redactor(self.c.get("redact_file")) if self.c.get("redact") else None
+        self.priority = None
+        if os.path.exists(os.path.join(self.c["log_dir"], ".jobboard_priority.json")):
+            self.release_priority("left over from a previous board run")
         if self.c.get("registry_file") and os.path.exists(self.c["registry_file"]):
             self.registry = load_toml(self.c["registry_file"]).get("queue", {})
 
@@ -340,7 +344,7 @@ class Board:
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
                 "local": self.local_host(), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "runners": runners,
-                "recent": recent, "logs": self.logs(),
+                "recent": recent, "logs": self.logs(), "priority": self.priority,
                 "reports": [r.get("name", "") for r in self.c.get("reports", [])], "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
@@ -406,6 +410,62 @@ class Board:
             return {"error": "not a job-board runner pid"}
         return self._run(["kill", str(pid)])
 
+    # ---------- priority: run one queue now, hold the other runners until it ends ----------
+    def _pstate(self):
+        return os.path.join(self.c["log_dir"], ".jobboard_priority.json")
+
+    def release_priority(self, note=""):
+        st = getattr(self, "priority", None)
+        if not st and os.path.exists(self._pstate()):
+            try:
+                st = json.load(open(self._pstate()))
+            except ValueError:
+                st = None
+        if not st:
+            return {"error": "no priority run"}
+        live = {r["pid"] for r in self.runners()}
+        for pid in st.get("held", []):
+            if pid in live:
+                self._run(["kill", "-CONT", str(pid)])
+        self.priority = None
+        try:
+            os.remove(self._pstate())
+        except OSError:
+            pass
+        return {"released": st.get("held", []), "note": note}
+
+    def prioritize(self, queue):
+        if getattr(self, "priority", None):
+            return {"error": f"queue {self.priority['queue']} already has priority; end it first"}
+        before = {r["pid"] for r in self.runners()}
+        r = self.start(queue)
+        if "error" in r or self.c["dry_run"]:
+            return r
+        pid = None
+        for _ in range(20):   # find the new runner
+            time.sleep(0.5)
+            pid = next((x["pid"] for x in self.runners() if x["queue"] == queue and x["pid"] not in before and x["queue"]), None)
+            if pid:
+                break
+        if not pid:
+            return {"error": "started, but the new runner was not found; nothing was held"}
+        held = [x["pid"] for x in self.runners() if x["pid"] != pid and x["queue"] and not x["paused"]]
+        for h in held:
+            self._run(["kill", "-STOP", str(h)])
+        self.priority = {"queue": queue, "pid": pid, "held": held, "since": time.strftime("%H:%M")}
+        json.dump(self.priority, open(self._pstate(), "w"))
+
+        def watch():
+            while True:
+                time.sleep(5)
+                if not getattr(self, "priority", None) or self.priority.get("pid") != pid:
+                    return
+                if pid not in {x["pid"] for x in self.runners()}:
+                    self.release_priority(f"{queue} finished")
+                    return
+        threading.Thread(target=watch, daemon=True).start()
+        return {"priority": queue, "runner": pid, "held": held}
+
     def hold(self, pid, on):
         """Pause (SIGSTOP) or resume (SIGCONT) one runner. The item already on the GPU finishes; the runner starts nothing new until resumed."""
         if pid not in {r["pid"] for r in self.runners()}:
@@ -455,7 +515,7 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 .stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
-<section id="gpu"></section><section><b>On the GPU now</b><table id="cur"></table></section>
+<div id="pri"></div><section id="gpu"></section><section><b>On the GPU now</b><table id="cur"></table></section>
 <section><b>Queues</b> <span class="muted small">(click a row for purpose and expected gain)</span><table id="q"></table></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
 <section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section>
@@ -475,6 +535,7 @@ function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").
  return `<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span></td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";}
 async function load(){const s=await (await fetch("/api/status")).json();
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
+document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
 document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>`<a href="/report/${i}" target="_blank">${esc(n)}</a>`).join(" · "):"";
 const g=s.remote,L=s.local;
 document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
@@ -498,7 +559,8 @@ const summ=q.done?`<div class="small muted">${esc(q.first_done)} → ${esc(q.las
 const fin=!rs.length&&q.done>=q.total?'<span class="pill">✓ complete</span>'+summ
  :!rs.length&&left<=0&&q.done<q.total?`<span class="pill">✓ complete</span><div class="small muted">${q.done} done · ${q.too_long} too long → excerpt route</div>`+summ.replace('<div class="small muted">','<div class="small muted">')
  :!rs.length&&!q.in_chain&&left>0?`<span class="pill muted">idle · ${left} left</span> `:"";
-const act=fin+st+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)</div>`:"");
+const pri=(q.in_chain||!rs.length)&&left>0&&!s.priority?` <button title="Run this queue now and hold the other runners until it ends" onclick="event.stopPropagation();if(confirm('Give ${qn} priority? It starts now; every other runner pauses after its current item and resumes when ${qn} finishes.'))post('/api/priority',{queue:'${qn}'})">⇧ Priority</button>`:"";
+const act=fin+st+pri+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)</div>`:"");
 return `<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
 <tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
@@ -548,6 +610,8 @@ def make_handler(board):
             routes = {"/api/pause": lambda: board.pause(), "/api/resume": lambda: board.resume(),
                       "/api/start": lambda: board.start(str(body.get("queue", ""))),
                       "/api/stop": lambda: board.stop(int(body.get("pid", 0))),
+                      "/api/priority": lambda: board.prioritize(str(body.get("queue", ""))),
+                      "/api/endpriority": lambda: board.release_priority("ended from the page"),
                       "/api/hold": lambda: board.hold(int(body.get("pid", 0)), True),
                       "/api/release": lambda: board.hold(int(body.get("pid", 0)), False)}
             if self.path not in routes:
