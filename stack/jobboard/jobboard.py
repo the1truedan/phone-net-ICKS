@@ -8,7 +8,7 @@ any local report pages come from files that config points at, so nothing case-sp
     python3 stack/jobboard/jobboard.py [--config config/jobboard.toml] [--port 8797] [--dry-run]
 """
 import argparse
-import threading, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
+import threading, csv, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -158,6 +158,137 @@ class Board:
                 t, d = cov.get(parts[1], (0, 0))
                 cov[parts[1]] = (t + 1, d + (parts[0] in res or parts[0] in silent))
         return cov
+
+    # ---------- coverage of every pull (v0.5.8) ----------
+    AUDIO = re.compile(r"\.(m4a|mp3|ogg|wav|amr|aac|3gp|3ga|opus|flac|awb)$", re.I)
+    H12 = re.compile(r"(?<![0-9a-f])[0-9a-f]{12}(?![0-9a-f])")
+
+    def manifests(self):
+        """Watch list: SHA256SUMS*.txt files that each phone pull writes (pull_manifest_globs), minus pull_manifest_exclude."""
+        ex = re.compile(self.c.get("pull_manifest_exclude", r"^$"))
+        out = set()
+        for g in self.c.get("pull_manifest_globs", []):
+            out |= {p for p in glob.glob(g) if not ex.search(p)}
+        return sorted(out)
+
+    def _pull_name(self, manifest):
+        base = self.c.get("pull_root", os.path.dirname(os.path.dirname(manifest)))
+        rel = os.path.relpath(os.path.dirname(manifest), base).split(os.sep)
+        return "/".join(rel[:2]) if rel[0] in self.c.get("pull_group_dirs", []) else rel[0]
+
+    def _scan_manifests(self, mans):
+        """sha256 -> (pull, absolute path) for every audio file in the manifests; first pull that lists a hash wins."""
+        ign = re.compile(self.c.get("coverage_ignore", r"^$"), re.I)
+        audio, ignored = {}, set()
+        for m in mans:
+            pull, d = self._pull_name(m), os.path.dirname(m)
+            for ln in open(m, errors="ignore"):
+                mm = re.match(r"([0-9a-f]{64})\s+\*?(.+)", ln.strip())
+                if not mm or not self.AUDIO.search(mm.group(2)):
+                    continue
+                path = os.path.normpath(os.path.join(d, mm.group(2)))
+                if ign.search(path):
+                    ignored.add(mm.group(1))
+                audio.setdefault(mm.group(1), (pull, path))
+        return audio, ignored
+
+    def _catalog(self):
+        p = self.c.get("catalog_csv", "")
+        try:
+            with open(p, newline="", errors="ignore") as f:
+                rows = list(csv.DictReader(f))
+        except OSError:
+            return {}, set()
+        return ({r.get("sha256", "").lower(): r.get("result", "") for r in rows},
+                {os.path.basename(r.get("source", "")).lower() for r in rows})
+
+    def coverage(self, res, lm):
+        """Every audio file in every pull, against the catalog, the results and the queues.
+        The manifest scan reruns only when a manifest is added or changes (size/mtime), so the page stays fast."""
+        mans = self.manifests()
+        if not mans:
+            return None
+        sig = tuple((m, os.path.getsize(m), int(os.path.getmtime(m))) for m in mans)
+        if getattr(self, "_cov_sig", None) != sig:
+            self._cov_audio, self._cov_ign = self._scan_manifests(mans)
+            self._cov_sig, self._cov_changed = sig, time.strftime("%m-%d %H:%M", time.localtime(max(s[2] for s in sig)))
+        cat_sha, cat_names = self._catalog()
+        done = set()
+        for lb in res:
+            done |= set(self.H12.findall(lb))
+        queued = set()
+        for lb in lm:
+            queued |= set(self.H12.findall(lb))
+        pulls, unc, uncat = {}, [], []
+        for h, (pull, path) in self._cov_audio.items():
+            st = pulls.setdefault(pull, {"pull": pull, "audio": 0, "not_in_catalog": 0, "done": 0, "plain": 0, "queued": 0, "uncovered": 0, "ignored": 0})
+            st["audio"] += 1
+            b = os.path.basename(path).lower()
+            skip = h in self._cov_ign or b.startswith(".")
+            if h not in cat_sha and not skip:
+                st["not_in_catalog"] += 1
+                uncat.append((h, path))
+            if h[:12] in done:
+                st["done"] += 1
+            elif skip:
+                st["ignored"] += 1
+            elif h[:12] in queued:
+                st["queued"] += 1
+            elif cat_sha.get(h, "").startswith("plain"):
+                st["plain"] += 1   # catalogued with an earlier plain transcript; no fine-comb pass yet
+            elif b in cat_names and h not in cat_sha:
+                st["ignored"] += 1   # another copy of a catalogued file (same name, different bytes: header repair or re-save)
+            else:
+                st["uncovered"] += 1
+                unc.append((h, path))
+        self._uncovered, self._uncatalogued = sorted(unc, key=lambda x: x[1]), sorted(uncat, key=lambda x: x[1])
+        rows = sorted(pulls.values(), key=lambda s: (-s["uncovered"], -s["not_in_catalog"], s["pull"]))
+        return {"manifests": len(mans), "changed": self._cov_changed, "pulls": rows, "audio": len(self._cov_audio),
+                "uncovered": len(unc), "not_in_catalog": len(uncat), "plain": sum(r["plain"] for r in rows)}
+
+    def queue_uncovered(self):
+        """Write the uncovered recordings to a new queue file (AV_QUEUE_<prefix><MMDD>[b..].tsv). Nothing starts; press Start."""
+        self.coverage(self.results(), self.label_map())
+        if not self._uncovered:
+            return {"error": "nothing uncovered"}
+        qdir, pre = os.path.dirname(self.c["queue_glob"]), self.c.get("coverage_queue_prefix", "U")
+        tag = time.strftime("%m%d")
+        name = next(f"{pre}{tag}{s}" for s in [""] + list("bcdefghij") if f"{pre}{tag}{s}" not in self.queue_files())
+        path = os.path.join(qdir, f"AV_QUEUE_{name}.tsv")
+        lines = [f"{name.lower()}_{h[:12]}\t{p}\n" for h, p in self._uncovered if os.path.exists(p)]
+        if self.c["dry_run"]:
+            return {"dry_run": True, "would_write": path, "items": len(lines)}
+        with open(path, "w") as f:
+            f.writelines(lines)
+        rf = self.c.get("registry_file")
+        if rf:   # purpose note for the new queue (the registry is local; case wording stays out of this code)
+            with open(rf, "a") as f:
+                f.write(f'\n[queue.{name}]\npurpose = "Recordings in phone pulls that no queue or result covered (coverage panel, {time.strftime('%Y-%m-%d %H:%M')})"\n'
+                        f'source = "pull manifests: {len(set(self._cov_audio[h][0] for h, _ in self._uncovered))} pull(s)"\n')
+            self.registry = load_toml(rf).get("queue", {})
+        return {"queue": name, "items": len(lines), "missing_on_disk": len(self._uncovered) - len(lines), "file": path}
+
+    def catalog_append(self):
+        """Append one row per uncatalogued audio file to catalog_csv (backup first). Only sha256/hash12/source/date fields are
+        filled; existing rows are not touched."""
+        self.coverage(self.results(), self.label_map())
+        p = self.c.get("catalog_csv", "")
+        if not self._uncatalogued or not os.path.exists(p):
+            return {"error": "nothing to add" if os.path.exists(p) else "catalog_csv not found"}
+        if self.c["dry_run"]:
+            return {"dry_run": True, "would_add": len(self._uncatalogued)}
+        shutil.copy2(p, p + time.strftime(".bak_%Y%m%d_%H%M%S"))
+        with open(p, newline="", errors="ignore") as f:
+            cols = next(csv.reader(f))
+        with open(p, "a", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
+            for h, path in self._uncatalogued:
+                ok = os.path.exists(path)
+                t = time.localtime(os.path.getmtime(path)) if ok else None
+                w.writerow({"date": time.strftime("%Y-%m-%d", t) if t else "", "time": time.strftime("%H:%M", t) if t else "",
+                            "date_confidence": "file_mtime", "reason": "added by job board coverage " + time.strftime("%Y-%m-%d"),
+                            "hash12": h[:12], "sha256": h, "source": path, "source_exists": "1" if ok else "0"})
+        return {"added": len(self._uncatalogued)}
 
     def queues(self, res):
         out = []
@@ -529,7 +660,7 @@ class Board:
                 "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "runners": runners,
                 "recent": recent, "mac_jobs": mac_jobs, "logs": self.logs(), "priority": self.priority,
-                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "flag_label": self.c.get("flag_label", "flagged")}
+                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "coverage": self.coverage(res, lm), "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
     def _run(self, argv, detach=False):
@@ -701,6 +832,7 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
 <div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table></section>
 <section><b>Queues</b> <span class="muted small">(to do first, then finished with the latest on top · click a row for purpose and expected gain)</span><table id="q"></table></section>
+<section id="cov"></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
 <section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section>
 <script>
@@ -755,6 +887,12 @@ const act=fin+st+pri+(q.in_chain&&!rs.length?'<span class="pill muted">waiting i
 const head=q.todo!==s.queues[0].todo&&q===s.queues.find(x=>!x.todo)?`<tr><td colspan="6" class="muted small" style="padding-top:12px"><b>Finished</b> · latest first</td></tr>`:q===s.queues[0]&&q.todo?`<tr><td colspan="6" class="muted small"><b>To do</b></td></tr>`:"";
 return head+`<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
 <tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");
+const C=s.coverage;document.getElementById("cov").innerHTML=C?`<b>Coverage</b> <span class="muted small">(every audio file in every phone pull, by hash · watching ${C.manifests} pull manifests · last change ${esc(C.changed)})</span>
+<div class="small" style="margin:4px 0">${C.audio} recordings · <b class="${C.uncovered?"bad":""}">${C.uncovered} not in any queue or result</b> · ${C.plain} plain transcript only · ${C.not_in_catalog} not in the catalog
+${C.uncovered?` <button onclick="if(confirm('Write the ${C.uncovered} uncovered recordings to a new queue? Nothing starts until you press Start.'))post('/api/queue_uncovered')">Queue ${C.uncovered} uncovered</button>`:""}
+${C.not_in_catalog?` <button onclick="if(confirm('Add ${C.not_in_catalog} rows to the catalog? A backup is made first; existing rows are not changed.'))post('/api/catalog_append')">Add ${C.not_in_catalog} to catalog</button>`:""}</div>
+<table><tr><th>Pull</th><th>Audio</th><th>Done</th><th>Plain only</th><th>Queued</th><th>Not covered</th><th>Not in catalog</th><th>Ignored</th></tr>${C.pulls.map(r=>`<tr><td>${esc(r.pull)}</td><td>${r.audio}</td><td>${r.done}</td><td class="muted">${r.plain}</td><td>${r.queued}</td><td class="${r.uncovered?"bad":""}">${r.uncovered}</td><td>${r.not_in_catalog}</td><td class="muted">${r.ignored}</td></tr>`).join("")}</table>
+<div class="small muted">Ignored: temp files, app/system sounds, and other copies of catalogued files. Done = a fine-comb result or all 15-min pieces processed. Plain only = an earlier plain transcript in the catalog, no fine-comb yet.</div>`:"";
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Host</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${hb('mac')} → ${hb('linux')}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
@@ -805,7 +943,9 @@ def make_handler(board):
                       "/api/priority": lambda: board.prioritize(str(body.get("queue", ""))),
                       "/api/endpriority": lambda: board.release_priority("ended from the page"),
                       "/api/hold": lambda: board.hold(int(body.get("pid", 0)), True),
-                      "/api/release": lambda: board.hold(int(body.get("pid", 0)), False)}
+                      "/api/release": lambda: board.hold(int(body.get("pid", 0)), False),
+                      "/api/queue_uncovered": lambda: board.queue_uncovered(),
+                      "/api/catalog_append": lambda: board.catalog_append()}
             if self.path not in routes:
                 return self._send(404, {"error": "not found"})
             self._send(200, routes[self.path]())

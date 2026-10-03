@@ -42,3 +42,13 @@ host_labels = {}              # optional badge names, e.g. { mac = "Desk Mac · 
 extra_result_patterns = ["CHUNKS_{label}.json"]   # chunk manifests count as results
 chunk_tier_glob = ""          # CSV piece lists (label,hash,...): a recording is done when every piece is processed or silent
 silent_lists = []             # files whose first column lists pieces confirmed silent
+
+# Coverage (v0.5.8): every audio file in every phone pull, checked by hash against the catalog, results and queues.
+# Each pull writes a SHA256SUMS*.txt; the board re-scans when one is added or changes.
+# pull_root = "/path/to/backups"
+# pull_manifest_globs = ["/path/to/backups/_phone_*/SHA256SUMS*.txt", "/path/to/backups/_phone_*/*/SHA256SUMS*.txt"]
+# pull_manifest_exclude = "/work_products/"
+# pull_group_dirs = ["_phone_inventory"]          # show these as <dir>/<subdir>
+# catalog_csv = "/path/to/CATALOG_RECORDINGS.csv" # needs sha256 and source columns
+# coverage_ignore = "(/Notifications/|/Ringtones/|/\\.pending-)"
+# coverage_queue_prefix = "U"                      # "Queue uncovered" writes AV_QUEUE_U<MMDD>.tsv

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.8 — 2026-10-02 · coverage of every phone pull
+- **Coverage panel (watch folder):** the job board now reads the checksum list (`SHA256SUMS*.txt`) that every phone pull writes
+  (`pull_manifest_globs`) and checks each audio file, by hash, against the catalog, the results and the queues. It scans again
+  when a pull is added or a list changes. One row per pull: done, plain transcript only, queued, **not covered**, not in the catalog, ignored.
+- **Queue uncovered:** writes the recordings that nothing covers to a new queue (`AV_QUEUE_U<MMDD>.tsv`) with a purpose note.
+  Nothing starts until you press Start. **Add to catalog:** appends one row per uncatalogued file (backup first; existing rows unchanged).
+- **Why:** before this, the board counted only hand-made queues. A check of all pulls found 97 recordings (about 25 GB, mostly
+  from an older SD card) that no queue or result covered, and a catalog that stopped at the 2026-09-29 pulls.
+
 ## v0.5.7 — 2026-10-02 · evening numbers, job board counts long recordings correctly
 - **By the numbers:** 2,800 recordings and long-file chunks fully speaker-separated (2,031 recordings + 769 chunks), up from 2,568.
   Every long-file piece that was waiting is processed or confirmed silent. The quick first pass ran on 79 pieces.
