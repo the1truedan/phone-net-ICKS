@@ -1,8 +1,8 @@
 # Changelog
 
 ## v0.5.10 — 2026-10-03 · new numbers, two new breakthroughs
-- **By the numbers:** 2,290 recordings indexed (every phone pull, checked by hash); 3,172 recordings and long-file chunks fully speaker-separated
-  (2,097 + 1,075 chunks), 274 more queued; 90 emails indexed; 560 days in the day-by-day ledger.
+- **By the numbers:** 2,290 recordings indexed (every phone pull, checked by hash); 3,600 recordings and long-file chunks fully speaker-separated
+  (2,283 + 1,317 chunks), every readable recording done; 90 emails indexed; 560 days in the day-by-day ledger.
 - **Breakthroughs:** two computers at once (a quick small-model pass on the Mac's GPU beside the CUDA deep pass), and coverage of every phone pull with a
   recovery step for damaged files (header rebuild, damaged-frame salvage, untrunc in a container).
 - Includes v0.5.9 (report pages with section cards, contents bar, callouts, aligned numbers and colour chips).
