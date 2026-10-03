@@ -89,10 +89,4 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 ## License
 
-[MIT](LICENSE) · © 2026 M.A.N.A.G.E.R. LLC
-
-<!-- manager-footer:start -->
----
-
-<p align="center">© 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there · <a href="https://linktr.ee/the1truedan">Linktree</a> · <a href="https://ko-fi.com/the1truedan">Ko-fi</a></p>
-<!-- manager-footer:end -->
+[MIT](LICENSE) · © 2026 M.A.N.A.G.E.R. LLC — *prepare for the care when we cannot be there*
