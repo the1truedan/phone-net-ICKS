@@ -89,4 +89,15 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 ## License
 
-[MIT](LICENSE) · © 2026 M.A.N.A.G.E.R. LLC — *prepare for the care when we cannot be there*
+[MIT](LICENSE)
+
+---
+
+<p align="left">
+  <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.5.7"><img src="https://img.shields.io/badge/release-v0.5.7-3dcaa0?style=for-the-badge" alt="v0.5.7"></a>
+  <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
+  <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+</p>
+
+**© 2026 M.A.N.A.G.E.R. LLC** — *prepare for the care when we cannot be there*
