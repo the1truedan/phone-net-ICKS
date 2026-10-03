@@ -128,24 +128,56 @@ class Board:
 
     def results(self):
         res = {}
+        pats = [self.c["result_pattern"]] + self.c.get("extra_result_patterns", [])   # e.g. CHUNKS_{label}.json for chunked recordings
         for p in glob.glob(os.path.join(self.c["results_dir"], "*.json")):
             b = os.path.basename(p)
-            m = re.fullmatch(self.c["result_pattern"].replace(".", r"\.").replace("{label}", r"(\w+)"), b)
-            if m:
-                res[m.group(1)] = os.path.getmtime(p)
+            for pat in pats:
+                m = re.fullmatch(pat.replace(".", r"\.").replace("{label}", r"(\w+)"), b)
+                if m:
+                    res[m.group(1)] = max(res.get(m.group(1), 0), os.path.getmtime(p))
+                    break
         return res
+
+    def chunk_coverage(self, res):
+        """2026-10-02: a long recording routed to chunk queues is covered when every 15-min piece is processed or confirmed silent.
+        Pieces come from CSV tier lists (chunk_tier_glob: label,hash,...) and silent pieces from silent_lists (first column = piece)."""
+        cov = {}
+        if not self.c.get("chunk_tier_glob"):
+            return cov
+        silent = set()
+        for f in self.c.get("silent_lists", []):
+            try:
+                silent |= {ln.split("\t", 1)[0] for ln in open(f, errors="ignore")}
+            except OSError:
+                pass
+        for f in glob.glob(self.c["chunk_tier_glob"]):
+            for ln in open(f, errors="ignore"):
+                parts = ln.split(",")
+                if len(parts) < 2 or parts[0] == "label":
+                    continue
+                t, d = cov.get(parts[1], (0, 0))
+                cov[parts[1]] = (t + 1, d + (parts[0] in res or parts[0] in silent))
+        return cov
 
     def queues(self, res):
         out = []
+        cov = self.chunk_coverage(res)
+        def covered(lb):   # all pieces of a routed long recording processed or silent
+            h = lb.split("_", 1)[-1]; t, d = cov.get(h, (0, 0))
+            return t > 0 and d >= t
         for name, q in sorted(self.queue_files().items()):
             labels = [ln.split("\t", 1)[0] for ln in open(q, errors="ignore") if ln.strip()]
             st_ = os.stat(q)
             created = getattr(st_, "st_birthtime", st_.st_mtime)
             done_t = [res[lb] for lb in labels if lb in res]
+            via_chunks = [lb for lb in labels if lb not in res and covered(lb)]
+            pending_pieces = sum(cov.get(lb.split("_", 1)[-1], (0, 0))[0] - cov.get(lb.split("_", 1)[-1], (0, 0))[1]
+                                 for lb in labels if lb not in res and not covered(lb))
             reg = self.registry.get(name, {})
             longs = self.long_skipped()
-            out.append({"queue": name, "total": len(labels), "done": len(done_t),
-                        "too_long": sum(1 for lb in labels if lb not in res and lb in longs),
+            out.append({"queue": name, "total": len(labels), "done": len(done_t) + len(via_chunks),
+                        "too_long": sum(1 for lb in labels if lb not in res and lb in longs and not covered(lb)),
+                        "via_chunks": len(via_chunks), "pending_pieces": pending_pieces,
                         "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
                         "last_done": time.strftime("%m-%d %H:%M", time.localtime(max(done_t))) if done_t else "",
                         "last_done_ts": max(done_t) if done_t else 0,
@@ -716,10 +748,10 @@ const btn=can?`<button onclick="event.stopPropagation();if(confirm('${fromEnd?(r
 const rate=q.span_s>0?`${(q.done/(q.span_s/3600)).toFixed(1)}/h`:"";
 const summ=q.done?`<div class="small muted">${esc(q.first_done)} → ${esc(q.last_done)}${q.span_s?` · ${mins(q.span_s)} · ${rate}`:""}</div>`:"";
 const fin=!rs.length&&q.done>=q.total?'<span class="pill">✓ complete</span>'+summ
- :!rs.length&&left<=0&&q.done<q.total?`<span class="pill">✓ complete</span><div class="small muted">${q.done} done · ${q.too_long} too long → excerpt route</div>`+summ.replace('<div class="small muted">','<div class="small muted">')
+ :!rs.length&&left<=0&&q.done<q.total?`<span class="pill">✓ complete</span><div class="small muted">${q.done} done · ${q.too_long} too long → excerpt route${q.pending_pieces?` (${q.pending_pieces} pieces still queued)`:""}</div>`+summ.replace('<div class="small muted">','<div class="small muted">')
  :!rs.length&&!q.in_chain&&left>0?`<span class="pill muted">idle · ${left} left</span> `:"";
 const pri=(q.in_chain||!rs.length)&&left>0&&!s.priority?` <button title="Run this queue now and hold the other runners until it ends" onclick="event.stopPropagation();if(confirm('Give ${qn} priority? It starts now; every other runner pauses after its current item and resumes when ${qn} finishes.'))post('/api/priority',{queue:'${qn}'})">⇧ Priority</button>`:"";
-const act=fin+st+pri+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)</div>`:"");
+const act=fin+st+pri+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)${q.pending_pieces?` · ${q.pending_pieces} pieces still queued in chunk queues`:""}</div>`:"")+(q.via_chunks?`<div class="small muted">${q.via_chunks} long recording${q.via_chunks==1?"":"s"} covered by 15-min pieces (processed or silent)</div>`:"");
 const head=q.todo!==s.queues[0].todo&&q===s.queues.find(x=>!x.todo)?`<tr><td colspan="6" class="muted small" style="padding-top:12px"><b>Finished</b> · latest first</td></tr>`:q===s.queues[0]&&q.todo?`<tr><td colspan="6" class="muted small"><b>To do</b></td></tr>`:"";
 return head+`<tr class="${q.flag?"flag":""}" onclick="const d=this.nextElementSibling;d.hidden=!d.hidden" style="cursor:pointer"><td><b>${esc(q.queue)}</b> ${q.flag?`<span class="pill flagpill small">⚖ ${esc(s.flag_label)}${q.flag_party?" · "+esc(q.flag_party):""}</span>`:""}</td><td>${q.done} / ${q.total}</td><td>${bar(p)}</td><td class="muted">${q.created}</td><td class="muted">${q.last_done}</td><td>${act}</td></tr>
 <tr hidden><td></td><td colspan="5" class="small">${q.purpose?`<b>Purpose:</b> ${esc(q.purpose)}<br>`:""}${q.source?`<b>Source:</b> ${esc(q.source)}<br>`:""}${q.gain?`<b>Expected gain:</b> ${esc(q.gain)}<br>`:""}${q.outputs?`<b>Outputs:</b> ${esc(q.outputs)}<br>`:""}${q.flag?`<b class="paused">⚖ ${esc(s.flag_label)}${q.flag_party?" ("+esc(q.flag_party)+")":""}:</b> ${esc(q.flag)}`:""}${!(q.purpose||q.gain)?'<span class="muted">no notes for this queue</span>':""}</td></tr>`}).join("");

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.7 — 2026-10-02 · evening numbers, job board counts long recordings correctly
+- **By the numbers:** 2,800 recordings and long-file chunks fully speaker-separated (2,031 recordings + 769 chunks), up from 2,568.
+  Every long-file piece that was waiting is processed or confirmed silent. The quick first pass ran on 79 pieces.
+- **Job board:** a long recording that is processed in 15-minute pieces now counts as done when every piece is processed or
+  confirmed silent (`chunk_tier_glob`, `silent_lists`), and chunk manifests count as results (`extra_result_patterns`).
+  Before this, such queues showed 0 done although the work was complete. Rows say how many pieces are still queued.
+
 ## v0.5.6 — 2026-10-02 · two computers on the job board, quick first pass, saturation watch
 - **Active jobs** (was "On the GPU now"): the GPU host's deep pass and the Mac's work in one table, each row with a host badge
   (🍎 Mac, 🐧 Linux GPU host, 🗄 storage server) and a progress bar. Mac progress is real where it can be measured (bytes of a piece

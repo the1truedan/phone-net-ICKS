@@ -38,3 +38,7 @@ flag_label = "flagged"
 storage_host = "storage-host"   # optional: ssh host of the storage server, for its network rate in the saturation line
 batch_jobs = []               # optional: [[name, log file, expected lines], ...] long scripts on this computer shown under Active jobs
 host_labels = {}              # optional badge names, e.g. { mac = "Desk Mac · macOS", linux = "GPU box · Linux", unraid = "NAS · Unraid" }
+# v0.5.7: long recordings processed in 15-minute pieces
+extra_result_patterns = ["CHUNKS_{label}.json"]   # chunk manifests count as results
+chunk_tier_glob = ""          # CSV piece lists (label,hash,...): a recording is done when every piece is processed or silent
+silent_lists = []             # files whose first column lists pieces confirmed silent
