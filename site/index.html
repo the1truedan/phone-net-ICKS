@@ -210,7 +210,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">v0.5.8 · 2026-10-02</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
+    <span class="private-chip">v0.5.10 · 2026-10-03</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
   </div>
 </header>
 
@@ -389,7 +389,7 @@
     <p class="section-sub">Built between care tasks with several AI assistants. Citations are commit IDs and session IDs from the owner's private records;
       they are listed so each step can be traced, not as public links. Sources were checked against three records (session index, Grok export, chat-history import); the session index had filed early grok.com chats as ChatGPT, and these entries use the corrected source.</p>
   </div>
-  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of ten coding breakthroughs from April to September 2026, clustered in the last week of September"></svg><div class="tip" hidden></div></div></div>
+  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of twelve coding breakthroughs from April to October 2026, clustered from the last week of September"></svg><div class="tip" hidden></div></div></div>
   <ol class="bt">
     <li><span class="bt-date">2026-04-14</span><span class="bt-tool">Grok (grok.com)</span><b>Coding pivot + AI certificate enrollment</b><span class="bt-help">Moved from chatting about the situation to building tools for it.</span>
       <span class="bt-cite">grok.com chat <code>a368cd55</code> (first build question: a Dockerfile) · AI/ML certificate acceptance, same night</span></li>
@@ -413,24 +413,28 @@
       <span class="bt-cite">session <code>52bdff7f</code></span></li>
     <li><span class="bt-date">2026-09-29</span><span class="bt-tool">Claude · adb</span><b>Payroll truth, straight from the payroll app</b><span class="bt-help">The payroll company's own shift exports (hours logged vs paid cap) plus a read-only check of the app on the phone: clock-in time with GPS and fingerprint, no camera or mic, screen time.</span>
       <span class="bt-cite">commit <code>913b9b2</code> · device audit 2026-09-29 17:41 · session <code>52bdff7f</code></span></li>
+    <li><span class="bt-date">2026-10-02</span><span class="bt-tool">Claude</span><b>Two computers at once: a quick pass on the Mac, the deep pass on the GPU</b><span class="bt-help">Long recordings are cut into 15-minute pieces and scored by a small model on the Mac's own GPU while the CUDA GPU does speaker separation. On a 16-hour recording only 12 of 65 pieces needed the deep pass. The job board shows both computers, with CPU, GPU and network per host.</span>
+      <span class="bt-cite">commit <code>0d5bb44</code> · session <code>9cf494a3</code> (resident GPU worker: session <code>875a33cc</code>)</span></li>
+    <li><span class="bt-date">2026-10-03</span><span class="bt-tool">Claude</span><b>Every pull covered, broken files recovered</b><span class="bt-help">The board now checks every recording in every phone pull by hash. It found 97 recordings that no queue covered. A recovery step rebuilt 15 damaged files (cut-off recordings, missing headers), one of them with untrunc in a container, so their audio could be transcribed.</span>
+      <span class="bt-cite">commit <code>28e2275</code> · session <code>9cf494a3</code></span></li>
   </ol>
 </section>
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.5.7 · updated 2026-10-02 (evening)</p>
+    <p class="section-eyebrow">By the numbers · v0.5.10 · updated 2026-10-03</p>
     <h2 class="section-title">Everything in one place</h2>
-    <p class="section-sub">Totals from Jan 2024 to Oct 1, 2026. Counts only: no names, no content, no medical detail.</p>
+    <p class="section-sub">Totals from Jan 2024 to Oct 3, 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
   <div class="totals">
     <div><b>18,797</b><span>caregiving notes</span></div>
     <div><b>~14.5 h</b><span>average day, first note to last (since Feb 2025)</span></div>
     <div><b>3.5 → 4.0 → 4.25 → 5.25</b><span>paid cap per day from payroll exports (6.5 promised)</span></div>
     <div><b>~760 h</b><span>audio transcribed on local hardware</span></div>
-    <div><b>2,073</b><span>recordings indexed</span></div>
-    <div><b>2,800</b><span>recordings and long-file chunks fully speaker-separated (2,031 + 769 chunks)</span></div>
+    <div><b>2,290</b><span>recordings indexed (every phone pull, checked by hash)</span></div>
+    <div><b>3,172</b><span>recordings and long-file chunks fully speaker-separated (2,097 + 1,075 chunks); 274 more in the queue</span></div>
     <div><b>1,119</b><span>true recording dates recovered</span></div>
-    <div><b>79</b><span>emails indexed: 58 with the two companies, 21 with the social worker</span></div>
+    <div><b>90</b><span>emails indexed: 63 with the two companies, 26 with the social worker, 1 with the care team</span></div>
     <div><b>1,750</b><span>calendar events · 699 days with one</span></div>
     <div><b>895</b><span>days with notes</span></div>
     <div><b>12,572</b><span>texts, calls and voicemails indexed (incl. 1,756 call/text records read from 3 phones)</span></div>
@@ -441,8 +445,8 @@
     <div><b>10</b><span>device pulls and reads from 5 phones (one with the care receiver's OK, case contacts only)</span></div>
     <div><b>~40 h · ~22 h</b><span>AI-assisted admin time · heavy GPU hours (Sep 25–29)</span></div>
     <div><b>55</b><span>payroll records exported: 40 pay stubs, 14 shift-status periods, 1 W-2</span></div>
-    <div><b>3,786 h · 2,018 h</b><span>hours logged · hours paid (Mar 2025 to Sep 2026)</span></div>
-    <div><b>557</b><span>days in the day-by-day ledger (hours, notes, emails, calls, recordings)</span></div>
+    <div><b>3,786 h · 2,018 h</b><span>hours logged · hours paid (Mar 2025 to Oct 2026)</span></div>
+    <div><b>560</b><span>days in the day-by-day ledger (hours, notes, emails, calls, recordings)</span></div>
     <div><b>36 of 40</b><span>pay stubs match the paid daily cap exactly (the other 4 are split corrections)</span></div>
   </div>
 
@@ -503,7 +507,7 @@
   </div>
 
   <div class="tools">
-    <h3>Models, tools and AI assistants (all links official) · as of v0.5.7</h3>
+    <h3>Models, tools and AI assistants (all links official) · as of v0.5.10</h3>
     <p><b>On-device models:</b>
       <a href="https://huggingface.co/openai/whisper-large-v3">Whisper large-v3</a> via <a href="https://github.com/SYSTRAN/faster-whisper">faster-whisper</a> and
       <a href="https://github.com/m-bain/whisperX">WhisperX</a> (word timing with <a href="https://pytorch.org/audio/stable/generated/torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.html">wav2vec2</a>) ·
@@ -514,14 +518,16 @@
     <p><b>Tools:</b>
       <a href="https://developer.android.com/tools/adb">adb</a> · <a href="https://ffmpeg.org/">FFmpeg</a> · <a href="https://rclone.org/">rclone</a> ·
       <a href="https://github.com/tesseract-ocr/tesseract">Tesseract OCR</a> · <a href="https://github.com/Genymobile/scrcpy">scrcpy</a> (planned) ·
-      <a href="https://takeout.google.com/">account export</a> · <a href="https://github.com/asciimoo/hister">Hister</a> (browser-history search)</p>
+      <a href="https://takeout.google.com/">account export</a> · <a href="https://github.com/asciimoo/hister">Hister</a> (browser-history search) ·
+      <a href="https://github.com/anthwlock/untrunc">untrunc</a> (rebuilds cut-off phone recordings, run in a container)</p>
     <p><b>AI assistants and CLI agents used to build it:</b>
       <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> · <a href="https://claude.ai/">Claude</a> ·
       <a href="https://grok.com/">Grok</a> · <a href="https://chatgpt.com/">ChatGPT</a> · <a href="https://github.com/openai/codex">Codex CLI</a> ·
       <a href="https://opencode.ai/">OpenCode</a> · <a href="https://github.com/badlogic/pi-mono">Pi coding agent</a> · Cowork, with session history from an <a href="https://github.com/kenn-io/agentsview">AgentsView</a> index.</p>
-    <p><b>Roadmap (earmarked, v0.5.6):</b> two computers working at once — the GPU host does the deep pass (large transcription model, speaker
+    <p><b>Done (v0.5.6–v0.5.10):</b> two computers working at once — the GPU host does the deep pass (large transcription model, speaker
       separation) while the Mac cuts long recordings into pieces, checks for silence and runs a quick small-model pass that decides which pieces need
-      the deep pass. Next: move audio leveling and the silence check fully to the Mac, and let it transcribe short items itself when the GPU is busy.
+      the deep pass; every phone pull is checked by hash, and damaged recordings go through a recovery step first.</p>
+    <p><b>Roadmap (earmarked):</b> next, move audio leveling and the silence check fully to the Mac, and let it transcribe short items itself when the GPU is busy.
       Also earmarked: a fast first hash (<a href="https://github.com/Cyan4973/xxHash">xxHash XXH128</a>) at every copy hop for quick transfer checks,
       with SHA-256 still taken once at the first pull as the custody hash. Details: <code>docs/EARMARK_DUAL_HOST_FAST_HASH.md</code>.</p>
     <p class="ai">Case audio and transcripts were processed only by the on-device models above, never sent to the cloud assistants.</p>
@@ -572,7 +578,7 @@
 </section>
 
 <footer><div class="mu-footer">
-  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.5.8 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.5.10 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
   <nav>
     <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
     <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>
@@ -734,7 +740,7 @@ function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Ma
   hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${AIH[MONTHS[i][0]] || 0} h</b> active`);
 })();
 
-const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"]];
+const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"], ["2026-10-02", "Claude", "Two computers at once: Mac quick pass + GPU deep pass"], ["2026-10-03", "Claude", "Every pull covered, broken files recovered"]];
 (function bt() {
   const root = document.getElementById("viz-bt"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900;
   const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-10-01"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
