@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.9 — 2026-10-02 · report pages with cards, contents bar and colour
+- **Report pages:** each section is a card with a coloured edge; a contents bar links to each section; quotes become callout
+  boxes; numbers align right; ✅ and ⚠️ get colour; bold table words listed in `report_chips` become coloured chips
+  (for example, the party that a row points to). Long headings no longer break the layout (pandoc `--wrap=none`).
+
 ## v0.5.8 — 2026-10-02 · coverage of every phone pull
 - **Coverage panel (watch folder):** the job board now reads the checksum list (`SHA256SUMS*.txt`) that every phone pull writes
   (`pull_manifest_globs`) and checks each audio file, by hash, against the catalog, the results and the queues. It scans again

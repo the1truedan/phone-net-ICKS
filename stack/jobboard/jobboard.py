@@ -798,22 +798,50 @@ class Board:
         name = html.escape(reps[i]["name"])
         if p.endswith(".md") and shutil.which("pandoc"):
             # pandoc's default is to drop raw HTML from the Markdown; links become local hrefs
-            inner = sh(["pandoc", "-f", "gfm", "-t", "html5", "--no-highlight", p], timeout=30)
+            inner = sh(["pandoc", "-f", "gfm", "-t", "html5", "--wrap=none", "--no-highlight", p], timeout=30)
         else:
             inner = f"<pre style='white-space:pre-wrap'>{html.escape(body)}</pre>"
         return (f"<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
-                f"<title>{name}</title><style>{REPORT_CSS}</style></head><body><div class=muted>{name} · {html.escape(os.path.basename(p))} · "
-                f"modified {time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(p)))}</div>{inner}</body></html>"), "text/html; charset=utf-8"
+                f"<title>{name}</title><style>{REPORT_CSS}</style></head><body>{self._report_layout(inner, name, p)}</body></html>"), "text/html; charset=utf-8"
+
+    def _report_layout(self, inner, name, path):
+        """2026-10-02 (v0.5.9): each h2 section in a card, a contents bar, callouts for quotes, numbers aligned right,
+        and coloured chips for bold table words listed in report_chips ([[word, colour], ...] in the local config)."""
+        inner = re.sub(r"<td>([−+\-$]?[\d.,]+(?: ?(?:h|%|min|GB|days?))?|\$[\d.,]+)</td>", r"<td class=num>\1</td>", inner)
+        for word, col in self.c.get("report_chips", []):
+            inner = re.sub(rf"<strong>({re.escape(word)}\b[^<]*)</strong>", rf"<span class=chip style='--c:{col}'>\1</span>", inner)
+        inner = inner.replace("✅", "<span class=ok>✅</span>").replace("⚠️", "<span class=warn>⚠️</span>")
+        m = re.search(r"<h1[^>]*>.*?</h1>", inner, re.S)
+        head, rest = (inner[:m.end()], inner[m.end():]) if m else ("", inner)
+        parts = re.split(r"(?=<h2[\s>])", rest)
+        intro, secs = (parts[0], parts[1:]) if parts and not parts[0].lstrip().startswith("<h2") else ("", parts)
+        toc = []
+        for sec in secs:
+            hm = re.match(r'<h2(?:\s+id="([^"]+)")?[^>]*>(.*?)</h2>', sec, re.S)
+            if hm and hm.group(1):
+                toc.append(f"<a href='#{hm.group(1)}'>{re.sub('<[^>]+>', '', hm.group(2))}</a>")
+        meta = (f"<div class=meta>📄 {name} · {html.escape(os.path.basename(path))} · modified "
+                f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(path)))} · <span class=badge>ASD-STE100</span></div>")
+        return (f"<header>{meta}{head}{intro}" + (f"<nav>{''.join(toc)}</nav>" if len(toc) > 1 else "") + "</header>"
+                + "".join(f"<section class=card>{x}</section>" for x in secs))
 
 
-REPORT_CSS = """:root{--bg:#fcfcfb;--fg:#1f1f1d;--muted:#6b6b66;--line:#e4e4df;--card:#fff;--acc:#2a78d6;--code:#f1f1ed}
-@media (prefers-color-scheme:dark){:root{--bg:#1a1a19;--fg:#ececea;--muted:#a3a39d;--line:#33332f;--card:#22221f;--acc:#3987e5;--code:#2b2b28}}
-body{background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:16px}
-h1{font-size:23px;margin:.6em 0 .3em}h2{font-size:18px;margin-top:1.6em;border-bottom:1px solid var(--line);padding-bottom:4px}h3{font-size:15.5px;margin-top:1.3em}
-table{width:100%;border-collapse:collapse;margin:8px 0 14px;display:block;overflow-x:auto}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-variant-numeric:tabular-nums}
-th{background:var(--card);font-weight:600}code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.92em}
-pre{background:var(--code);padding:10px;border-radius:6px;overflow-x:auto}blockquote{border-left:3px solid var(--acc);margin:8px 0;padding:2px 12px;color:var(--muted)}
-a{color:var(--acc)}img{max-width:100%}.muted{color:var(--muted);font-size:12.5px}li{margin:2px 0}"""
+REPORT_CSS = """:root{--bg:#f6f7f9;--fg:#1d1f23;--muted:#666b73;--line:#e2e5ea;--card:#fff;--acc:#2a6fd6;--code:#eef1f5;--ok:#1e8e4e;--warn:#c27c00;--call:#fff7e0;--callb:#e0a400}
+@media (prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#eceef1;--muted:#a2a8b1;--line:#30343a;--card:#1f2226;--acc:#5b9bf0;--code:#2a2e33;--ok:#4cc27e;--warn:#f0b03c;--call:#2b2617;--callb:#a37a12}}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,sans-serif;max-width:1120px;margin:0 auto;padding:16px}
+header{margin-bottom:14px}.meta{color:var(--muted);font-size:12.5px}.badge{background:var(--acc);color:#fff;border-radius:9px;padding:1px 8px;font-size:11px;font-weight:600}
+h1{font-size:25px;margin:.4em 0 .4em;padding-bottom:6px;border-bottom:3px solid var(--acc)}
+h2{font-size:18px;margin:0 0 10px;color:var(--acc)}h3{font-size:15.5px;margin-top:1.2em}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:10px;padding:14px 18px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}nav a{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:3px 11px;font-size:13px;text-decoration:none}
+nav a:hover{border-color:var(--acc)}
+table{width:100%;border-collapse:collapse;margin:8px 0 6px;display:block;overflow-x:auto}td,th{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top;font-variant-numeric:tabular-nums}
+th{background:var(--code);font-weight:600;font-size:13.5px}tbody tr:nth-child(even) td{background:rgba(127,127,127,.04)}tbody tr:hover td{background:rgba(42,111,214,.06)}
+td.num{text-align:right;white-space:nowrap}td strong{color:var(--fg)}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.9em}pre{background:var(--code);padding:10px;border-radius:6px;overflow-x:auto}
+blockquote{background:var(--call);border-left:4px solid var(--callb);margin:10px 0;padding:6px 14px;border-radius:6px}blockquote p{margin:.3em 0}
+.chip{display:inline-block;border-radius:10px;padding:0 8px;font-weight:600;color:var(--c);border:1px solid var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);white-space:nowrap}
+.ok{color:var(--ok)}.warn{color:var(--warn)}a{color:var(--acc)}img{max-width:100%}.muted{color:var(--muted);font-size:12.5px}li{margin:3px 0}"""
 
 
 PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

@@ -52,3 +52,5 @@ silent_lists = []             # files whose first column lists pieces confirmed 
 # catalog_csv = "/path/to/CATALOG_RECORDINGS.csv" # needs sha256 and source columns
 # coverage_ignore = "(/Notifications/|/Ringtones/|/\\.pending-)"
 # coverage_queue_prefix = "U"                      # "Queue uncovered" writes AV_QUEUE_U<MMDD>.tsv
+# Report pages (v0.5.9): bold table words that start with one of these get a coloured chip.
+# report_chips = [["Party A", "#7b4bd6"], ["Party B", "#0f8a7e"]]
