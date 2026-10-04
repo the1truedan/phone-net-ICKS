@@ -210,7 +210,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">v0.5.10 · 2026-10-03</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
+    <span class="private-chip">v0.5.11 · 2026-10-03</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
   </div>
 </header>
 
@@ -414,15 +414,17 @@
     <li><span class="bt-date">2026-09-29</span><span class="bt-tool">Claude · adb</span><b>Payroll truth, straight from the payroll app</b><span class="bt-help">The payroll company's own shift exports (hours logged vs paid cap) plus a read-only check of the app on the phone: clock-in time with GPS and fingerprint, no camera or mic, screen time.</span>
       <span class="bt-cite">commit <code>913b9b2</code> · device audit 2026-09-29 17:41 · session <code>52bdff7f</code></span></li>
     <li><span class="bt-date">2026-10-02</span><span class="bt-tool">Claude</span><b>Two computers at once: a quick pass on the Mac, the deep pass on the GPU</b><span class="bt-help">Long recordings are cut into 15-minute pieces and scored by a small model on the Mac's own GPU while the CUDA GPU does speaker separation. On a 16-hour recording only 12 of 65 pieces needed the deep pass. The job board shows both computers, with CPU, GPU and network per host.</span>
-      <span class="bt-cite">commit <code>0d5bb44</code> · session <code>9cf494a3</code> (resident GPU worker: session <code>875a33cc</code>)</span></li>
+      <span class="bt-cite">commit <code>0d5bb44</code> · session <code>9cf494a3</code> (resident GPU worker: session <code>875a33cc</code>)</span>
+      <span class="bt-cite">session index, 2026-10-02 18:43 and 18:47: “can any jobs run concurrently like overnight?” · “on large- run smaller model to get context to discern if second better pass is required”</span></li>
     <li><span class="bt-date">2026-10-03</span><span class="bt-tool">Claude</span><b>Every pull covered, broken files recovered</b><span class="bt-help">The board now checks every recording in every phone pull by hash. It found 97 recordings that no queue covered. A recovery step rebuilt 15 damaged files (cut-off recordings, missing headers), one of them with untrunc in a container, so their audio could be transcribed.</span>
-      <span class="bt-cite">commit <code>28e2275</code> · session <code>9cf494a3</code></span></li>
+      <span class="bt-cite">commit <code>28e2275</code> · session <code>9cf494a3</code></span>
+      <span class="bt-cite">session index, 2026-10-02 22:58: “can job board have a watch directory already established where the new pulls drop to?”</span></li>
   </ol>
 </section>
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.5.10 · updated 2026-10-03</p>
+    <p class="section-eyebrow">By the numbers · v0.5.11 · updated 2026-10-03</p>
     <h2 class="section-title">Everything in one place</h2>
     <p class="section-sub">Totals from Jan 2024 to Oct 3, 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
@@ -507,7 +509,7 @@
   </div>
 
   <div class="tools">
-    <h3>Models, tools and AI assistants (all links official) · as of v0.5.10</h3>
+    <h3>Models, tools and AI assistants (all links official) · as of v0.5.11</h3>
     <p><b>On-device models:</b>
       <a href="https://huggingface.co/openai/whisper-large-v3">Whisper large-v3</a> via <a href="https://github.com/SYSTRAN/faster-whisper">faster-whisper</a> and
       <a href="https://github.com/m-bain/whisperX">WhisperX</a> (word timing with <a href="https://pytorch.org/audio/stable/generated/torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H.html">wav2vec2</a>) ·
@@ -578,7 +580,7 @@
 </section>
 
 <footer><div class="mu-footer">
-  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.5.10 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.5.11 · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
   <nav>
     <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
     <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.11 — 2026-10-03 · the requests behind the two newest breakthroughs
+- **Breakthroughs:** the two newest entries now quote the owner's own request from the session index (time-stamped, IDs only), as a historical note
+  of how each step started: running jobs concurrently with a small-model first pass, and a watch folder for new phone pulls.
+- Final numbers unchanged from v0.5.10: 2,267 of 2,271 recordings fully processed (2 unreadable, 2 not recordings); 3,600 speaker-separated
+  recordings and pieces.
+
 ## v0.5.10 — 2026-10-03 · new numbers, two new breakthroughs
 - **By the numbers:** 2,290 recordings indexed (every phone pull, checked by hash); 3,600 recordings and long-file chunks fully speaker-separated
   (2,283 + 1,317 chunks), every readable recording done; 90 emails indexed; 560 days in the day-by-day ledger.
