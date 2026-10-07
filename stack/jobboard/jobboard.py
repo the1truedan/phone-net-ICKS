@@ -10,6 +10,7 @@ any local report pages come from files that config points at, so nothing case-sp
 import argparse
 import threading, csv, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOKEN = secrets.token_urlsafe(18)
@@ -100,6 +101,17 @@ class Board:
             self.registry = load_toml(self.c["registry_file"]).get("queue", {})
 
     # ---------- queues ----------
+
+    def batch_jobs(self):
+        """batch_jobs from the config file, re-read when the file changes, so new Mac jobs show up without a restart."""
+        path = self.c.get("_config_path")
+        try:
+            m = os.path.getmtime(path)
+            if m != getattr(self, "_bj_mtime", None):
+                self._bj, self._bj_mtime = load_toml(path).get("batch_jobs", []), m
+            return self._bj
+        except Exception:
+            return self.c.get("batch_jobs", [])
     def qname(self, path):
         return re.sub(self.c.get("queue_name_regex", r"^$"), "", os.path.splitext(os.path.basename(path))[0])
 
@@ -362,14 +374,44 @@ class Board:
                     best = max(best, (int(f[6]), int(f[9])))
                 except ValueError:
                     pass
-        rxr, txr = self._rate("m4rv", *best)
+        rxr, txr = self._rate("local", *best)
         # Apple GPU (no sudo): the graphics driver's own statistics. Quick triage (whisper.cpp, Metal) runs here, so the GPU is the busy part.
-        io = sh(["ioreg", "-r", "-d", "1", "-w", "0", "-c", "IOAccelerator"])
+        io = sh(["/usr/sbin/ioreg", "-r", "-d", "1", "-w", "0", "-c", "IOAccelerator"])
         gm = re.search(r'"Device Utilization %"=(\d+)', io); um = re.search(r'"In use system memory"=(\d+)', io)
         tri = [p for p in glob.glob(os.path.join(self.c["results_dir"], "TRIAGE_*.json")) if time.time() - os.path.getmtime(p) < 600]
         return {"load1": round(la[0], 2), "cpus": n, "cpu_pct": round(min(100, cpu), 1), "rx_mbs": rxr and round(rxr / 1e6, 1),
                 "tx_mbs": txr and round(txr / 1e6, 1), "triage_10min": len(tri),
-                "gpu_pct": int(gm.group(1)) if gm else None, "gpu_mem_gb": round(int(um.group(1)) / 2**30, 1) if um else None}
+                "gpu_pct": int(gm.group(1)) if gm else None, "gpu_mem_gb": round(int(um.group(1)) / 2**30, 1) if um else None,
+                "gpu_users": self.gpu_users()}
+
+    # Process names that use the Apple GPU (Metal); the label says what the work is. macOS has no per-process GPU % without sudo,
+    # so each row shows the process CPU % as a busy hint, plus models loaded in Ollama with their GPU memory.
+    GPU_PROCS = [(r"ollama", "Ollama (local models: embeddings, summaries, captions)"), (r"whisper-(cli|server|stream)", "whisper.cpp quick triage"),
+                 (r"ffmpeg", "ffmpeg (cutting / frames)"), (r"python.*(mlx|torch|comfy|wera_doc_embed|embed_append|quick_triage)", "Python ML job"),
+                 (r"Brave Browser Helper \(GPU\)|Google Chrome Helper \(GPU\)", "Browser GPU process (video, pages)"),
+                 (r"LM Studio|llama-server|lms ", "LM Studio / llama.cpp"), (r"OBS\.app|/obs ", "OBS (screen recording / encoding)"),
+                 (r"Docker Desktop Helper \(Renderer\)|Docker Desktop Helper \(GPU\)", "Docker Desktop window"),
+                 (r"scrcpy", "scrcpy (phone mirror)"), (r"WindowServer", "macOS display (WindowServer)")]
+
+    def gpu_users(self):
+        rows = {}
+        for ln in sh(["ps", "-Ao", "pid=,%cpu=,command="]).splitlines():
+            f = ln.strip().split(None, 2)
+            if len(f) < 3:
+                continue
+            for pat, label in self.GPU_PROCS:
+                if re.search(pat, f[2]):
+                    r = rows.setdefault(label, {"label": label, "cpu_pct": 0.0, "n": 0})
+                    r["cpu_pct"] += float(f[1]); r["n"] += 1
+                    break
+        out = sorted((r for r in rows.values() if r["cpu_pct"] >= 1), key=lambda r: -r["cpu_pct"])[:5]
+        for r in out: r["cpu_pct"] = round(r["cpu_pct"], 1)
+        try:
+            ps = json.load(urllib.request.urlopen("http://127.0.0.1:11434/api/ps", timeout=1)).get("models", [])
+            models = [{"name": m.get("name"), "vram_gb": round(m.get("size_vram", 0) / 2**30, 1)} for m in ps]
+        except Exception:
+            models = []
+        return {"procs": out, "models": models}
 
     def hosts(self):
         """Host badges: [icon, "name · role"]. Names come from host_labels in the config (defaults are generic)."""
@@ -407,15 +449,24 @@ class Board:
             m = re.search(r"scp .*?/([\w]+)(?:\.orig48k)?\.wav \S*:", cmd)
             if m and cmd.startswith("scp"):
                 jobs.append({"label": m.group(1), "stage": "upload to GPU host", "elapsed_s": el, "pct": None, "est": True}); continue
-        for name, log, total in self.c.get("batch_jobs", []):   # [name, log file, expected lines]
+        for name, log, total, *rest in self.batch_jobs():   # [name, log file, expected lines, optional status file]
             if os.path.exists(log) and time.time() - os.path.getmtime(log) < 3600:
                 lines = [x for x in open(log, errors="ignore").read().splitlines() if x.strip()]
-                done = any("DONE" in x for x in lines[-2:])
+                done = len(lines) >= total or any(re.search(r"\bDONE\b|\bdone\b \{", x) for x in lines[-2:])   # all pieces logged = finished
                 if not done:
-                    jobs.append({"label": name, "stage": f"batch: {len(lines)} of {total} pieces", "elapsed_s": int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log))),
-                                 "pct": int(100 * len(lines) / total), "est": False})
+                    el = int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log)))
+                    n = len(lines)
+                    stage = f"batch: {n} of {total} pieces"
+                    now = rest[0] if rest else ""
+                    if now and os.path.exists(now) and time.time() - os.path.getmtime(now) < 600:   # the job's own "working on" line
+                        stage += " · now: " + open(now, errors="ignore").read().strip()[:120]
+                    elif lines:   # else the last finished piece (log line minus its time stamp)
+                        stage += " · last: " + re.sub(r"^\S+ ", "", lines[-1])[:120]
+                    left = int(el / n * (total - n)) if n > 1 else None
+                    jobs.append({"label": name, "stage": self.redact(stage) if self.redact else stage, "elapsed_s": el,
+                                 "pct": int(100 * n / total), "est": left is not None, "left_s": left})
         for j in jobs:
-            j["host"] = "mac"; j["queue"] = self.queue_of(j["label"], lm, by_hash) if j["label"] not in (b[0] for b in self.c.get("batch_jobs", [])) else "batch"
+            j["host"] = "mac"; j["queue"] = self.queue_of(j["label"], lm, by_hash) if j["label"] not in (b[0] for b in self.batch_jobs()) else "batch"
         return jobs
 
     def storage(self):
@@ -490,7 +541,7 @@ class Board:
             r["cpu_pct"] = round(float(out[6]), 1) if out[6].strip() else None
             nl = next((x for x in out if x.startswith("NET ")), None)
             if nl:
-                _, a, b = nl.split(); rxr, txr = self._rate("mrgpu", int(a), int(b))
+                _, a, b = nl.split(); rxr, txr = self._rate("gpu_host", int(a), int(b))
                 r["rx_mbs"], r["tx_mbs"] = rxr and round(rxr / 1e6, 1), txr and round(txr / 1e6, 1)
             sep = out.index("---")
             sep2 = out.index("+++") if "+++" in out else len(out)
@@ -881,7 +932,7 @@ function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").
  const el=c.elapsed_s+dt,raw=c.est_total_s?100*el/c.est_total_s:null,p=raw==null?(c.lo+c.hi)/2:Math.min(c.hi,Math.max(c.lo,raw));
  const left=c.est_total_s?c.est_total_s-el:null,eta=left==null?"estimating…":raw>c.hi?`finishing ${esc(c.stage_name)}…`:`~${secs(left)} left`;
  return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span></td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
- document.getElementById("cur").innerHTML+=MAC.map(j=>{const el=j.elapsed_s+dt;return `<tr><td>${esc(j.label)}</td><td>${hb('mac')}</td><td>${esc(j.queue)}</td><td></td><td><span class="pill small">${esc(j.stage)}</span></td><td style="white-space:nowrap">${j.pct==null?'<span class="small muted">in progress</span>':ubar(j.pct)+` <b>${j.pct}%</b>`} <span class="small muted">${secs(el)}${j.est?" · estimated":""}</span></td></tr>`}).join("");}
+ document.getElementById("cur").innerHTML+=MAC.map(j=>{const el=j.elapsed_s+dt;return `<tr><td>${esc(j.label)}</td><td>${hb('mac')}</td><td>${esc(j.queue)}</td><td></td><td><span class="pill small">${esc(j.stage)}</span></td><td style="white-space:nowrap">${j.pct==null?'<span class="small muted">in progress</span>':ubar(j.pct)+` <b>${j.pct}%</b>`} <span class="small muted">${secs(el)}${j.left_s!=null?` · ~${secs(j.left_s)} left`:(j.est?" · estimated":"")}</span></td></tr>`}).join("");}
 async function load(){const s=await (await fetch("/api/status")).json();
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
@@ -893,7 +944,7 @@ document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <div><div class="muted small">GPU host CPU</div><div class="big">${g.cpu_pct??"?"}% · load ${g.load1} / ${g.cpus}</div>${bar(g.cpu_pct)}</div>
 <div><div class="muted small">GPU host memory</div><div class="big">${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(1)} / ${(g.mem_total_mib/1024).toFixed(0)} GiB</div>${bar(100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib)}</div>
 <div><div class="muted small">GPU host network</div><div class="big">${g.rx_mbs??"…"} ↓ · ${g.tx_mbs??"…"} ↑ MB/s</div>${bar(100*Math.max(g.rx_mbs||0,g.tx_mbs||0)/117)}</div>
-<div><div class="muted small">${hb('mac')} cutting + quick triage</div><div class="big">GPU ${L.gpu_pct??"?"}% · CPU ${L.cpu_pct}%</div>${bar(L.gpu_pct)}${bar(L.cpu_pct)}<div class="small muted">Apple GPU (Metal) runs quick triage · GPU memory ${L.gpu_mem_gb??"?"} GB · load ${L.load1} / ${L.cpus}</div><div class="small muted">${L.rx_mbs??"…"} ↓ · ${L.tx_mbs??"…"} ↑ MB/s · ${L.triage_10min} triaged in 10 min</div></div>
+<div><div class="muted small">${hb('mac')} cutting + quick triage</div><div class="big">GPU ${L.gpu_pct??"?"}% · CPU ${L.cpu_pct}%</div>${bar(L.gpu_pct)}${bar(L.cpu_pct)}<div class="small muted">Apple GPU (Metal) runs quick triage · GPU memory ${L.gpu_mem_gb??"?"} GB · load ${L.load1} / ${L.cpus}</div><div class="small muted">${L.rx_mbs??"…"} ↓ · ${L.tx_mbs??"…"} ↑ MB/s · ${L.triage_10min} triaged in 10 min</div>${(()=>{const u=L.gpu_users||{};const m=(u.models||[]).map(x=>`${esc(x.name)} (${x.vram_gb} GB)`).join(", ");const p=(u.procs||[]).map(x=>`${esc(x.label)} · CPU ${x.cpu_pct}%`).join("<br>");return (m||p)?`<div class="small" style="margin-top:4px"><b>Using the Mac GPU now:</b>${m?`<br>Models loaded: ${m}`:""}${p?`<br>${p}`:""}</div>`:`<div class="small muted">Mac GPU: no known GPU job running</div>`})()}</div>
 <div><div class="muted small">${hb('unraid')} ${esc(s.storage.nic||"NIC")} (shared 1 GbE)</div><div class="big">${s.storage.reachable?`${s.storage.rx_mbs??"…"} ↓ · ${s.storage.tx_mbs??"…"} ↑ MB/s`:"not reachable"}</div>${bar(100*Math.max(s.storage.rx_mbs||0,s.storage.tx_mbs||0)/117)}<div class="small muted">load ${s.storage.load1??"?"} / ${s.storage.cpus??"?"}</div></div>
 <div><div class="muted small">State</div><div class="big"><span class="pill ${g.paused?"paused":""}">${g.paused?"PAUSED":"running"}</span> ${g.workers} item${g.workers==1?"":"s"} processing${(g.resident_workers||[]).length?` · ${g.resident_workers.length} resident worker${g.resident_workers.length==1?"":"s"} (models loaded)${(g.spool_queued||[]).length?` · ${g.spool_queued.length} waiting`:""}`:""}</div>
 <button onclick="post('/api/pause')">Pause all</button> <button onclick="post('/api/resume')">Resume all</button></div></div>
@@ -988,6 +1039,7 @@ def main():
     ap.add_argument("--redact", action="store_true", help="block out names/identifiers listed in redact_file (for screenshots)")
     a = ap.parse_args()
     cfg = load_toml(a.config)
+    cfg["_config_path"] = a.config
     if a.dry_run:
         cfg["dry_run"] = True
     if a.redact:
