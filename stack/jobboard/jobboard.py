@@ -724,7 +724,7 @@ class Board:
                 "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "runners": runners,
                 "recent": recent, "mac_jobs": mac_jobs, "logs": self.logs(), "priority": self.priority,
-                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "coverage": self.coverage(res, lm), "flag_label": self.c.get("flag_label", "flagged")}
+                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "report_fresh": [self.freshness(k) for k in range(len(self.c.get("reports", [])))], "coverage": self.coverage(res, lm), "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
     def _run(self, argv, detach=False):
@@ -851,6 +851,44 @@ class Board:
             return {"error": "not a job-board runner pid"}
         return self._run(["kill", "-STOP" if on else "-CONT", str(pid)])
 
+    def freshness(self, i):
+        """2026-10-12 (Dan): stale-report LED. Config freshness_sources = {name = [glob, ...]} (non-recursive; a matched
+        dir counts by its own mtime, which moves when a pull adds files). A report lists the sources it is built from
+        (sources = [...] on its reports entry; [] = fixed snapshot, never stale); default freshness_default, else all.
+        green = no source newer than the report file; yellow = newer data for < freshness_red_h (24) h; red = longer."""
+        reps = self.c.get("reports", [])
+        if not 0 <= i < len(reps) or not os.path.exists(reps[i]["path"]):
+            return {"led": "grey", "note": "report file missing", "updated": None, "newer": []}
+        srcs = self.c.get("freshness_sources", {})
+        want = reps[i].get("sources", self.c.get("freshness_default", list(srcs)))
+        rm, now = os.path.getmtime(reps[i]["path"]), time.time()
+        cache = self.__dict__.setdefault("_fresh_cache", {})
+        newer = []
+        for n in want:
+            hit = cache.get(n)
+            if not hit or now - hit[0] > 60:   # re-glob each source at most once a minute
+                best, what = 0.0, ""
+                for g in srcs.get(n, []):
+                    for q in glob.glob(os.path.expanduser(g)):
+                        try:
+                            m = os.path.getmtime(q)
+                        except OSError:
+                            continue
+                        if m > best:
+                            best, what = m, os.path.basename(q.rstrip("/"))
+                hit = cache[n] = (now, best, what)
+            if hit[1] > rm:
+                newer.append({"source": n, "at": time.strftime("%m-%d %H:%M", time.localtime(hit[1])), "item": hit[2], "t": hit[1]})
+        upd = time.strftime("%Y-%m-%d %H:%M", time.localtime(rm))
+        if not want:
+            return {"led": "grey", "note": "fixed snapshot", "updated": upd, "newer": []}
+        if not newer:
+            return {"led": "green", "note": "up to date with " + ", ".join(want), "updated": upd, "newer": []}
+        behind_h = (now - min(x["t"] for x in newer)) / 3600
+        led = "red" if behind_h >= self.c.get("freshness_red_h", 24) else "yellow"
+        return {"led": led, "note": f"newer data for {behind_h:.0f} h", "updated": upd,
+                "newer": [{k: v for k, v in x.items() if k != "t"} for x in sorted(newer, key=lambda x: x["t"])]}
+
     def report(self, i):
         reps = self.c.get("reports", [])
         if not 0 <= i < len(reps) or not os.path.exists(reps[i]["path"]):
@@ -866,9 +904,9 @@ class Board:
         else:
             inner = f"<pre style='white-space:pre-wrap'>{html.escape(body)}</pre>"
         return (f"<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
-                f"<title>{name}</title><style>{REPORT_CSS}</style></head><body>{self._report_layout(inner, name, p)}</body></html>"), "text/html; charset=utf-8"
+                f"<title>{name}</title><style>{REPORT_CSS}</style></head><body>{self._report_layout(inner, name, p, i)}</body></html>"), "text/html; charset=utf-8"
 
-    def _report_layout(self, inner, name, path):
+    def _report_layout(self, inner, name, path, i=None):
         """2026-10-02 (v0.5.9): each h2 section in a card, a contents bar, callouts for quotes, numbers aligned right,
         and coloured chips for bold table words listed in report_chips ([[word, colour], ...] in the local config)."""
         inner = re.sub(r"<td>([−+\-$]?[\d.,]+(?: ?(?:h|%|min|GB|days?))?|\$[\d.,]+)</td>", r"<td class=num>\1</td>", inner)
@@ -884,8 +922,15 @@ class Board:
             hm = re.match(r'<h2(?:\s+id="([^"]+)")?[^>]*>(.*?)</h2>', sec, re.S)
             if hm and hm.group(1):
                 toc.append(f"<a href='#{hm.group(1)}'>{re.sub('<[^>]+>', '', hm.group(2))}</a>")
+        fr = self.freshness(i) if i is not None else None
+        led = ""
+        if fr:
+            lbl = {"green": "Up to date", "yellow": "New data since this page was built", "red": "Stale: rebuild this page", "grey": "Fixed snapshot"}[fr["led"]]
+            det = " · ".join(f"{html.escape(x['source'])} {x['at']} ({html.escape(x['item'])})" for x in fr["newer"])
+            led = (f"<div class='fresh {fr['led']}'><span class=led></span><b>{lbl}</b> · page built {fr['updated']}"
+                   + (f" · {html.escape(fr['note'])}: {det}" if det else f" · {html.escape(fr['note'])}") + "</div>")
         meta = (f"<div class=meta>📄 {name} · {html.escape(os.path.basename(path))} · modified "
-                f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(path)))} · <span class=badge>ASD-STE100</span></div>")
+                f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(path)))} · <span class=badge>ASD-STE100</span></div>{led}")
         return (f"<header>{meta}{head}{intro}" + (f"<nav>{''.join(toc)}</nav>" if len(toc) > 1 else "") + "</header>"
                 + "".join(f"<section class=card>{x}</section>" for x in secs))
 
@@ -893,6 +938,9 @@ class Board:
 REPORT_CSS = """:root{--bg:#f6f7f9;--fg:#1d1f23;--muted:#666b73;--line:#e2e5ea;--card:#fff;--acc:#2a6fd6;--code:#eef1f5;--ok:#1e8e4e;--warn:#c27c00;--call:#fff7e0;--callb:#e0a400}
 @media (prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#eceef1;--muted:#a2a8b1;--line:#30343a;--card:#1f2226;--acc:#5b9bf0;--code:#2a2e33;--ok:#4cc27e;--warn:#f0b03c;--call:#2b2617;--callb:#a37a12}}
 body{background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,sans-serif;max-width:1120px;margin:0 auto;padding:16px}
+.fresh{display:inline-flex;align-items:center;gap:7px;margin-top:6px;font-size:12.5px;padding:3px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card)}
+.led{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;background:var(--c);box-shadow:0 0 6px var(--c)}
+.green{--c:#1fb35a}.yellow{--c:#e6b000}.red{--c:#e03b3b}.grey{--c:#9aa0a8}.grey .led{box-shadow:none}
 header{margin-bottom:14px}.meta{color:var(--muted);font-size:12.5px}.badge{background:var(--acc);color:#fff;border-radius:9px;padding:1px 8px;font-size:11px;font-weight:600}
 h1{font-size:25px;margin:.4em 0 .4em;padding-bottom:6px;border-bottom:3px solid var(--acc)}
 h2{font-size:18px;margin:0 0 10px;color:var(--acc)}h3{font-size:15.5px;margin-top:1.2em}
@@ -949,7 +997,7 @@ function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").
 async function load(){const s=await (await fetch("/api/status")).json();
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
-document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>`<a href="/report/${i}" target="_blank">${esc(n)}</a>`).join(" · "):"";
+document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>{const f=(s.report_fresh||[])[i]||{led:"grey",note:""},c={green:"#1fb35a",yellow:"#e6b000",red:"#e03b3b",grey:"#9aa0a8"}[f.led];return `<a href="/report/${i}" target="_blank" title="${esc(f.led+': '+(f.note||'')+(f.newer&&f.newer.length?' · '+f.newer.map(x=>x.source+' '+x.at).join(', '):''))}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};box-shadow:0 0 5px ${c};margin-right:4px"></span>${esc(n)}</a>`}).join(" · "):"";
 const g=s.remote,L=s.local;
 document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <div><div class="muted small">${hb('linux')} GPU memory</div><div class="big">${g.gpu_used_mib} / ${g.gpu_total_mib} MiB</div>${bar(100*g.gpu_used_mib/g.gpu_total_mib)}</div>

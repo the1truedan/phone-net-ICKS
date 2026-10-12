@@ -18,7 +18,11 @@ chained_queues = ["QUEUE_A", "QUEUE_B"]    # queues those scripts will start on 
 remote_inprogress_glob = "/work/in/*.orig48k.wav"   # files staged on the GPU host while an item runs
 registry_file = "/path/to/jobboard_registry.toml"  # optional per-queue notes: [queue.NAME] purpose / source / gain / outputs
 recent_n = 15
-reports = [ { name = "My report", path = "/path/to/report.html" } ]   # local files linked at the top of the page
+reports = [ { name = "My report", path = "/path/to/report.html", sources = ["phone", "tasks"] } ]   # local files linked at the top of the page
+# Stale-report LED (green / yellow / red; grey = sources = [] fixed snapshot). A report is stale when any of its
+# sources has a file or dir newer than the report file. Reports without sources use freshness_default.
+freshness_default = ["phone", "tasks"]
+freshness_red_h = 24   # yellow below this many hours behind, red at or above
 auto_clear_stale = true      # remove GPU-host staging copies of finished/abandoned items (never originals) when no worker uses them
 stale_after_s = 28800       # an item staged this long without a running worker counts as abandoned
 redact = false                 # or start with --redact: block out (█) the terms in redact_file plus phones/emails/addresses/SSNs
@@ -54,3 +58,7 @@ silent_lists = []             # files whose first column lists pieces confirmed 
 # coverage_queue_prefix = "U"                      # "Queue uncovered" writes AV_QUEUE_U<MMDD>.tsv
 # Report pages (v0.5.9): bold table words that start with one of these get a coloured chip.
 # report_chips = [["Party A", "#7b4bd6"], ["Party B", "#0f8a7e"]]
+
+[freshness_sources]   # non-recursive globs; a matched dir counts by its own mtime
+phone = ["/path/to/phone_pulls/*"]
+tasks = ["/path/to/takeout/parsed/tasks_all.csv"]
