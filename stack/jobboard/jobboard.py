@@ -112,6 +112,17 @@ class Board:
             return self._bj
         except Exception:
             return self.c.get("batch_jobs", [])
+    def reg(self):
+        """Queue registry, re-read when the file changes (2026-10-11: a new [queue.X] note showed blank until a restart)."""
+        rf = self.c.get("registry_file")
+        try:
+            m = os.path.getmtime(rf)
+            if m != getattr(self, "_reg_mtime", None):
+                self.registry, self._reg_mtime = load_toml(rf).get("queue", {}), m
+        except Exception:
+            pass
+        return self.registry
+
     def qname(self, path):
         return re.sub(self.c.get("queue_name_regex", r"^$"), "", os.path.splitext(os.path.basename(path))[0])
 
@@ -316,7 +327,7 @@ class Board:
             via_chunks = [lb for lb in labels if lb not in res and covered(lb)]
             pending_pieces = sum(cov.get(lb.split("_", 1)[-1], (0, 0))[0] - cov.get(lb.split("_", 1)[-1], (0, 0))[1]
                                  for lb in labels if lb not in res and not covered(lb))
-            reg = self.registry.get(name, {})
+            reg = self.reg().get(name, {})
             longs = self.long_skipped()
             out.append({"queue": name, "total": len(labels), "done": len(done_t) + len(via_chunks),
                         "too_long": sum(1 for lb in labels if lb not in res and lb in longs and not covered(lb)),
@@ -449,22 +460,24 @@ class Board:
             m = re.search(r"scp .*?/([\w]+)(?:\.orig48k)?\.wav \S*:", cmd)
             if m and cmd.startswith("scp"):
                 jobs.append({"label": m.group(1), "stage": "upload to GPU host", "elapsed_s": el, "pct": None, "est": True}); continue
-        for name, log, total, *rest in self.batch_jobs():   # [name, log file, expected lines, optional status file]
-            if os.path.exists(log) and time.time() - os.path.getmtime(log) < 3600:
-                lines = [x for x in open(log, errors="ignore").read().splitlines() if x.strip()]
-                done = len(lines) >= total or any(re.search(r"\bDONE\b|\bdone\b \{", x) for x in lines[-2:])   # all pieces logged = finished
-                if not done:
-                    el = int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log)))
-                    n = len(lines)
-                    stage = f"batch: {n} of {total} pieces"
-                    now = rest[0] if rest else ""
-                    if now and os.path.exists(now) and time.time() - os.path.getmtime(now) < 600:   # the job's own "working on" line
-                        stage += " · now: " + open(now, errors="ignore").read().strip()[:120]
-                    elif lines:   # else the last finished piece (log line minus its time stamp)
-                        stage += " · last: " + re.sub(r"^\S+ ", "", lines[-1])[:120]
-                    left = int(el / n * (total - n)) if n > 1 else None
-                    jobs.append({"label": name, "stage": self.redact(stage) if self.redact else stage, "elapsed_s": el,
-                                 "pct": int(100 * n / total), "est": left is not None, "left_s": left})
+        for name, log, total, *rest in self.batch_jobs():   # [name, log file, expected lines (0 = open-ended: copies, uploads), optional status file]
+            if not os.path.exists(log) or (total and time.time() - os.path.getmtime(log) >= 3600):
+                continue
+            lines = [x for x in open(log, errors="ignore").read().replace("\r", "\n").splitlines() if x.strip()]
+            done = any(re.search(r"DONE\b|\bdone\b \{", x) for x in lines[-2:]) or (total and len(lines) >= total)   # 2026-10-11: X_DONE markers count (\bDONE missed TOWER_COPY_DONE)
+            if done or (not total and time.time() - os.path.getmtime(log) >= 6 * 3600):
+                continue
+            el = int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log)))
+            n = len(lines)
+            stage = f"batch: {n} of {total} pieces" if total else "running"
+            now = rest[0] if rest else ""
+            if now and os.path.exists(now) and time.time() - os.path.getmtime(now) < 600:   # the job's own "working on" line
+                stage += " · now: " + open(now, errors="ignore").read().strip()[:120]
+            elif lines:   # else the last finished piece (log line minus its time stamp)
+                stage += " · last: " + re.sub(r"^\S+ ", "", lines[-1])[:120]
+            left = int(el / n * (total - n)) if total and n > 1 else None
+            jobs.append({"label": name, "stage": self.redact(stage) if self.redact else stage, "elapsed_s": el,
+                         "pct": int(100 * n / total) if total else None, "est": left is not None, "left_s": left})
         for j in jobs:
             j["host"] = "mac"; j["queue"] = self.queue_of(j["label"], lm, by_hash) if j["label"] not in (b[0] for b in self.batch_jobs()) else "batch"
         return jobs
@@ -924,7 +937,7 @@ function ubar(p,w=30){p=Math.max(0,Math.min(100,p||0));const f=p/100*w,n=Math.fl
 // 2026-10-02: host badges (runner + cutting + quick triage on the Mac; deep pass on the Linux GPU host; storage on the Unraid server)
 const HOST=__HOSTS__;
 function hb(k){const h=HOST[k];if(!h)return"";const n=h[1].split(" · ")[0];return REDACT?`<span class="pill small">${h[0]} ${"█".repeat(n.length)}</span>`:`<span class="pill small" title="${h[1]}">${h[0]} ${n}</span>`}
-function secs(s){s=Math.max(0,Math.round(s));const m=Math.floor(s/60);return m?`${m}m ${String(s%60).padStart(2,"0")}s`:`${s}s`}
+function secs(s){s=Math.max(0,Math.round(s));const m=Math.floor(s/60),h=Math.floor(m/60),d=Math.floor(h/24);return d?`${d}d ${h%24}h`:h?`${h}h ${String(m%60).padStart(2,"0")}m`:m?`${m}m ${String(s%60).padStart(2,"0")}s`:`${s}s`}   // 2026-10-11: hours, not 1121m
 let CUR=[],MAC=[],T0=Date.now();
 function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").innerHTML=CUR.length?"<tr><th>Item</th><th>Host</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>"+CUR.map(c=>{
  if(c.stale)return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td></td><td><span class="pill paused">stale leftover (not running)</span></td></tr>`;
