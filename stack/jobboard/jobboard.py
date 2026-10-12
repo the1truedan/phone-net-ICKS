@@ -398,7 +398,7 @@ class Board:
     # Process names that use the Apple GPU (Metal); the label says what the work is. macOS has no per-process GPU % without sudo,
     # so each row shows the process CPU % as a busy hint, plus models loaded in Ollama with their GPU memory.
     GPU_PROCS = [(r"ollama", "Ollama (local models: embeddings, summaries, captions)"), (r"whisper-(cli|server|stream)", "whisper.cpp quick triage"),
-                 (r"ffmpeg", "ffmpeg (cutting / frames)"), (r"python.*(mlx|torch|comfy|wera_doc_embed|embed_append|quick_triage)", "Python ML job"),
+                 (r"ffmpeg", "ffmpeg (cutting / frames)"), (r"python.*(mlx|torch|comfy|doc_embed|embed_append|quick_triage)", "Python ML job"),
                  (r"Brave Browser Helper \(GPU\)|Google Chrome Helper \(GPU\)", "Browser GPU process (video, pages)"),
                  (r"LM Studio|llama-server|lms ", "LM Studio / llama.cpp"), (r"OBS\.app|/obs ", "OBS (screen recording / encoding)"),
                  (r"Docker Desktop Helper \(Renderer\)|Docker Desktop Helper \(GPU\)", "Docker Desktop window"),

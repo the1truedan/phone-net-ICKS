@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.6.0 — 2026-10-12 · out-of-date lights, camera-clip saving with a person in the loop, old-phone backup recovery
+- **Breakthroughs (2 new, 15 total):** camera clips saved from the phone app over USB with a person in the loop (only Download,
+  Share or "Not now" are ever tapped; every clip's file time is checked against its target minute; expiring clips first; the to-do
+  pages are stamped after each run), and a 2020 LG Bridge full-phone backup (`.lbf`) read without the vendor app.
+- **New tool:** `scripts/lbf_extract.py` streams the ZIP entries inside an `.lbf` (the small index is scrambled, the entries are not),
+  writes a SHA-256 manifest of every entry and extracts databases and recordings. Read-only on the backup.
+- **Job board:** an out-of-date light on every report page and in the report list (green / yellow / red / grey) from the newest
+  data each report depends on (`freshness_sources`, per-report `sources`, `freshness_red_h`); hours and minutes; live reload of queue
+  and batch lists; open-ended batch jobs; a panel for what is using the Mac GPU; generic host keys. Finished voicemail queues keep
+  their done rows, so they no longer read 0 of 0.
+- **Camera-clip queues:** short urgency queues (expiring, daytime, deep early-morning scrolls); each line ends pulled / not in the app
+  list / past the scroll limit / queued; indoor cameras that cannot see the street are flagged.
+- **By the numbers (2026-10-12):** 2,436 phone-pull recordings checked by hash (2,430 covered); 4,715 speaker-separated outputs
+  (incl. 1,089 chunks); 296 named-caller voicemails QC'd with speaker-name confidence; 325 camera clips pulled and timestamp-checked;
+  568 ledger days.
+- **Live page:** new "Job board, in the open" and "Getting a packet to the right desk" sections (generic handoff practice: one
+  question per office, exhibits with file, timestamp and SHA-256, a person listens before anything is cited, safety concerns about
+  someone else go through a licensed professional). No names, agencies or case details.
+
 ## v0.5.11 — 2026-10-03 · the requests behind the two newest breakthroughs
 - **Breakthroughs:** the two newest entries now quote the owner's own request from the session index (time-stamped, IDs only), as a historical note
   of how each step started: running jobs concurrently with a small-model first pass, and a watch folder for new phone pulls.
