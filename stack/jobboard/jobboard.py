@@ -316,13 +316,31 @@ class Board:
     def queues(self, res):
         out = []
         cov = self.chunk_coverage(res)
+        by_hash, empty = {}, set()
+        for lb, t in res.items():
+            h = lb.split("_", 1)[-1]
+            if re.fullmatch(r"[0-9a-f]{12}", h):
+                by_hash[h] = max(by_hash.get(h, 0), t)
         def covered(lb):   # all pieces of a routed long recording processed or silent
             h = lb.split("_", 1)[-1]; t, d = cov.get(h, (0, 0))
             return t > 0 and d >= t
         for name, q in sorted(self.queue_files().items()):
-            labels = [ln.split("\t", 1)[0] for ln in open(q, errors="ignore") if ln.strip()]
+            rows = [ln.rstrip("\n").split("\t") for ln in open(q, errors="ignore") if ln.strip()]
+            labels = [r[0] for r in rows]
             st_ = os.stat(q)
             created = getattr(st_, "st_birthtime", st_.st_mtime)
+            # 2026-10-12: the same recording (same 12-hex hash) finished under another queue's label counts as done,
+            # and a source with no audio (0 B, or a 44-byte WAV header only) counts as done ("empty")
+            res = dict(res)
+            for r in rows:
+                lb = r[0]
+                if lb in res:
+                    continue
+                h = lb.split("_", 1)[-1]
+                if h in by_hash:
+                    res[lb] = by_hash[h]
+                elif len(r) > 1 and r[1].startswith("/") and os.path.exists(r[1]) and os.path.getsize(r[1]) <= 44:
+                    res[lb] = os.path.getmtime(r[1]); empty.add(lb)
             done_t = [res[lb] for lb in labels if lb in res]
             via_chunks = [lb for lb in labels if lb not in res and covered(lb)]
             pending_pieces = sum(cov.get(lb.split("_", 1)[-1], (0, 0))[0] - cov.get(lb.split("_", 1)[-1], (0, 0))[1]
@@ -332,6 +350,7 @@ class Board:
             out.append({"queue": name, "total": len(labels), "done": len(done_t) + len(via_chunks),
                         "too_long": sum(1 for lb in labels if lb not in res and lb in longs and not covered(lb)),
                         "via_chunks": len(via_chunks), "pending_pieces": pending_pieces,
+                        "empty": sum(1 for lb in labels if lb in empty),
                         "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
                         "last_done": time.strftime("%m-%d %H:%M", time.localtime(max(done_t))) if done_t else "",
                         "last_done_ts": max(done_t) if done_t else 0,
@@ -464,12 +483,20 @@ class Board:
             if not os.path.exists(log) or (total and time.time() - os.path.getmtime(log) >= 3600):
                 continue
             lines = [x for x in open(log, errors="ignore").read().replace("\r", "\n").splitlines() if x.strip()]
-            done = any(re.search(r"DONE\b|\bdone\b \{", x) for x in lines[-2:]) or (total and len(lines) >= total)   # 2026-10-11: X_DONE markers count (\bDONE missed TOWER_COPY_DONE)
+            done = any(re.search(r"DONE\b|\bdone\b \{|^done\b", x) for x in lines[-2:]) or (total and len(lines) >= total)   # 2026-10-12: "done 36 files" too   # 2026-10-11: X_DONE markers count (\bDONE missed TOWER_COPY_DONE)
             if done or (not total and time.time() - os.path.getmtime(log) >= 6 * 3600):
                 continue
             el = int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log)))
             n = len(lines)
             stage = f"batch: {n} of {total} pieces" if total else "running"
+            if not total:   # 2026-10-12: open-ended jobs (copies) — check the processes holding the log
+                pids = sh(["lsof", "-t", log]).split()
+                stats = sh(["ps", "-o", "stat=", "-p", ",".join(pids)]).split() if pids else []
+                idle = int(time.time() - os.path.getmtime(log))
+                if not stats and idle >= 600:   # lsof sees nothing under launchd on this Mac, so fall back to log idle time
+                    stage = f"no log updates for {idle // 60} min (paused or stopped)"
+                elif any(x.startswith("T") for x in stats):
+                    stage = "PAUSED (process stopped)"
             now = rest[0] if rest else ""
             if now and os.path.exists(now) and time.time() - os.path.getmtime(now) < 600:   # the job's own "working on" line
                 stage += " · now: " + open(now, errors="ignore").read().strip()[:120]
