@@ -37,7 +37,7 @@ Use `scripts/lowprio.sh <command>` for any CPU-heavy job.
 | Quick triage (small.en) | M4RV Apple GPU, `lowprio` | Fast; leaves the CPU free |
 | Deep pass (diarized, beam 10) | MRGPU, queued one at a time | Needs CUDA |
 | One urgent best-quality transcript | M4RV CPU (`lowprio`, 5 threads) or MRGPU if idle | Fast cores; no copying |
-| Many CPU transcripts at once | **Tower CPU lane** (nice 19, ionice -c3, 16 threads; tested 2026-10-15: 18 s audio in 11 s incl. model load) | 36 threads sit idle; remote copies deleted after pull-back |
+| Many CPU transcripts at once | **Tower CPU lane** `scripts/tower_cpu_transcribe.sh <audio> <out>` (nice 19, ionice -c3, 16 threads; tested 2026-10-15: 18 s audio in 11 s incl. model load) | 36 threads sit idle; remote copies deleted after pull-back |
 | LLM scoring (qwen3.5:9b) | MRGPU if its GPU is idle; else M4RV | One GPU job per GPU |
 | Embedding (bge-m3) | M4RV Ollama | Index lives here |
 | Hashing, dedup, walks on ai-data | Tower, `nice 19 ionice -c3` | No network hop |

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.7.1 — 2026-10-16 · CPU jobs to the many-core server; new numbers; answering a written explanation in 7 days
+- **Tower CPU lane:** `scripts/tower_cpu_transcribe.sh` + `scripts/tower_fw.py` send urgent one-off best-quality transcripts
+  (faster-whisper large-v3, int8) to the many-core server's idle threads (nice 19, idle I/O, 16 threads), then delete the remote
+  copies, so the GPU queue keeps moving. Host, folder and custody-log hook come from environment variables.
+- **Job board (from v0.7.0):** progress bars, CPU vs GPU, ETA per job, and the active-process monitor with close/stop buttons to head
+  off out-of-memory errors.
+- **Live page numbers (2026-10-16):** ~19,100 caregiving notes; 2,461 recordings catalogued (~750 h) + ~80 new; 4,975
+  speaker-separated outputs; 60 deep-quality redos; 16 device pulls; ~81 h active AI-assisted admin time since Sep 1 (38 h in the
+  Sep 25–29 sprint); 12.55 B AI tokens across Claude, Grok and Codex; 316 care-record documents parsed locally.
+- **Live page sections:** "Why the thinking is outsourced" (the caregiver's real situation, no personal detail); "Answering a
+  written explanation, fast" (counts and method only); "Time to process" now shows the staged deep queue (1,664 recordings, ~350 h
+  audio, ~320 GPU hours).
+
 ## v0.7.0 — 2026-10-16 · job board shows progress, ETA and value per job; host routing and throttling
 - **Job board, "Other recon jobs":** jobs started outside the board now show a progress bar, CPU vs GPU, elapsed time, and an **ETA
   learned from past runs** (audio length from a catalog × the measured speed of finished items in the same queue, or a small history
