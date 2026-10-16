@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.7.0 — 2026-10-16 · job board shows progress, ETA and value per job; host routing and throttling
+- **Job board, "Other recon jobs":** jobs started outside the board now show a progress bar, CPU vs GPU, elapsed time, and an **ETA
+  learned from past runs** (audio length from a catalog × the measured speed of finished items in the same queue, or a small history
+  file). Each row has a **"what this gains" drop-down**. Quick passes show a tally (done / queued per run). Same-recording results and
+  empty files count as done; open-ended jobs show paused or idle.
+- **No case data in the code:** job names, "gains" text and queue paths now come from a `[recon_jobs]` table in the git-ignored board
+  config. `config/jobboard.example.toml` shows a generic example.
+- **New doc:** `docs/HOST_ROUTING_AND_THROTTLE.md`, which machine runs what (GPU box, desk Mac, many-core server), and 7 rules learned
+  from real failures (one GPU job per GPU, gate on free VRAM, long files last, background priority can starve an urgent job).
+- **New tool:** `scripts/lowprio.sh <command>`, which runs a CPU-heavy job so it yields: macOS background QoS + nice 15; Linux nice 19 +
+  idle I/O; math-library threads capped at half the cores.
+- Numbers on the live page are unchanged from v0.6.0 (2026-10-12).
+
 ## v0.6.0 — 2026-10-12 · out-of-date lights, camera-clip saving with a person in the loop, old-phone backup recovery
 - **Breakthroughs (2 new, 15 total):** camera clips saved from the phone app over USB with a person in the loop (only Download,
   Share or "Not now" are ever tapped; every clip's file time is checked against its target minute; expiring clips first; the to-do

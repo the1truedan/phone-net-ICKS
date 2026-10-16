@@ -62,3 +62,22 @@ silent_lists = []             # files whose first column lists pieces confirmed 
 [freshness_sources]   # non-recursive globs; a matched dir counts by its own mtime
 phone = ["/path/to/phone_pulls/*"]
 tasks = ["/path/to/takeout/parsed/tasks_all.csv"]
+
+# Recon jobs started outside the board (shown under "Other recon jobs" with progress, ETA and a "what this gains" drop-down).
+# Keep real names, paths and case wording in your private config/jobboard.toml, not here.
+[recon_jobs]
+evidence_root = "/path/to/evidence"
+catalog_csv = "/path/to/evidence/CATALOG_RECORDINGS.csv"   # hash12,duration_min: audio length per recording, for ETAs
+queue_dir = "/path/to/evidence/queues"                     # AV_QUEUE_<NAME>.tsv files
+deep_dir = "/path/to/evidence/finecomb_deep"               # FINECOMB_*<hash12>*.json outputs mark items done
+default_queue = ""
+jobs = [
+  ["quick_pass_", "Quick pass (whisper.cpp)"],
+  ["embed_append", "Embedding (bge-m3)"],
+  ["_deep_run", "Deep pass (diarized, GPU)"],
+]
+
+[recon_jobs.gain]
+"quick_pass_" = "First rough transcript + tier (A/B/C) of new recordings; decides which go to the deep pass."
+"embed_append" = "Makes new text searchable by meaning."
+"deep_gpu" = "GPU half of the deep pass: diarization, voiceprints, transcript, QC flags."

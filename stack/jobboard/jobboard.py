@@ -542,6 +542,205 @@ class Board:
         if tw.get("load1") and tw.get("cpus") and tw["load1"] > tw["cpus"]: w.append(f"storage server load {tw['load1']} over {tw['cpus']} threads")
         return w
 
+    # 2026-10-15 (Dan): show who is using GPU/CPU on both hosts, recon jobs vs everything else, with hints (never kills).
+    RECON = r"fine_comb|finecomb|whisper|quick_triage|embed_append|ollama|llama-server|pyannote"  # override: [recon_jobs] process_regex
+    HEAVY = r"\bobs(-studio)?\b|\bsteam(webhelper|_osx)?\b|comfyui|maestro|wangp|directorsconsole|davinci|\bresolve\b|lm studio|lmstudio|blender|handbrake|\brsync\b"
+    def compute(self):
+        t, cached = getattr(self, "_compute", (0, None))
+        if cached and time.time() - t < 20: return cached
+        def cls(a):
+            a2 = a.lower()
+            if re.search(self.c.get("recon_jobs", {}).get("process_regex") or self.RECON, a2): return "recon"
+            if re.search(self.HEAVY, a2): return "other-heavy"
+            return "other"
+        out = {"mac": {}, "linux": {}, "hints": []}
+        io = sh(["/usr/sbin/ioreg", "-r", "-d", "1", "-c", "IOAccelerator"], timeout=8)
+        m = re.search(r'"Device Utilization %"=(\d+)', io or ""); out["mac"]["gpu_util"] = int(m.group(1)) if m else None
+        try:
+            ps_ = json.loads(sh(["curl", "-s", "-m", "3", "127.0.0.1:11434/api/ps"], timeout=5) or "{}").get("models", [])
+            out["mac"]["ollama"] = [f"{x['name']} ({x.get('size_vram',0)/2**30:.1f} GB)" for x in ps_]
+        except Exception: out["mac"]["ollama"] = []
+        rows = []
+        etim = {}
+        for l in (sh(["ps", "-Ao", "pcpu=,rss=,etime=,args="], timeout=8) or "").splitlines():
+            f = l.split(None, 3)
+            if len(f) == 4:
+                try:
+                    rows.append((float(f[0]), int(f[1]) // 1024, f[3][:300]))
+                    e = [int(x) for x in f[2].replace("-", ":").split(":")]; e = [0] * (4 - len(e)) + e
+                    etim[f[3][:300]] = e[0] * 86400 + e[1] * 3600 + e[2] * 60 + e[3]
+                except ValueError: pass
+        rows.sort(reverse=True)
+        out["mac"]["top"] = [{"cpu": c, "mem_mb": m_, "cmd": a, "kind": cls(a)} for c, m_, a in rows[:8]]
+        out["mac"]["cpus"] = os.cpu_count()
+        def nm(a):
+            if "comfyui" in a.lower(): return "ComfyUI" + (" (Stability Matrix)" if "stabilitymatrix" in a.lower() else "")
+            m_ = re.search(r"/([^/]+)\.app/", a); return (m_.group(1) if m_ else re.sub(r".*/", "", a.split(" -")[0]))[:40]
+        heavy_mac = sorted({nm(a) for c, m_, a in rows if cls(a) == "other-heavy" and "systemextension" not in a.lower()
+                            and (c >= 2 or re.search(r"\bobs\b|steam|resolve|davinci|comfy", a.lower()))})
+        out["mac"]["heavy_apps"] = heavy_mac
+        cmd = ("nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits; echo ===; "
+               "nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits | while IFS=, read p m; do echo \"$m|$(ps -o args= -p $p | cut -c1-140)\"; done; echo ===; "
+               "ps -eo pcpu=,rss=,args= --sort=-pcpu | head -8 | cut -c1-160; echo ===; "
+               "ps -eo args= | grep -iE '\\bobs\\b|steam|comfyui|maestro|wangp|directorsconsole' | grep -v grep | awk '{print $1}' | sed 's#.*/##' | sort | uniq -c")
+        r = (sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", self.c["remote_host"], cmd], timeout=25) or "").split("===")
+        if len(r) >= 4:
+            g = [x.strip() for x in r[0].strip().split(",")]
+            out["linux"]["gpu_util"], out["linux"]["gpu_used"], out["linux"]["gpu_total"] = (int(g[0]), int(g[1]), int(g[2])) if len(g) == 3 else (None, None, None)
+            apps = []
+            for l in r[1].strip().splitlines():
+                if "|" in l:
+                    mm, a = l.split("|", 1); apps.append({"mem_mib": int(mm.strip() or 0), "cmd": a.strip(), "kind": cls(a)})
+            out["linux"]["gpu_apps"] = apps
+            tops = []
+            for l in r[2].strip().splitlines():
+                f = l.split(None, 2)
+                if len(f) == 3:
+                    try: tops.append({"cpu": float(f[0]), "mem_mb": int(f[1]) // 1024, "cmd": f[2], "kind": cls(f[2])})
+                    except ValueError: pass
+            out["linux"]["top"] = tops
+            out["linux"]["heavy_apps"] = [l.strip() for l in r[3].strip().splitlines() if l.strip()]
+            recon_on = any(a["kind"] == "recon" for a in apps)
+            for a in apps:
+                if a["kind"] != "recon" and a["mem_mib"] > 500:
+                    out["hints"].append(f"🐧 {a['cmd'][:60]} holds {a['mem_mib']} MiB of GPU memory" + (" while recon jobs run: consider stopping it." if recon_on else "."))
+            if any("steam" in h.lower() for h in out["linux"]["heavy_apps"]):
+                out["hints"].append("🐧 Steam is running on MRGPU (background updates/webhelpers): quit it to free CPU, disk and network during recon.")
+            if any(re.search(r"comfy|maestro|wangp|directors", h.lower()) for h in out["linux"]["heavy_apps"]):
+                out["hints"].append("🐧 A video/image app (ComfyUI / Maestro / WanGP / Director's Console) is running on MRGPU: stop it before deep passes.")
+        for h in heavy_mac:
+            out["hints"].append(f"🍎 {h} is running on this Mac: pause it if recon jobs slow down (OBS capture, Resolve, Steam, rsync, LM Studio).")
+        if (out["mac"].get("gpu_util") or 0) >= 90 and not out["mac"]["ollama"]:
+            out["hints"].append("🍎 Mac GPU is busy but no Ollama model is loaded: something outside the recon jobs is using it (check Activity Monitor > GPU).")
+        # 2026-10-15 (Dan): Close / Kill buttons for detected non-recon apps. Commands stay on the server, keyed by id;
+        # the page only sends {id, mode}. Recon jobs are never offered. Patterns use [x]yz so pkill never matches its own shell.
+        acts = {}
+        R = self.c["remote_host"]; ssh = lambda c: ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", R, c]
+        lh = " ".join(out["linux"].get("heavy_apps", [])).lower()
+        if "steam" in lh:
+            acts["linux-steam"] = {"label": "Steam on MRGPU", "host": "linux",
+                "close": ssh("steam -shutdown >/dev/null 2>&1 & sleep 8; pkill -TERM -f '[d]ebian-installation'; sleep 2; echo left=$(pgrep -fc '[d]ebian-installation')"),
+                "kill": ssh("pkill -KILL -f '[d]ebian-installation'; sleep 1; echo left=$(pgrep -fc '[d]ebian-installation')")}
+        for key, pat, label in (("comfyui", "[C]omfyUI", "ComfyUI"), ("maestro", "[m]aestro", "Maestro"), ("wangp", "[W]an2GP|[w]angp", "WanGP"), ("directors", "[d]irectorsconsole", "Director's Console")):
+            if key in lh:
+                acts["linux-" + key] = {"label": label + " on MRGPU", "host": "linux",
+                    "close": ssh(f"pkill -TERM -f {shlex.quote(pat)}; sleep 3; echo left=$(pgrep -fc {shlex.quote(pat)})"),
+                    "kill": ssh(f"pkill -KILL -f {shlex.quote(pat)}; sleep 1; echo left=$(pgrep -fc {shlex.quote(pat)})")}
+        for name in out["mac"].get("heavy_apps", []):
+            if name.startswith("ComfyUI"):
+                acts["mac-comfyui"] = {"label": name + " on this Mac", "host": "mac",
+                    "close": ["pkill", "-TERM", "-f", "[C]omfyUI/main.py"], "kill": ["pkill", "-KILL", "-f", "[C]omfyUI/main.py"]}
+            elif re.fullmatch(r"[\w .-]+", name):
+                acts["mac-" + re.sub(r"\W+", "", name.lower())[:20]] = {"label": name + " on this Mac", "host": "mac",
+                    "close": ["osascript", "-e", f'quit app "{name}"'], "kill": ["pkill", "-KILL", "-x", name]}
+        self._actions = acts
+        out["actions"] = [{"id": k, "label": v["label"], "host": v["host"]} for k, v in acts.items()]
+        # 2026-10-15 (Dan): list recon jobs started outside the board so "Active jobs" is current.
+        # 2026-10-15/16: recon jobs started outside the board, what each one gains, and where their queues live all come from
+        # the [recon_jobs] table in the (git-ignored) board config, so no case names or paths live in the code.
+        rj = self.c.get("recon_jobs", {})
+        JOBS = [tuple(x) for x in rj.get("jobs", [])]
+        GAIN = rj.get("gain", {})
+        FDp = rj.get("evidence_root", "")
+        QDIR = rj.get("queue_dir", "")
+        DEEPDIR = rj.get("deep_dir", "")
+        CATALOG = rj.get("catalog_csv", "")
+        # 2026-10-15 (Dan): ETAs from past runs. Audio length per recording comes from the catalog; speed (wall s per audio s)
+        # comes from the finished items in the same queue (deep passes) or from a small history file (other jobs).
+        if not self._dur and CATALOG:
+            try:
+                for r_ in csv.DictReader(open(CATALOG)): self._dur[r_["hash12"]] = float(r_.get("duration_min") or 0) * 60
+            except Exception: pass
+        HP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "eta_history.json")
+        try: hist = json.load(open(HP))
+        except Exception: hist = {}
+        DEFAULT_RTF = {"fw_run.py": 1.6, "deep": 0.9, "tower": 0.7}
+        def med(xs, d): xs = [x for x in xs if x and 0.02 < x < 20]; return statistics.median(xs) if xs else d
+        def deep_progress(qname):
+            try:
+                hs = [re.search(r"[0-9a-f]{12}", l).group(0) for l in open(os.path.join(QDIR, f"AV_QUEUE_{qname}.tsv")) if re.search(r"[0-9a-f]{12}", l)]
+                hs = list(dict.fromkeys(hs)); done = {}
+                for h in hs:
+                    g = glob.glob(os.path.join(DEEPDIR, f"FINECOMB_*{h}*.json"))
+                    if g: done[h] = max(os.path.getmtime(x) for x in g)
+                seq = sorted(done.items(), key=lambda kv: kv[1]); rt = []
+                for (h0, t0), (h1, t1) in zip(seq, seq[1:]):
+                    if self._dur.get(h1) and 0 < t1 - t0 < 6 * 3600: rt.append((t1 - t0) / self._dur[h1])
+                rtf = med(rt[-10:] + hist.get("deep", []), DEFAULT_RTF["deep"])
+                left_audio = sum(self._dur.get(h, 0) for h in hs if h not in done)
+                since = time.time() - seq[-1][1] if seq else 0
+                eta = max(60, int(left_audio * rtf - since)) if left_audio else (None if len(done) < len(hs) else 0)
+                return len(done), len(hs), eta, rtf
+            except Exception: return None, None, None, None
+        ext = []
+        for c_, m_, a in rows:
+            for key, label in JOBS:
+                if key in a and "grep" not in a and not a.startswith("bash -c"):
+                    q = re.search(r"AV_QUEUE_(\w+)\.tsv|(\w+_1015\w*)", a)
+                    x = {"host": "mac", "job": label, "cpu": c_, "res": "GPU" if "Apple GPU" in label else "CPU", "elapsed_s": etim.get(a),
+                         "detail": (q.group(0) if q else "")[:40], "pct": None, "gain": GAIN.get(key, "")}
+                    qn = re.search(r"AV_QUEUE_(\w+)\.tsv", a); qname = qn.group(1) if qn else (rj.get("default_queue", "") if "_deep_run" in a else "")
+                    if "deep_run" in key and qname:
+                        d_, t_, eta_, rtf_ = deep_progress(qname.upper())
+                        if t_:
+                            argv0 = [a2.split()[0].rsplit("/", 1)[-1] + " " + a2 for _, _, a2 in rows]
+                            if any(x2.startswith("ffmpeg ") and "orig48k" in x2 for x2 in argv0): stage = "1/5 extracting audio"
+                            elif any(x2.startswith("scp ") and "mrgpu" in x2 for x2 in argv0): stage = "2/5 uploading to MRGPU"
+                            elif any(x2.startswith("rsync ") and "mrgpu" in x2 for x2 in argv0): stage = "5/5 pulling results back"
+                            elif any(x2.startswith("ssh ") and "fine_comb_deep" in x2 and "ffmpeg" not in x2.split("&&")[1][:12] for x2 in argv0 if "&&" in x2): stage = "4/5 transcribe + speakers (GPU)"
+                            elif any(x2.startswith("ssh ") and "speechnorm" in x2 for x2 in argv0): stage = "3/5 leveling on MRGPU, then GPU"
+                            else: stage = "between items"
+                            x.update(pct=int(100 * d_ / t_), detail=f"{d_}/{t_} recordings · {stage}", res="GPU", left_s=eta_ if d_ < t_ else 0,
+                                     eta_basis=f"from {qname} finished items: {rtf_:.2f} s per audio s")
+                    if key == "quick_pass_":
+                        sc = re.search(r"(\S+quick_pass_\w+\.sh)", a)
+                        try:
+                            src = open(sc.group(1)).read(); dline = re.search(r'\bD=(\S+)', src).group(1).replace("$FD", FDp).strip('"')
+                            fl = re.search(r"for n in ([\d ]+); do", src)
+                            if fl: files = [f"Record{n}.wav" for n in fl.group(1).split()]
+                            else: files = [os.path.basename(f) for f in glob.glob(dline + "/*.m4a") + glob.glob(dline + "/*.wav")
+                                           if not any(ex in f for ex in re.findall(r'\*"([^"*]+)"\*\) continue', src))]
+                            st = (x["elapsed_s"] or 0); t_start = time.time() - st
+                            lg = re.search(r"LOG=(\S+)", src).group(1).replace("$Q", re.search(r"\bQ=(\S+)", src).group(1)).replace("$FD", FDp)
+                            dn = [l for l in open(lg) if " done " in l and any(f" done {f} " in l + " " for f in files)]
+                            dn = [l for l in dn if os.path.getmtime(lg) >= t_start]
+                            nd = len({l.split(" done ")[1].split(" tier=")[0] for l in dn}); nt = len(files)
+                            per = st / nd if nd else None
+                            x.update(pct=int(100 * nd / nt) if nt else None, detail=f"{nd}/{nt} files quick-passed", res="GPU (Apple)",
+                                     left_s=int(per * (nt - nd)) if per else None, eta_basis="average time per file in this run" if per else "")
+                        except Exception: pass
+                    if key == "fw_run.py":
+                        w = re.search(r"(\S+\.wav)", a)
+                        try:
+                            dur = os.path.getsize(w.group(1)) / 32000      # 16 kHz mono 16-bit
+                            rtf = med(hist.get("fw_run.py", []), DEFAULT_RTF["fw_run.py"]); tot = dur * rtf; el = x["elapsed_s"] or 0
+                            x.update(pct=min(99, int(100 * el / tot)), left_s=max(0, int(tot - el)), detail=f"{int(dur//60)} min audio",
+                                     eta_basis=f"{len(hist.get('fw_run.py', []))} past runs, {rtf:.2f} s per audio s")
+                            self._live = getattr(self, "_live", {}); self._live[a] = ("fw_run.py", dur, time.time() - el)
+                        except Exception: pass
+                    ext.append(x); break
+        for a in out["linux"].get("gpu_apps", []):
+            if "fine_comb_deep" in a["cmd"]:
+                lab = re.search(r"--label (\S+)", a["cmd"]); ext.append({"host": "linux", "job": "Deep pass (diarized) on GPU", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"), "mem_mib": a["mem_mib"], "pct": None, "gain": GAIN.get("deep_gpu", ""), "detail": lab.group(1) if lab else ""})
+            elif "fine_comb_resident" in a["cmd"]:
+                ext.append({"host": "linux", "job": "Resident fine-comb worker (board queues)", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"), "mem_mib": a["mem_mib"], "pct": None, "gain": GAIN.get("resident", ""), "detail": f"{a['mem_mib']} MiB"})
+        live_now = {a for _, _, a in rows}
+        for a_, (k_, dur_, t0_) in list(getattr(self, "_live", {}).items()):
+            if a_ not in live_now:
+                hist.setdefault(k_, []).append(round((time.time() - t0_) / dur_, 3)); hist[k_] = hist[k_][-20:]; del self._live[a_]
+                try: json.dump(hist, open(HP, "w"))
+                except Exception: pass
+        seen_ = set(); out["recon_jobs"] = [x for x in ext if not ((x["host"], x["job"], x["detail"]) in seen_ or seen_.add((x["host"], x["job"], x["detail"])))]
+        out["time"] = time.strftime("%H:%M:%S")
+        self._compute = (time.time(), out); return out
+
+    def proc_action(self, aid, mode):
+        a = getattr(self, "_actions", {}).get(aid)
+        if not a or mode not in ("close", "kill"):
+            return {"error": "unknown app or mode (refresh the page)"}
+        res = self._run(a[mode]); self._compute = (0, None)
+        return {"done": f"{mode}: {a['label']}", "result": res}
+
     def remote(self):
         t, cached = self._remote
         if time.time() - t < self.c["remote_cache_s"]:
@@ -997,7 +1196,7 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 .stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
-<div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table></section>
+<div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other recon jobs running (detected from processes)</div><table id="ext"></table></section><section id="comp"></section>
 <section><b>Queues</b> <span class="muted small">(to do first, then finished with the latest on top · click a row for purpose and expected gain)</span><table id="q"></table></section>
 <section id="cov"></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
@@ -1064,6 +1263,22 @@ document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Fin
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Host</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${hb('mac')} → ${hb('linux')}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
 load();setInterval(load,15000);setInterval(drawCur,1000);
+async function comp(){try{const c=await (await fetch("/api/compute")).json();
+const k={"recon":"🟢 recon","other-heavy":"🟠 other (heavy)","other":"⚪ other"};
+const row=(x,m)=>`<tr><td>${k[x.kind]||x.kind}</td><td>${m}</td><td class="small">${esc(x.cmd)}</td></tr>`;
+const L=c.linux||{},M=c.mac||{};
+document.getElementById("comp").innerHTML=`<b>Compute users</b> <span class="muted small">(${esc(c.time||"")} · who is using GPU/CPU on each host; hints only, nothing is stopped automatically)</span>
+${(c.hints||[]).length?`<div style="margin:.4em 0;color:var(--warn)">${c.hints.map(h=>"⚠ "+esc(h)).join("<br>")}</div>`:`<div class="muted small">No outside jobs competing with recon right now.</div>`}
+${(c.actions||[]).length?`<div style="margin:.4em 0">${c.actions.map(a=>`<span class="pill">${hb(a.host)} ${esc(a.label)} <button onclick="procAct('${a.id}','close','${esc(a.label)}')">Close</button> <button onclick="procAct('${a.id}','kill','${esc(a.label)}')">Kill</button></span>`).join(" ")}</div>`:""}
+<table><tr><th colspan=3>${hb('linux')} GPU ${L.gpu_util??"?"}% · ${L.gpu_used??"?"} / ${L.gpu_total??"?"} MiB</th></tr>${(L.gpu_apps||[]).map(x=>row(x,x.mem_mib+" MiB")).join("")}
+<tr><th colspan=3>${hb('linux')} top CPU</th></tr>${(L.top||[]).slice(0,5).map(x=>row(x,x.cpu+"%")).join("")}
+<tr><th colspan=3>${hb('mac')} GPU ${M.gpu_util??"?"}% · Ollama: ${esc((M.ollama||[]).join(", ")||"none loaded")}</th></tr>${(M.top||[]).slice(0,5).map(x=>row(x,x.cpu+"%")).join("")}</table>`;}catch(e){}}
+function procAct(id,mode,label){if(!confirm((mode==="kill"?"KILL (forced; unsaved work is lost): ":"Close: ")+label+"?"))return;post("/api/proc",{id,mode}).then(comp);}
+async function ext(){try{const c=await (await fetch("/api/compute")).json();
+document.getElementById("ext").innerHTML=(c.recon_jobs||[]).map(j=>{const use=j.res==="GPU"&&j.host==="linux"?`GPU ${j.gpu??"?"}% · ${((j.mem_mib||0)/1024).toFixed(1)} GB`:`${j.res} · CPU ${j.cpu??0}%${j.cpu>100?` (~${(j.cpu/100).toFixed(1)} cores)`:""}`;const ub=j.res==="GPU"&&j.host==="linux"?(j.gpu??0):Math.min(100,(j.cpu||0)/((c.mac||{}).cpus||10));return `<tr><td>${j.gain?`<details><summary>${esc(j.job)}</summary><div class="small muted" style="max-width:420px">🎯 ${esc(j.gain)}</div></details>`:esc(j.job)}</td><td>${hb(j.host)}</td><td class="small">${esc(j.detail)}${j.elapsed_s?` · ${secs(j.elapsed_s)}`:""}</td><td style="white-space:nowrap;min-width:160px">${j.pct!=null?ubar(j.pct)+` <b>${j.pct}%</b>`:'<span class="small muted">running</span>'}${j.left_s!=null?`<div class="small muted" title="${esc(j.eta_basis||"")}">~${secs(j.left_s)} left${j.eta_basis?` · ${esc(j.eta_basis)}`:""}</div>`:""}</td><td class="small" style="white-space:nowrap">${bar(ub)}${use}</td></tr>`}).join("")||`<tr><td class="muted small">none</td></tr>`;}catch(e){}}
+ext();setInterval(ext,20000);
+comp();setInterval(comp,20000);
+
 </script></body></html>"""
 
 
@@ -1090,6 +1305,8 @@ def make_handler(board):
                 return self._send(200, PAGE.replace("__TOKEN__", TOKEN).replace("__REDACT__", "true" if board.redact else "false").replace("__HOSTS__", json.dumps(board.hosts())), "text/html; charset=utf-8")
             if self.path == "/api/status":
                 return self._send(200, board.status())
+            if self.path == "/api/compute":
+                return self._send(200, board.compute())
             m = re.fullmatch(r"/report/(\d+)", self.path)
             if m:
                 body, ctype = board.report(int(m.group(1)))
@@ -1112,7 +1329,8 @@ def make_handler(board):
                       "/api/hold": lambda: board.hold(int(body.get("pid", 0)), True),
                       "/api/release": lambda: board.hold(int(body.get("pid", 0)), False),
                       "/api/queue_uncovered": lambda: board.queue_uncovered(),
-                      "/api/catalog_append": lambda: board.catalog_append()}
+                      "/api/catalog_append": lambda: board.catalog_append(),
+                      "/api/proc": lambda: board.proc_action(str(body.get("id", "")), str(body.get("mode", "")))}
             if self.path not in routes:
                 return self._send(404, {"error": "not found"})
             self._send(200, routes[self.path]())
