@@ -210,7 +210,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">v0.7.1 · 2026-10-16</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
+    <span class="private-chip">v0.7.2 · 2026-10-16</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a>
   </div>
 </header>
 
@@ -428,7 +428,7 @@
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.7.1 · updated 2026-10-16</p>
+    <p class="section-eyebrow">By the numbers · v0.7.2 · updated 2026-10-16</p>
     <h2 class="section-title">Everything in one place</h2>
     <p class="section-sub">Totals from Jan 2024 to Oct 16, 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
@@ -490,6 +490,19 @@
         <li>What the check found: night wakings recorded but 0 night hours; appointments capped at 10 hours a month against 8 to 28 appointment days a month; monthly totals that work out to 22–24 days; a "pay rate increase" with the rate unchanged; a worksheet dated before the care needs rose.</li>
         <li>The reply went by fax: a dated timeline, 12 written questions, and a request for a reassessment with the family's advocates on the call.</li>
         <li>How it was possible: the same pipeline. A hash on every file, session logs for every agent run (AgentsView, plus codeburn when the session index was unreachable), Claude coordinating while Grok and Codex ran parallel recon passes, and local models for anything clinical. Forensic-style cataloging modeled on ISO/IEC 27037; not a certification.</li>
+      </ul>
+      <h3>Data key: where every chart and number comes from</h3>
+      <p>Source types only. The private key (with file names and hashes) stays with the owner.</p>
+      <ul>
+        <li><b>Hours per day</b>: <i>Notes span</i> = first to last caregiving note of each day, monthly average (the caregiver's own task-app notes, account export). <i>Logged in the payroll app</i> and <i>paid</i> = the payroll company's own Shift Status exports (one row per service day; 535 days), monthly averages. Cross-checked against the payroll company's pay stubs (40). <i>Promised</i> = the care-plan company's phone call on the eve of the change (recorded).</li>
+        <li><b>Why May 2025 reads 5.99</b>: in the May 4–17 pay period the payroll export shows 9 days paid at the full logged time (3.75 to 15 h), and the pay stub for that period confirms it (99.25 h paid, against the usual 49 h). It is a real paid amount, not a chart error. Every other month sits at the approved cap.</li>
+        <li><b>Caregiving notes per month</b> and <b>What the notes are about</b>: the same task-app export, counted per month; topics from keyword lists (a note can count in more than one); named people and places grouped as "local contacts."</li>
+        <li><b>AI-assisted admin time per month</b>: the local agent session index (AgentsView); 10-minute windows with at least one message, in sessions whose first message is about caregiving. A floor, not a total. Token totals: codeburn (all agents).</li>
+        <li><b>Days with an emergency incident</b>: distinct days from the caregiver's log and recordings (911/EMS, choking). Not a medical record.</li>
+        <li><b>Emails</b>: the caregiver's own mailbox, indexed by sender and recipient organization; counts only.</li>
+        <li><b>Recordings, outputs and hours</b>: the recordings catalog (hash, length, true date) built from phone pulls; speaker-separated outputs counted from the transcriber's result files.</li>
+        <li><b>Calendar, texts, calls, photos, trips, ledger</b>: account exports (calendar, voice and texts), phone call logs read over USB, file hashes from phone pulls, and the day-by-day ledger that joins them.</li>
+        <li><b>Care-record and worksheet findings</b>: the patient portal's structured export (parsed locally) and the care-plan company's own worksheet; checked by a person before any claim.</li>
       </ul>
       <h3>Path to those findings</h3>
       <p>Keyword lists from the key meetings → the owner's own filename tags → meaning search → same-day cross-checks (notes, calendar, email, trips) → read every lead in context before calling it strong.</p>
@@ -687,6 +700,7 @@ const MONTHS = [["2024-01",144,5.7],["2024-02",99,3.0],["2024-03",84,4.2],["2024
  ["2026-07",612,14.8],["2026-08",601,15.5],["2026-09",436,14.4]];
 // Approved paid hours/day, from dated notes and messages. Add rows as more dates are confirmed: [firstMonth, hours, label]
 const PAYLOG = {"2025-03": 12.3, "2025-04": 5.7, "2025-05": 9.5, "2025-06": 12.9, "2025-07": 14.5, "2025-08": 3.5, "2025-09": 12.3, "2025-10": 11.1, "2025-11": 9.7, "2025-12": 3.8, "2026-01": 3.9, "2026-02": 4.1, "2026-03": 4.1, "2026-04": 4.1, "2026-05": 4.0, "2026-06": 4.4, "2026-07": 4.5, "2026-08": 4.4, "2026-09": 6.5};  // monthly avg hours/day logged in the payroll app (shift-status exports)
+// Paid hours/day, monthly average, from the payroll Shift Status exports. 2025-05 = 5.99 is real (May 4–17 period paid 99.25 h; pay stub confirms).
 const PAYCAP = {"2025-03": 3.5, "2025-04": 3.5, "2025-05": 5.99, "2025-06": 3.5, "2025-07": 3.51, "2025-08": 3.5, "2025-09": 3.64, "2025-10": 3.48, "2025-11": 3.5, "2025-12": 3.52, "2026-01": 3.76, "2026-02": 4.0, "2026-03": 4.0, "2026-04": 4.0, "2026-05": 4.03, "2026-06": 4.25, "2026-07": 4.25, "2026-08": 4.25, "2026-09": 5.25};  // monthly avg paid cap from the same exports; Sep 2026 = 5.25 sent to payroll
 const PROMISED = [["2026-09",6.5,"6.5 promised from Sep 1"]];
 const MARKERS = [["2024-06","Care begins"],["2025-03","Paid hours begin"]];

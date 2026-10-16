@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.2 — 2026-10-16 · a data key for every chart
+- **Live page:** new "Data key" section that names the source type behind every chart and number (task-app export, payroll Shift
+  Status exports cross-checked with pay stubs, agent session index, recordings catalog, account exports). Source types only; no file
+  names or personal detail.
+- **May 2025 explained:** the paid line averages 5.99 h/day because one pay period paid 99.25 h (pay stub confirms) instead of the usual
+  49 h. It is a real paid amount, not a chart error.
+
 ## v0.7.1 — 2026-10-16 · CPU jobs to the many-core server; new numbers; answering a written explanation in 7 days
 - **Tower CPU lane:** `scripts/tower_cpu_transcribe.sh` + `scripts/tower_fw.py` send urgent one-off best-quality transcripts
   (faster-whisper large-v3, int8) to the many-core server's idle threads (nice 19, idle I/O, 16 threads), then delete the remote
