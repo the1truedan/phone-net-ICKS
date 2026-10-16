@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.4 — 2026-10-16 · see the bottleneck: per-job CPU, memory, GPU and network on the board
+- **Job board:** every running job (recon jobs, queue runners, Mac cutting/upload jobs, items on the GPU host) shows small bars for
+  **CPU** (the job's process and all its children, plus the whole host), **memory** (job RSS or GPU VRAM, plus host free %), **GPU**
+  (host utilisation; macOS has no per-process GPU % without sudo) and **network** (per process on the Mac via `nettop`, no sudo;
+  whole NIC on the GPU host from `/proc/net/dev`). A **"likely limit"** tag names the bottleneck: GPU ≥ 85%, CPU, memory < 15% free,
+  network ≥ 70% of 1 GbE (`nic_mbs` in the config), or "waiting" (disk, remote host or between items).
+- **Live page:** three new breakthroughs (10/15 care-record export read locally; 10/16 one visit mapped + "what was said" in one place;
+  10/16 per-job bottlenecks, and a side matter dated and handed to counsel); ~90 new recordings from the Oct 14–16 pulls; 18 device pulls.
+
 ## v0.7.3 — 2026-10-16 · token tile split into input, output and cache
 - **Live page:** the AI-token tile now shows fresh input (109 M) and model output (27 M) first; the 12.55 B total is labeled as mostly
   (98%) cache re-reads of the same context (codeburn breakdown).
