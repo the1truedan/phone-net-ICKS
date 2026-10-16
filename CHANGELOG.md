@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.3 — 2026-10-16 · token tile split into input, output and cache
+- **Live page:** the AI-token tile now shows fresh input (109 M) and model output (27 M) first; the 12.55 B total is labeled as mostly
+  (98%) cache re-reads of the same context (codeburn breakdown).
+
 ## v0.7.2 — 2026-10-16 · a data key for every chart
 - **Live page:** new "Data key" section that names the source type behind every chart and number (task-app export, payroll Shift
   Status exports cross-checked with pay stubs, agent session index, recordings catalog, account exports). Source types only; no file
