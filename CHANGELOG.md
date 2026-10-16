@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.5 — 2026-10-16 · long job lines stay inside the board
+- **Job board:** a long status line (for example a paused multi-day upload with its full transfer stats) no longer pushes the
+  CPU/memory/GPU/network bars past the table edge. Status pills wrap in their column (full text on hover), the usage bars shrink to
+  fit with each value kept on one line, and long command paths in "Compute users" wrap. No sideways scrolling on the main page.
+
 ## v0.7.4 — 2026-10-16 · see the bottleneck: per-job CPU, memory, GPU and network on the board
 - **Job board:** every running job (recon jobs, queue runners, Mac cutting/upload jobs, items on the GPU host) shows small bars for
   **CPU** (the job's process and all its children, plus the whole host), **memory** (job RSS or GPU VRAM, plus host free %), **GPU**
