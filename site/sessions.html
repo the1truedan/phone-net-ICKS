@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sessions of Therapy</title>
+<meta name="description" content="Sessions of Therapy: groggy logs of how one family caregiver used AI tools, counted and not read. 1,649 sessions in a black box." />
+<meta name="robots" content="noindex" />
+<style>
+  :root {
+    --bg: #0a0d14; --bg-panel: #121722; --bg-panel-2: #181e2c; --line: #273044;
+    --fg: #e7eef8; --fg-dim: #8b97ad; --fg-dimmer: #5c6880;
+    --accent: #6ee7ff; --accent-soft: #9bdfff; --accent-mu: #f0b429;
+    --c-care: #6ee7ff; --c-build: #8b97ad; --c-exist: #f0b429; --c-dad: #8a6fd1; --c-consp: #7ee081;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: var(--bg); }
+  a { color: var(--accent-soft); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  .hero { border-bottom: 1px solid var(--line); text-align: center; padding: 3.5rem 0 2rem; }
+  .eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: var(--accent-soft); margin: 0 0 1rem; }
+  h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; margin: 0 0 .6rem; letter-spacing: -.02em; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .sub { color: var(--fg-dim); max-width: 640px; margin: 0 auto; font-size: 1.05rem; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 2rem 0 0; }
+  .stat { background: var(--bg-panel); padding: .9rem 1rem; text-align: left; }
+  .stat b { display: block; font-family: var(--mono); font-size: 1.35rem; color: var(--fg); }
+  .stat span { font-size: .78rem; color: var(--fg-dim); }
+  section { padding: 2.2rem 0; border-bottom: 1px solid var(--line); }
+  h2 { font-size: 1.25rem; margin: 0 0 .3rem; }
+  .lede { color: var(--fg-dim); margin: 0 0 1.2rem; max-width: 760px; }
+  .viz { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; }
+  @media (max-width: 860px) { .viz { grid-template-columns: 1fr; } }
+  .stage { position: relative; background: radial-gradient(ellipse at 50% 40%, #121a2a 0%, var(--bg) 70%); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 520px; cursor: grab; touch-action: none; }
+  canvas:active { cursor: grabbing; }
+  @media (max-width: 600px) { canvas { height: 380px; } }
+  .search { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 8px; }
+  .search input { flex: 1; min-width: 0; background: rgba(10,13,20,.85); border: 1px solid var(--line); color: var(--fg); border-radius: 8px; padding: .55rem .75rem; font-family: var(--mono); font-size: .85rem; outline: none; }
+  .search input:focus { border-color: var(--accent); }
+  .search button { background: rgba(10,13,20,.85); border: 1px solid var(--line); color: var(--fg-dim); border-radius: 8px; padding: 0 .8rem; font: inherit; font-size: .8rem; cursor: pointer; }
+  .search button:hover { color: var(--fg); border-color: var(--accent); }
+  .hint { position: absolute; bottom: 10px; left: 12px; font-family: var(--mono); font-size: .7rem; color: var(--fg-dimmer); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 999px; padding: .25rem .7rem; font-size: .78rem; color: var(--fg-dim); cursor: pointer; }
+  .chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .chip.on, .chip:hover { color: var(--fg); border-color: var(--accent); }
+  .panel { overflow: hidden; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 12px; padding: 1rem; font-size: .85rem; }
+  .panel h3 { margin: 0 0 .1rem; font-size: 1rem; }
+  .panel .k { color: var(--fg-dim); font-size: .75rem; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; margin: .9rem 0 .3rem; }
+  .bars div { display: grid; grid-template-columns: 80px 1fr 42px; gap: 6px; align-items: center; font-size: .78rem; margin: 3px 0; }
+  .bars span.b { height: 7px; border-radius: 4px; background: var(--accent); opacity: .8; }
+  .bars em { font-style: normal; font-family: var(--mono); color: var(--fg-dim); text-align: right; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .72rem; }
+  td { padding: 3px 4px; border-bottom: 1px solid var(--line); color: var(--fg-dim); white-space: nowrap; }
+  td:first-child { color: var(--fg); } td:last-child { white-space: normal; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .card { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; }
+  .card h3 { margin: 0 0 .4rem; font-size: .95rem; }
+  .card p, .card li { color: var(--fg-dim); font-size: .88rem; margin: .2rem 0; }
+  .card ul { padding-left: 1.1rem; margin: 0; }
+  table.repos { font-family: inherit; font-size: .82rem; } table.repos td { white-space: normal; padding: 6px 8px; vertical-align: top; } table.repos td:first-child { font-family: var(--mono); white-space: nowrap; }
+  .num { font-family: var(--mono); color: var(--fg); }
+  footer { color: var(--fg-dimmer); font-size: .78rem; padding: 2rem 0 3rem; text-align: center; }
+  .tag { font-family: var(--mono); font-size: .7rem; color: var(--accent-mu); border: 1px solid #4a3a12; border-radius: 4px; padding: 0 .35rem; }
+  @media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
+  .switch { display: inline-flex; gap: 2px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; margin: 0 0 1.2rem; }
+  .switch a { color: var(--fg-dim); text-decoration: none; font-size: .8rem; padding: .25rem .9rem; border-radius: 999px; }
+  .switch a[aria-current] { background: var(--accent); color: var(--bg); }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <nav class="switch" aria-label="Pages"><a href="index.html">Summary</a><a href="analytics.html">Analytics</a><a href="workflow.html">Workflow</a><a href="sessions.html" aria-current="page">Sessions of Therapy</a></nav>
+    <p class="eyebrow">phone+net+tics · phone-net · I.C.K.S. v0.7.6 · sessions of therapy</p>
+    <h1>Sessions of <em>Therapy</em></h1>
+    <p class="sub">Groggy logs: how one family caregiver used AI tools, day and night, to the point of explaining their own work back to them. Every session is a dot in the black box. We count the sessions. We do not show what they say.</p>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>The black box</h2>
+    <p class="lede">Each dot is one AI session. The dot size shows how many messages it had. Dots group by topic. The moving sparks show the same week jumping from one topic to another. Type in the search box, or click a topic, to zoom in.</p>
+    <div class="viz">
+      <div>
+        <div class="stage">
+          <canvas id="cv" aria-label="Rotating black cube with clusters of session dots"></canvas>
+          <div class="search">
+            <input id="q" type="search" placeholder="search: care · 2026-10 · claude" aria-label="Search sessions" autocomplete="off" />
+            <button id="reset" type="button">Reset</button>
+          </div>
+          <div class="hint">drag to turn · click a dot or a topic to zoom</div>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <aside class="panel" id="panel" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where the line splits</h2>
+    <p class="lede">Some prompts belong to two topics at once. These counts come from a first keyword pass over all prompts. A local model will replace the keywords before this page is final.</p>
+    <div class="grid3">
+      <div class="card"><h3>Care and evidence</h3><p><span class="num" data-st="split0"></span> prompts. Care problems turned into records: recordings, custody logs, transcripts.</p></div>
+      <div class="card"><h3>Care and the law</h3><p><span class="num" data-st="split1"></span> prompts asked what the rules say: statutes, ADA, appeal rights.</p></div>
+      <div class="card"><h3>Faith and conspiracy</h3><p><span class="num" data-st="split2"></span> prompts. This is where the search for meaning turned into theories. It is a small number, and it is shown on purpose.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Calling out the tools</h2>
+    <p class="lede">The caregiver checks the AI. When the AI is wrong, the error gets a name and a number: a CVE-FAUX record.</p>
+    <div class="grid3">
+      <div class="card"><h3>Call-outs</h3><p><span class="num" data-st="callouts"></span> prompts corrected the AI ("that's not right", "you said…"), in <span class="num" id="xs"></span> sessions.</p></div>
+      <div class="card"><h3>Glitches</h3><p><span class="num" data-st="cjk"></span> AI replies had stray Chinese characters in English text.</p></div>
+      <div class="card"><h3>Caught mid-thought</h3><p data-st="caught"></p></div>
+      <div class="card"><h3>The CVE wall</h3><ul data-st-html="cves"></ul></div>
+      <div class="card"><h3>The missing answers</h3><p data-st="missing"></p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tools and cost</h2>
+    <p class="lede">What the agents used. MCP tools connect the AI to the family's own data. The local ones never leave the house.</p>
+    <div class="grid3">
+      <div class="card"><h3>Tool calls</h3><p><span class="num" data-st="tools"></span> calls.</p></div>
+      <div class="card"><h3>MCP calls: <span class="num" data-st="mcp"></span></h3><p data-st="mcpList"></p></div>
+      <div class="card"><h3>Tokens</h3><p data-st="tokens"></p><p data-st="price"></p></div>
+    </div>
+  </section>
+  <section>
+    <h2>The workbench</h2>
+    <p class="lede">What the agents did with their hands: the commands they ran, the folders they worked in, and the files they made or changed.</p>
+    <div class="grid3">
+      <div class="card"><h3>Most used commands</h3><p data-st="cmds"></p></div>
+      <div class="card"><h3>Most used folders</h3><p data-st="folders"></p></div>
+      <div class="card"><h3>Files</h3><p data-st="files"></p></div>
+      <div class="card"><h3>Topics by prompt count</h3><p data-st="topics"></p></div>
+      <div class="card"><h3>Where the sessions came from</h3><p data-st="sources"></p></div>
+    </div>
+  </section>
+  <section>
+    <h2>Build the tools · What tools</h2>
+    <p class="lede" id="reposLede">The public repos that came out of the sessions. The goal behind all of them: <b>prepare for the care when we cannot be there.</b></p>
+    <div style="overflow-x:auto"><table class="repos" id="repos"></table></div>
+  </section>
+</main>
+
+<footer>
+  <p>Counts only. No message text, medical text or names leave the house. Session IDs are replaced by numbers and dates are rounded to the month. Topics come from a first keyword pass. <span id="note"></span></p>
+  <p>phone+net+tics · sessions of therapy v0.7.6 · one door in a larger µlab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</p>
+</footer>
+
+<script src="sessions_data.js"></script>
+<script>
+const LOCAL = window.SOT_DATA && window.SOT_DATA.length;
+const ST = Object.assign({ prompts: "—", tools: "—", mcp: "—", callouts: "—", cjk: "—", mcpList: "", tokens: "", price: "", split: ["—","—","—"], caught: "—", missing: "—", cves: "", cmds: "—", folders: "—", files: "—", topics: "—", sources: "—", note: "Synthetic demo data (the data file did not load)." }, window.SOT_STATS || {});
+const DATA = LOCAL ? window.SOT_DATA : (() => {
+  let s = 11; const r = () => (s = (s * 48271) % 2147483647) / 2147483647;
+  const cats = ["build","build","dev","dev","care","care","evid","law","policy","iot","make","comedy","side","money","exist","dad","consp"], ags = ["claude","grok-web","grok","codex","chatgpt","pi","opencode"];
+  const out = [], t0 = Date.parse("2026-03-01T00:00:00Z");
+  for (let i = 0; i < 900; i++) { const d = new Date(t0 + r() * 228 * 864e5); out.push({ i: Math.floor(r()*0xffffffff).toString(16).padStart(8,"0"), t: d.toISOString().slice(0,16).replace("T"," "), a: ags[(r()*ags.length)|0], m: Math.ceil(Math.pow(r(), 3) * 1500) + 1, o: Math.floor(r() * 400000), c: cats[(r()*cats.length)|0], x: r() < 0.04 }); }
+  return out.sort((a, b) => a.t.localeCompare(b.t));
+})();
+const CATS = {};
+[["care","Caregiving","#6ee7ff"],["evid","Evidence · custody · transcripts","#9bdfff"],["law","Law · statutes · ADA · legal research","#ff9f6b"],
+ ["policy","Policy · procedure · runbooks","#c4841a"],["dev","Module development","#5fa8ff"],["build","Building · servers · infra","#8b97ad"],
+ ["iot","IoT · sensors · grow tent","#7ee0c1"],["make","Images · video · songs","#f06bd0"],["comedy","Improv · comedy","#ffd166"],
+ ["side","Grow · shopping","#a3d977"],["money","Tax · SSDI · jobs","#e0c27e"],["exist","Faith · meaning","#f0b429"],
+ ["dad","Family","#8a6fd1"],["consp","Theories","#7ee081"]].forEach(([k, label, color], n, all) => {
+  const y = 1 - (n + 0.5) / all.length * 2, rr = Math.sqrt(1 - y * y), th = n * 2.39996;
+  CATS[k] = { label, color, pos: [Math.cos(th) * rr * 0.62, y * 0.62, Math.sin(th) * rr * 0.62] };
+});
+if (window.SOT_LABELS) Object.entries(window.SOT_LABELS).forEach(([k, v]) => { if (CATS[k]) CATS[k].label = v; });
+const fmt = n => n >= 1e9 ? (n/1e9).toFixed(2)+" B" : n >= 1e6 ? (n/1e6).toFixed(1)+" M" : n >= 1e3 ? (n/1e3).toFixed(1)+" K" : String(n);
+const comma = n => n.toLocaleString("en-US");
+
+// seeded random so the layout is stable
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v); };
+
+DATA.forEach(d => {
+  const c = CATS[d.c] || CATS.build;
+  const spread = d.c === "build" ? 0.13 : 0.085;
+  d.p = c.pos.map(v => Math.max(-0.92, Math.min(0.92, v + gauss() * spread)));
+  d.r = 1.2 + Math.log10(Math.max(1, d.m)) * 1.1;
+  d.col = c.color; d.hit = true;
+});
+
+// stats strip
+const tot = { s: DATA.length, m: DATA.reduce((a, d) => a + d.m, 0), o: DATA.reduce((a, d) => a + d.o, 0) };
+document.getElementById("stats").innerHTML = [
+  [comma(tot.s), "sessions"], [comma(tot.m), "messages"], [ST.prompts, "prompts"],
+  [ST.tools, "tool calls"], [ST.mcp, "MCP calls"], [fmt(tot.o), "output tokens"]
+].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+document.querySelectorAll("[data-st]").forEach(el => { const k = el.dataset.st; el.textContent = k.startsWith("split") ? ST.split[+k.slice(5)] : ST[k]; });
+document.querySelectorAll("[data-st-html]").forEach(el => { el.innerHTML = ST[el.dataset.stHtml] || "<li>—</li>"; });
+document.getElementById("note").textContent = LOCAL ? "" : ST.note;
+const REPOS = window.SOT_REPOS || [];
+document.getElementById("repos").innerHTML = REPOS.length ? "<tr><td><b>repo</b></td><td><b>what it does</b></td><td><b>how it helps care when we cannot be there</b></td></tr>" + REPOS.map(r => `<tr><td>${r.n}</td><td>${r.d}</td><td>${r.g}</td></tr>`).join("") : "";
+document.getElementById("xs").textContent = DATA.filter(d => d.x).length;
+
+// chips
+const chips = document.getElementById("chips");
+Object.entries(CATS).forEach(([k, c]) => {
+  const n = DATA.filter(d => d.c === k).length;
+  const el = document.createElement("button");
+  el.className = "chip"; el.type = "button"; el.dataset.k = k;
+  el.innerHTML = `<i style="background:${c.color}"></i>${c.label} <b>${comma(n)}</b>`;
+  el.onclick = () => { stopDemo(); q.value = k; applySearch(); };
+  chips.appendChild(el);
+});
+
+// sparks: consecutive sessions in the same week that change topic
+const sparks = [];
+for (let i = 1; i < DATA.length; i++) {
+  const a = DATA[i-1], b = DATA[i];
+  if ((a.w || a.t.slice(0, 10)) === (b.w || b.t.slice(0, 10)) && a.c !== b.c) sparks.push([a, b]);
+}
+const live = [];
+
+// canvas + 3D
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function size() { DPR = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+window.addEventListener("resize", size); size();
+
+let rotY = 0.6, rotX = -0.35, zoom = 1, zoomT = 1, center = [0, 0, 0], centerT = [0, 0, 0], autoSpin = true;
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function project(p) {
+  let x = p[0] - center[0], y = p[1] - center[1], z = p[2] - center[2];
+  const cy = Math.cos(rotY), sy = Math.sin(rotY), cx = Math.cos(rotX), sx = Math.sin(rotX);
+  let x1 = x*cy - z*sy, z1 = x*sy + z*cy;
+  let y1 = y*cx - z1*sx, z2 = y*sx + z1*cx;
+  const f = 2.6 / (2.6 + z2), s = Math.min(W, H) * 0.36 * zoom * f;
+  return [W/2 + x1*s, H/2 + y1*s, z2, f];
+}
+const V = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+const E = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+const FACES = [[0,1,2,3],[4,5,6,7],[0,1,5,4],[2,3,7,6],[1,2,6,5],[0,3,7,4]];
+
+function draw(tm) {
+  if (autoSpin && !reduce) rotY += 0.0018;
+  zoom += (zoomT - zoom) * 0.08;
+  for (let i = 0; i < 3; i++) center[i] += (centerT[i] - center[i]) * 0.08;
+  ctx.clearRect(0, 0, W, H);
+  const pv = V.map(project);
+  // black faces
+  FACES.map(f => ({ f, z: f.reduce((a, i) => a + pv[i][2], 0) / 4 })).sort((a, b) => b.z - a.z).forEach(({ f }) => {
+    ctx.beginPath(); f.forEach((i, j) => j ? ctx.lineTo(pv[i][0], pv[i][1]) : ctx.moveTo(pv[i][0], pv[i][1])); ctx.closePath();
+    ctx.fillStyle = "rgba(4,6,10,0.55)"; ctx.fill();
+  });
+  // glow edges
+  ctx.lineWidth = 1.2;
+  E.forEach(([a, b]) => { ctx.strokeStyle = "rgba(110,231,255,0.35)"; ctx.beginPath(); ctx.moveTo(pv[a][0], pv[a][1]); ctx.lineTo(pv[b][0], pv[b][1]); ctx.stroke(); });
+  // dots, far to near
+  const pts = DATA.map(d => ({ d, q: project(d.p) })).sort((a, b) => b.q[2] - a.q[2]);
+  pts.forEach(({ d, q }) => {
+    const r = d.r * q[3] * Math.sqrt(zoom);
+    ctx.globalAlpha = d.hit ? 0.9 : 0.08;
+    ctx.fillStyle = d.col; ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 6.283); ctx.fill();
+    if (d === picked) { ctx.globalAlpha = 1; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(q[0], q[1], r + 4, 0, 6.283); ctx.stroke(); }
+    d.sx = q[0]; d.sy = q[1]; d.sr = r;
+  });
+  ctx.globalAlpha = 1;
+  // sparks
+  if (!reduce && sparks.length && live.length < 14 && Math.random() < 0.12) live.push({ s: sparks[(Math.random() * sparks.length) | 0], t: 0 });
+  for (let i = live.length - 1; i >= 0; i--) {
+    const L = live[i]; L.t += 0.012;
+    if (L.t >= 1) { live.splice(i, 1); continue; }
+    const [a, b] = L.s, k = L.t;
+    const mid = a.p.map((v, j) => (v + b.p[j]) / 2 + (j === 1 ? -0.35 : 0));
+    const p = a.p.map((v, j) => (1-k)*(1-k)*v + 2*(1-k)*k*mid[j] + k*k*b.p[j]);
+    const q = project(p);
+    ctx.fillStyle = "#ffffff"; ctx.shadowColor = b.col; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(q[0], q[1], 2.2 * q[3], 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// interaction
+let drag = null, picked = null;
+cv.addEventListener("pointerdown", e => { stopDemo(); drag = { x: e.clientX, y: e.clientY, moved: false }; cv.setPointerCapture(e.pointerId); autoSpin = false; });
+cv.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+  rotY += dx * 0.008; rotX = Math.max(-1.4, Math.min(1.4, rotX + dy * 0.008));
+  drag.x = e.clientX; drag.y = e.clientY;
+});
+cv.addEventListener("pointerup", e => {
+  const wasClick = drag && !drag.moved; drag = null;
+  if (!wasClick) return;
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 144;
+  DATA.forEach(d => { if (!d.hit) return; const dd = (d.sx - x) ** 2 + (d.sy - y) ** 2; if (dd < bd) { bd = dd; best = d; } });
+  if (best) { picked = best; centerT = best.p.slice(); zoomT = 2.4; renderPanel(DATA.filter(d => d.c === best.c && d.hit), CATS[best.c].label, best); }
+});
+cv.addEventListener("wheel", e => { e.preventDefault(); stopDemo(); zoomT = Math.max(0.7, Math.min(4, zoomT * (e.deltaY > 0 ? 0.9 : 1.1))); }, { passive: false });
+
+const q = document.getElementById("q");
+function applySearch() {
+  const s = q.value.trim().toLowerCase();
+  picked = null;
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.k === s));
+  if (!s) { DATA.forEach(d => d.hit = true); centerT = [0, 0, 0]; zoomT = 1; renderPanel(DATA, "All sessions"); return; }
+  const terms = s.split(/\s+/);
+  DATA.forEach(d => { const hay = (d.i + " " + d.a + " " + d.c + " " + (CATS[d.c] || CATS.build).label + " " + d.t).toLowerCase(); d.hit = terms.every(t => hay.includes(t)); });
+  const hits = DATA.filter(d => d.hit);
+  if (hits.length) {
+    centerT = [0, 1, 2].map(j => hits.reduce((a, d) => a + d.p[j], 0) / hits.length);
+    const spread = Math.max(...hits.map(d => Math.hypot(...d.p.map((v, j) => v - centerT[j])))) || 0.3;
+    zoomT = Math.max(1, Math.min(3, 0.9 / spread));
+  }
+  renderPanel(hits, `Search: "${q.value.trim()}"`);
+}
+q.addEventListener("input", () => { stopDemo(); applySearch(); });
+document.getElementById("reset").onclick = () => { stopDemo(); q.value = ""; autoSpin = true; applySearch(); };
+
+function renderPanel(list, title, one) {
+  const p = document.getElementById("panel");
+  if (!list.length) { p.innerHTML = `<h3>${title}</h3><p style="color:var(--fg-dim)">No sessions match.</p>`; return; }
+  const ts = list.map(d => d.t).sort();
+  const msgs = list.reduce((a, d) => a + d.m, 0), outs = list.reduce((a, d) => a + d.o, 0), xs = list.filter(d => d.x).length;
+  const ag = {}; list.forEach(d => ag[d.a] = (ag[d.a] || 0) + 1);
+  const top = Object.entries(ag).sort((a, b) => b[1] - a[1]).slice(0, 5), mx = top[0][1];
+  const recent = (one ? [one, ...list.filter(d => d !== one)] : list.slice().sort((a, b) => b.t.localeCompare(a.t))).slice(0, 8);
+  p.innerHTML = `
+    <h3>${title}</h3>
+    <div style="color:var(--fg-dim)">${comma(list.length)} sessions · ${ts[0].slice(0, 10)} to ${ts[ts.length-1].slice(0, 10)}</div>
+    <div class="k">Summary</div>
+    <div>${comma(msgs)} messages · ${fmt(outs)} output tokens · ${xs} sessions with call-outs</div>
+    <div class="k">Which tool</div>
+    <div class="bars">${top.map(([a, n]) => `<div><span>${a}</span><span class="b" style="width:${Math.max(4, n / mx * 100)}%"></span><em>${n}</em></div>`).join("")}</div>
+    <div class="k">${one ? "Picked session first" : "Latest sessions"}</div>
+    <table>${recent.map(d => `<tr><td>${d.i}</td><td>${d.t}</td><td>${d.a}</td><td>${comma(d.m)}m · ${fmt(d.o).replace(" ","")}t</td></tr>`).join("")}</table>`;
+}
+renderPanel(DATA, "All sessions");
+
+// demo: type a search, zoom in, then reset
+let demoTimers = [], demoOn = true;
+function stopDemo() { if (!demoOn) return; demoOn = false; demoTimers.forEach(clearTimeout); }
+function demo() {
+  const word = "care 2026-10";
+  [...word].forEach((ch, i) => demoTimers.push(setTimeout(() => { q.value = word.slice(0, i + 1); applySearch(); }, 1800 + i * 140)));
+  demoTimers.push(setTimeout(() => { q.value = ""; applySearch(); }, 1800 + word.length * 140 + 5000));
+  demoTimers.push(setTimeout(() => { if (demoOn) demo(); }, 1800 + word.length * 140 + 9000));
+}
+if (!reduce) demo();
+</script>
+</body>
+</html>

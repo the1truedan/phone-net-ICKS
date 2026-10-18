@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.6 — 2026-10-18 · Sessions of Therapy: the AI-use cube
+- **New page `sessions.html`:** "Sessions of Therapy" (a play on therapy sessions). 1,649 AI sessions from one caregiver as dots in
+  a turning black cube, grouped into 14 topics. A search box and topic chips zoom in; a side panel shows the count, month range,
+  messages, output tokens, which tool, and the latest sessions. Sparks show the same week jumping between topics.
+- **Also on the page:** where topics overlap, the call-outs and CVE-FAUX wall (AI mistakes caught by the caregiver, including 18
+  answers stopped mid-way and 127 mid-turn corrections), the missing-answers count, tool and MCP calls, tokens at API list price
+  (not billed), the agents' workbench (commands, folders, files) and the public repos with the goal behind them.
+- **Privacy:** metadata only (`sessions_data.js`). No message text, no names, no session IDs (replaced by numbers), dates rounded
+  to the month, no paths or hostnames. Topics come from a first keyword pass; a local model will replace it.
+- **Links:** the summary chips, workflow footer and README point to the new page.
+
 ## v0.7.5 — 2026-10-16 · long job lines stay inside the board
 - **Job board:** a long status line (for example a paused multi-day upload with its full transfer stats) no longer pushes the
   CPU/memory/GPU/network bars past the table edge. Status pills wrap in their column (full text on hover), the usage bars shrink to
