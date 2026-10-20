@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.7 — 2026-10-19 · Disclosure Edition
+- **Code name:** Disclosure Edition. In this release, the family asked all parties for one meeting with full disclosure, both ways.
+- **Live page numbers (2026-10-19):** 2,624 recordings catalogued; 28 device pulls; 20 faxes delivered since Sep 1 (3 failed at the
+  receiving machine, and an email copy went instead); 41 letters and email drafts checked before sending since Oct 14 (facts, dates,
+  tone, legal wording), with 23 saved revisions; 1 all-caps subject line changed to "Please reply by…"; one meeting request to 4 parties,
+  with 4 fixed times checked against the advocate's availability.
+- **Four new breakthroughs (ASD-STE100 text):** a misheard word settled by two decodes of the same audio; phone answers set beside the
+  written questions; private-care windows that the camera tools must skip; visit recordings found by matching the calendar to the
+  recordings catalog.
+- **Privacy:** counts only. No names, no medical detail, no message text.
+
 ## v0.7.6 — 2026-10-18 · Sessions of Therapy: the AI-use cube
 - **New page `sessions.html`:** "Sessions of Therapy" (a play on therapy sessions). 1,649 AI sessions from one caregiver as dots in
   a turning black cube, grouped into 14 topics. A search box and topic chips zoom in; a side panel shows the count, month range,
