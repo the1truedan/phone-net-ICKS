@@ -13,6 +13,21 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
+## Latest · v0.7.7 · Disclosure Edition (2026-10-19)
+
+**Real life, in the open.** This week the family used the toolkit to ask a care agency, its payroll company and an
+independent advocate for one meeting, with full disclosure both ways. Every letter came from the indexed record. Every quote was
+checked against its source before it went out.
+
+- **20 faxes delivered** since Sep 1. 3 more failed at the receiving machine, and an email copy went instead.
+- **41 letters and email drafts** checked before sending since Oct 14 (facts, dates, tone, legal wording), with 23 saved revisions.
+- **1 all-caps subject line** changed to "Please reply by…". Calm and exact is stronger.
+- Source: the [By the numbers](https://the1truedan.github.io/phone-net-ICKS/#totals) chart on the live page (counts only).
+
+**No PHI. No PII.** These numbers tell the story with counts alone. That is possible because the record is **disaggregated**: each
+recording, note and letter is its own checksummed item, and its date, source and hash are kept apart from its content. The content
+stays on local hardware. Only the counts travel. *More on the method soon.*
+
 ## Job board (v0.5.0, updated v0.6.0)
 A local page (127.0.0.1 only) to watch and steer the GPU transcription queues: GPU host CPU/memory/GPU and temperature,
 items on the GPU with uv-style progress bars (real stage + time left), Start now / Start from end for any queue, Pause/Stop per runner, done/total per queue, recently finished items, pause/resume/start/stop, automatic
@@ -108,7 +123,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.6.0"><img src="https://img.shields.io/badge/release-v0.6.0-3dcaa0?style=for-the-badge" alt="v0.6.0"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.7.7"><img src="https://img.shields.io/badge/release-v0.7.7_Disclosure_Edition-3dcaa0?style=for-the-badge" alt="v0.7.7 Disclosure Edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>

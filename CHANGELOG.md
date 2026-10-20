@@ -10,6 +10,8 @@
   written questions; private-care windows that the camera tools must skip; visit recordings found by matching the calendar to the
   recordings catalog.
 - **Privacy:** counts only. No names, no medical detail, no message text.
+- **README:** new "Latest · Disclosure Edition" section (fax and draft-check counts, cited to the live page's totals chart);
+  release badge now v0.7.7. **Live page:** footer and job-board eyebrow versions corrected (they still said v0.6.0).
 
 ## v0.7.6 — 2026-10-18 · Sessions of Therapy: the AI-use cube
 - **New page `sessions.html`:** "Sessions of Therapy" (a play on therapy sessions). 1,649 AI sessions from one caregiver as dots in
