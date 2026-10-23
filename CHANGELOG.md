@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (local, not pushed) — 2026-10-23 · candidate breakthrough: cite-checked local LLM judging
+- **Breakthrough (Dan, 2026-10-23):** a model's "red flag" only counts when it cites its evidence. "Contradicts self" must name the
+  other statement; "conflicts with the record" must name a numbered record line. A script checks every cite. The first 9B pass
+  labelled 49 of 74 high flags "contradicts self" from one statement alone; the cite rule removes that class of error for any model.
+- **Bake-off:** the same meeting statements rated by 5 local models (9B to 27B) on one GPU, one model at a time, with memory
+  guards (unload before load, free-VRAM check, fixed context, timeouts). Pick by measured agreement, not model size.
+- **Job board:** `problem_lists` config (unreadable, encrypted or private files count as "problem", not "left" or "uncovered";
+  Start/Priority no longer re-run a skip forever). New recon job names for camera-audio sync, clip transcripts, fusion, position.
+- **Ops:** GPU host Ollama container now one model / one request, flash attention, q8 KV cache; storage host Ollama capped at 10 GB.
+- **Privacy:** counts only. No names, no medical detail, no quotes.
+
 ## v0.7.7 — 2026-10-19 · Disclosure Edition
 - **Code name:** Disclosure Edition. In this release, the family asked all parties for one meeting with full disclosure, both ways.
 - **Live page numbers (2026-10-19):** 2,624 recordings catalogued; 28 device pulls; 20 faxes delivered since Sep 1 (3 failed at the

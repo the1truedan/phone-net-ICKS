@@ -137,6 +137,15 @@ class Board:
         except OSError:
             return set()
 
+    def problem_labels(self):
+        """2026-10-23: labels in problem_lists (first column; e.g. the runner's UNREADABLE_SOURCES.tsv, a hand-kept PROBLEM_FILES.tsv).
+        They count as 'problem', not 'left', so Start / Priority do not re-run a skip forever."""
+        out = set()
+        for p in self.c.get("problem_lists", []):
+            try: out |= {ln.split("\t", 1)[0].strip() for ln in open(p, errors="ignore") if ln.strip() and not ln.startswith("#")}
+            except OSError: pass
+        return out
+
     def rev_dir(self):
         return self.c.get("reverse_dir") or os.path.join(os.path.dirname(self.c["queue_glob"]), "from_end")
 
@@ -243,11 +252,12 @@ class Board:
         for lb in lm:
             queued |= set(self.H12.findall(lb))
         pulls, unc, uncat = {}, [], []
+        prob_h = {x for lb in self.problem_labels() for x in self.H12.findall(lb)}   # 2026-10-23: problem files count as ignored, not uncovered
         for h, (pull, path) in self._cov_audio.items():
             st = pulls.setdefault(pull, {"pull": pull, "audio": 0, "not_in_catalog": 0, "done": 0, "plain": 0, "queued": 0, "uncovered": 0, "ignored": 0})
             st["audio"] += 1
             b = os.path.basename(path).lower()
-            skip = h in self._cov_ign or b.startswith(".")
+            skip = h in self._cov_ign or b.startswith(".") or h[:12] in prob_h
             if h not in cat_sha and not skip:
                 st["not_in_catalog"] += 1
                 uncat.append((h, path))
@@ -346,9 +356,10 @@ class Board:
             pending_pieces = sum(cov.get(lb.split("_", 1)[-1], (0, 0))[0] - cov.get(lb.split("_", 1)[-1], (0, 0))[1]
                                  for lb in labels if lb not in res and not covered(lb))
             reg = self.reg().get(name, {})
-            longs = self.long_skipped()
+            longs = self.long_skipped(); probs = self.problem_labels()
             out.append({"queue": name, "total": len(labels), "done": len(done_t) + len(via_chunks),
                         "too_long": sum(1 for lb in labels if lb not in res and lb in longs and not covered(lb)),
+                        "problem": sum(1 for lb in labels if lb not in res and lb in probs and lb not in longs and not covered(lb)),
                         "via_chunks": len(via_chunks), "pending_pieces": pending_pieces,
                         "empty": sum(1 for lb in labels if lb in empty),
                         "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
@@ -1005,7 +1016,7 @@ class Board:
         busy = {r["queue"] for r in runners if r["queue"]}
         for q in qs:
             q["in_chain"] = q["queue"] in chained
-            q["todo"] = q["total"] - q["done"] - q["too_long"] > 0
+            q["todo"] = q["total"] - q["done"] - q["too_long"] - q.get("problem", 0) > 0
         # queues with work left first (running, then waiting in the chain, then idle); finished queues after, latest finished on top
         qs.sort(key=lambda q: (0, 0 if q["queue"] in busy else 1 if q["in_chain"] else 2, q["queue"]) if q["todo"]
                 else (1, -q["last_done_ts"], q["queue"]))
@@ -1079,8 +1090,8 @@ class Board:
         if queue not in qs:
             return {"error": "unknown queue"}
         q = next(x for x in self.status()["queues"] if x["queue"] == queue)
-        if q["total"] - q["done"] - q["too_long"] <= 0:
-            return {"error": f"nothing left that can run: {q['too_long']} remaining item(s) are over the length limit and go to the excerpt route"}
+        if q["total"] - q["done"] - q["too_long"] - q.get("problem", 0) <= 0:
+            return {"error": f"nothing left that can run: {q['too_long']} over the length limit (excerpt route), {q.get('problem', 0)} problem file(s) (unreadable / encrypted; see problem_lists)"}
         mine = [r for r in self.runners() if r["queue"] == queue]
         if any(r["from_end"] for r in mine):
             return {"error": "this queue already has a runner working from the end"}
@@ -1305,7 +1316,7 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 <section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section>
 <script>
 const TOKEN="__TOKEN__",REDACT=__REDACT__;
-async function post(p,b){const r=await fetch(p,{method:"POST",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:JSON.stringify(b||{})});alert(JSON.stringify(await r.json()));load();}
+async function post(p,b){const r=await fetch(p,{method:"POST",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:JSON.stringify(b||{})});if(r.status===403){alert("The board restarted since this page loaded (new security token). Reloading now: press the button again.");location.reload();return}alert(JSON.stringify(await r.json()));load();}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function mins(s){if(s==null)return"?";const m=Math.round(s/60);return m>=60?`${Math.floor(m/60)}h ${m%60}m`:`${m}m`}
 function bar(p){return `<div class="bar"><i style="width:${p||0}%"></i></div>`}
@@ -1346,7 +1357,7 @@ document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 ${(s.saturation||[]).length?`<div class="bad small"><b>Saturation:</b> ${s.saturation.map(esc).join(" · ")}</div>`:`<div class="small muted">No host near a limit (GPU memory, RAM, CPU, 1 GbE links).</div>`}${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}${s.est_model?(s.est_model.per_audio_min_s?` · estimate per item: ${s.est_model.fixed_s}s fixed + ${s.est_model.per_audio_min_s}s per audio minute (fit on ${s.est_model.n} recent items)`:` · estimate per item: average ${s.est_model.fixed_s}s (last ${s.est_model.n} items)`):""}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
 CUR=(g.current||[]);MAC=(s.mac_jobs||[]);GH=g.reachable?g:null;MACN=(L||{}).cpus||10;T0=Date.now();drawCur();const cur=[];if(0)document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
 document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+s.queues.map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
-const rs=s.runners.filter(r=>r.queue==q.queue),left=q.total-q.done-(q.too_long||0),qn=esc(q.queue);
+const rs=s.runners.filter(r=>r.queue==q.queue),left=q.total-q.done-(q.too_long||0)-(q.problem||0),qn=esc(q.queue);
 const ctl=r=>`<button onclick="event.stopPropagation();post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="event.stopPropagation();if(confirm('Stop ${qn} runner ${r.pid}? The item already on the GPU finishes.'))post('/api/stop',{pid:${r.pid}})">Stop</button>`;
 const st=rs.map(r=>`<div style="margin:2px 0"><span class="pill ${r.paused?"paused":""}">${r.paused?"paused":"running"}${r.from_end?" · from end":""}</span> ${hb('mac')}→${hb('linux')} ${ctl(r)}</div>${r.cpu!=null?useBars(r,MACN):""}`).join("");
 const can=left>0&&!rs.some(r=>r.from_end),fromEnd=rs.length||q.in_chain;
@@ -1354,7 +1365,7 @@ const btn=can?`<button onclick="event.stopPropagation();if(confirm('${fromEnd?(r
 const rate=q.span_s>0?`${(q.done/(q.span_s/3600)).toFixed(1)}/h`:"";
 const summ=q.done?`<div class="small muted">${esc(q.first_done)} → ${esc(q.last_done)}${q.span_s?` · ${mins(q.span_s)} · ${rate}`:""}</div>`:"";
 const fin=!rs.length&&q.done>=q.total?'<span class="pill">✓ complete</span>'+summ
- :!rs.length&&left<=0&&q.done<q.total?`<span class="pill">✓ complete</span><div class="small muted">${q.done} done · ${q.too_long} too long → excerpt route${q.pending_pieces?` (${q.pending_pieces} pieces still queued)`:""}</div>`+summ.replace('<div class="small muted">','<div class="small muted">')
+ :!rs.length&&left<=0&&q.done<q.total?`<span class="pill">✓ complete</span><div class="small muted">${q.done} done · ${q.too_long} too long → excerpt route${q.problem?` · ${q.problem} problem file(s), not re-queued`:""}${q.pending_pieces?` (${q.pending_pieces} pieces still queued)`:""}</div>`+summ.replace('<div class="small muted">','<div class="small muted">')
  :!rs.length&&!q.in_chain&&left>0?`<span class="pill muted">idle · ${left} left</span> `:"";
 const pri=(q.in_chain||!rs.length)&&left>0&&!s.priority?` <button title="Run this queue now and hold the other runners until it ends" onclick="event.stopPropagation();if(confirm('Give ${qn} priority? It starts now; every other runner pauses after its current item and resumes when ${qn} finishes.'))post('/api/priority',{queue:'${qn}'})">⇧ Priority</button>`:"";
 const act=fin+st+pri+(q.in_chain&&!rs.length?'<span class="pill muted">waiting in chain</span> ':"")+btn+(q.too_long&&left>0?`<div class="small muted">${q.too_long} too long (excerpt route)${q.pending_pieces?` · ${q.pending_pieces} pieces still queued in chunk queues`:""}</div>`:"")+(q.via_chunks?`<div class="small muted">${q.via_chunks} long recording${q.via_chunks==1?"":"s"} covered by 15-min pieces (processed or silent)</div>`:"");
