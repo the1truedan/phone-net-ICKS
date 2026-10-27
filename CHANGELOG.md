@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (local, not pushed) — 2026-10-23 to 2026-10-26 · code name: "na^3 boo x2 edition" (was temp name "Gonna Need a Bigger Book")
+## v0.7.8 — 2026-10-27 · na^3 boo x2 edition (work from 2026-10-23 to 2026-10-26; temp name "Gonna Need a Bigger Book")
 - **Breakthrough (Dan, 2026-10-23):** a model's "red flag" only counts when it cites its evidence. "Contradicts self" must name the
   other statement; "conflicts with the record" must name a numbered record line. A script checks every cite. The first 9B pass
   labelled 49 of 74 high flags "contradicts self" from one statement alone; the cite rule removes that class of error for any model.

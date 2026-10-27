@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.7.7 Disclosure Edition (2026-10-19) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.7.8 na^3 boo x2 edition (2026-10-27) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,18 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Latest · v0.7.7 · Disclosure Edition (2026-10-19)
+## Latest · v0.7.8 · na^3 boo x2 edition (2026-10-27)
+
+**Hard week, calm letters.** In a week of round-the-clock care, the toolkit checked a late agency reply against the written list
+of meeting promises (1 of 10 items arrived) and turned the gaps into numbered questions with one answer date.
+
+- **Cite rule:** a model's red flag counts only when it cites a numbered record line. A script removes uncited claims.
+- **One address, three microphones:** an email address spelled aloud at a meeting was found on 1 of 3 recordings.
+- **Portal that cannot forward:** export the sent text, then paste it into a plain email that uses initials only.
+- **Old budget sheet vs new:** compared on the home computer only. Exact hours stay in the private record.
+- **53 old files into custody** with SHA-256, originals not moved. Details: [CHANGELOG](CHANGELOG.md).
+
+### v0.7.7 · Disclosure Edition (2026-10-19)
 
 **Real life, in the open.** This week the family used the toolkit to ask a care agency, its payroll company and an
 independent advocate for one meeting, with full disclosure both ways. Every letter came from the indexed record. Every quote was
@@ -123,7 +134,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.7.7"><img src="https://img.shields.io/badge/release-v0.7.7_Disclosure_Edition-3dcaa0?style=for-the-badge" alt="v0.7.7 Disclosure Edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.7.8"><img src="https://img.shields.io/badge/release-v0.7.8_na%5E3_boo_x2_edition-3dcaa0?style=for-the-badge" alt="v0.7.8 na^3 boo x2 edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>
