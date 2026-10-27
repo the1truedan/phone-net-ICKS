@@ -41,6 +41,9 @@
 - **Live stats (2026-10-27):** hospice start date (Oct 14); 10.5 h a day said at the Oct 21 meeting, shown as a dotted mark (not in
   writing, not paid); 1 of 10 promised items arrived; follow-up counts (2 portal messages, 41 numbered questions, 10-item records
   request, 3 emails, 0 replies yet); portal lockouts. The notes chart explains that fewer notes now means comfort care, kept private.
+- **Compute, measured (2026-10-27):** new chart of home GPU load per day from the GPU's own metrics (Aug 28 to Oct 26). Oct 23–25
+  (meeting recordings and statements checked): 38.8 busy hours in 3 days, about 9× the Oct 4–22 daily average. Correspondence scope:
+  22 / 25 email threads with the care agency / payroll company; 8 / 2 secure-portal messages received. Generic names only.
 - **Privacy:** counts only. No names, no medical detail, no quotes.
 
 ## v0.7.7 — 2026-10-19 · Disclosure Edition
