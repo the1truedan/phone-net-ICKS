@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (local, not pushed) — 2026-10-23 · temp code name: "Gonna Need a Bigger Book" (cite-checked, larger local LLM judging)
+## Unreleased (local, not pushed) — 2026-10-23 to 2026-10-26 · code name: "na^3 boo x2 edition" (was temp name "Gonna Need a Bigger Book")
 - **Breakthrough (Dan, 2026-10-23):** a model's "red flag" only counts when it cites its evidence. "Contradicts self" must name the
   other statement; "conflicts with the record" must name a numbered record line. A script checks every cite. The first 9B pass
   labelled 49 of 74 high flags "contradicts self" from one statement alone; the cite rule removes that class of error for any model.
@@ -23,6 +23,22 @@
   One letter thanks staff for an answer they gave on time and apologises for short replies sent earlier. 9 old drafts were backed up
   and then deleted so that old text could not be sent by mistake. A large-print, one-page send sheet was printed, and the message
   text was put on the clipboard so it could be pasted, not retyped.
+- **Old budget sheet vs new (2026-10-26), hours only:** a 2025 budget sheet (IHAT) found in an old desktop folder was read on the
+  home computer and set beside the 2026 sheets. Authorized hours per month: 105.6 (Sep 2025), 103.1 (May 2026), 158.4 (Sep 2026,
+  about 5.2 a day, which matches the payroll certification, not the 6.5 a day said by phone). 10.5 a day was said at the 10/21
+  meeting and is not in writing yet. The acuity level is the same ("Average") on all three sheets.
+- **Why the numbers are what they are:** the agency's own cue sheet holds the levers: every need must also be on the functional
+  screen; family caregivers are not paid for chores that also help others in the house; "multi-tasking" cuts time; many tasks are
+  "typically" capped unless a doctor or therapist recommends more; overnight and supervision rows have their own tests. A local
+  model (9B, home computer only) now checks each lever against the medical record lines and must cite each line; uncited claims are
+  removed by script.
+- **Old paper trail into custody:** 53 files from 2025 (payroll exports, letters, two recorded payroll-company calls with
+  transcripts) copied into the evidence folder with SHA-256, without moving the originals.
+- **Session tips (what worked on a hard night):** ask "are you using this box?" before any load test (a guard now refuses to start
+  while a game or Steam runs); keep raw reactions in local notes and put dates and counts in letters; check a late reply against the
+  written promise list; when a secure portal cannot forward, export the text and paste it into a plain email with initials only;
+  print a large-type send sheet and put the message on the clipboard; run medical comparisons on local models only, and keep the
+  GPU box free while it is being measured.
 - **Privacy:** counts only. No names, no medical detail, no quotes.
 
 ## v0.7.7 — 2026-10-19 · Disclosure Edition
