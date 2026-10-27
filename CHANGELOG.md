@@ -23,10 +23,9 @@
   One letter thanks staff for an answer they gave on time and apologises for short replies sent earlier. 9 old drafts were backed up
   and then deleted so that old text could not be sent by mistake. A large-print, one-page send sheet was printed, and the message
   text was put on the clipboard so it could be pasted, not retyped.
-- **Old budget sheet vs new (2026-10-26), hours only:** a 2025 budget sheet (IHAT) found in an old desktop folder was read on the
-  home computer and set beside the 2026 sheets. Authorized hours per month: 105.6 (Sep 2025), 103.1 (May 2026), 158.4 (Sep 2026,
-  about 5.2 a day, which matches the payroll certification, not the 6.5 a day said by phone). 10.5 a day was said at the 10/21
-  meeting and is not in writing yet. The acuity level is the same ("Average") on all three sheets.
+- **Old budget sheet vs new (2026-10-26):** an older budget sheet found in an old desktop folder was read on the home computer
+  only and set beside the newer sheets. The newest written number matches the payroll certification, not the number said by
+  phone, and the number said at the meeting is not in writing yet. Exact hours and ratings stay in the private record.
 - **Why the numbers are what they are:** the agency's own cue sheet holds the levers: every need must also be on the functional
   screen; family caregivers are not paid for chores that also help others in the house; "multi-tasking" cuts time; many tasks are
   "typically" capped unless a doctor or therapist recommends more; overnight and supervision rows have their own tests. A local
