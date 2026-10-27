@@ -38,6 +38,9 @@
   written promise list; when a secure portal cannot forward, export the text and paste it into a plain email with initials only;
   print a large-type send sheet and put the message on the clipboard; run medical comparisons on local models only, and keep the
   GPU box free while it is being measured.
+- **Live stats (2026-10-27):** hospice start date (Oct 14); 10.5 h a day said at the Oct 21 meeting, shown as a dotted mark (not in
+  writing, not paid); 1 of 10 promised items arrived; follow-up counts (2 portal messages, 41 numbered questions, 10-item records
+  request, 3 emails, 0 replies yet); portal lockouts. The notes chart explains that fewer notes now means comfort care, kept private.
 - **Privacy:** counts only. No names, no medical detail, no quotes.
 
 ## v0.7.7 — 2026-10-19 · Disclosure Edition
