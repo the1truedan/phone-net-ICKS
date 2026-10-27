@@ -9,6 +9,20 @@
 - **Job board:** `problem_lists` config (unreadable, encrypted or private files count as "problem", not "left" or "uncovered";
   Start/Priority no longer re-run a skip forever). New recon job names for camera-audio sync, clip transcripts, fusion, position.
 - **Ops:** GPU host Ollama container now one model / one request, flash attention, q8 KV cache; storage host Ollama capped at 10 GB.
+- **Send night (2026-10-26), a hard week of round-the-clock care:** one late reply checked against the written list of meeting
+  promises: 1 of 10 items arrived (an undated guideline sheet). The follow-up quotes that sheet's own tests back as numbered
+  questions instead of opinion. Sent: 2 secure-portal messages (one to 12 people, one records request with 10 numbered items) and
+  3 plain emails (escalation, grievance, ombudsman), all with a confirm-receipt request and one answer date.
+- **Breakthrough: one address, three microphones.** An email address spelled aloud at a meeting was searched for on every device
+  that recorded that day. 1 of 3 sources caught the letters (the other two were off or caught only "email is"). The spelling and the
+  one source are written down, and the reply asks the speaker to forward the request if the address is wrong.
+- **Breakthrough: the portal that cannot forward.** The agency's secure portal would not add outside recipients to a reply or
+  forward a sent message. Work-around: export the sent text, then paste it into a plain email that uses initials only. The note to
+  the agency names this as a reason to also answer by letter or regular email.
+- **Tone, measured:** the caregiver's raw reactions stay in local notes. The letters carry dates, counts and the agency's own words.
+  One letter thanks staff for an answer they gave on time and apologises for short replies sent earlier. 9 old drafts were backed up
+  and then deleted so that old text could not be sent by mistake. A large-print, one-page send sheet was printed, and the message
+  text was put on the clipboard so it could be pasted, not retyped.
 - **Privacy:** counts only. No names, no medical detail, no quotes.
 
 ## v0.7.7 — 2026-10-19 · Disclosure Edition
