@@ -37,3 +37,14 @@ Optional background for the white paper's release rule: ISO/IEC 27045 (big data 
   claims export), Wisconsin Medicaid / ForwardHealth member portal, Social Security (my Social Security: benefit letter, premium
   deductions), and the care-plan company's and payroll company's portals. Goal: export claims and billing for the care-plan company,
   hospice and payroll company, and reconcile them against care logs. Exports go to the private evidence folder, hashed on arrival.
+- **Procurement (2026-10-26): sheet-fed (ADF) scanner for paper intake.** Bought used: Fujitsu ScanSnap S1500M, $33.97 (online
+  thrift auction; USB cable on hand). Purpose: receipts, letters, agency packets, invoices, orders and handwritten notes come in as
+  paper; the flatbed was broken, and a phone camera app is too slow for whole packets. Plan when it arrives:
+  1. An always-on Linux box (old laptop, or USB pass-through on the storage or GPU host) runs SANE (`fujitsu` backend) and
+     `scanbd`, so pressing the scanner's button starts a scan with no screen needed.
+  2. Each scan lands as a PDF in a watch folder, hashed on arrival (same custody log as phone pulls), then `ocrmypdf` adds text.
+  3. Tiered OCR check, all local: OpenCV for deskew and cleanup only; Tesseract 5 plus a second engine (PaddleOCR or docTR); a
+     local vision model referees pages where the engines disagree. Each page gets a grade (A/B/C/F) from cross-engine agreement and
+     field checks (dates, amounts, phone numbers). Grade C/F pages are flagged for a person to check.
+  4. Sorting: the type (receipt, letter, invoice, order, handwritten note) and its dates go into the catalog, so paper sits on the
+     same timeline as recordings and email. Private pages follow the same rules as recordings: local only, counts only in public.
