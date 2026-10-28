@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oct 28 Workflow</title>
+<meta name="description" content="What it took on Oct 28, 2026 to read two encrypted replies and answer them by a 4:20 PM deadline. Counts and steps only: no names, no content, no medical detail.">
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1c1a; --muted: #5d5a54; --card: #ffffff; --line: #d9d5cc;
+    --accent: #1f6f5c; --accent-fg: #ffffff; --code: #f1eee7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833;
+      --accent: #5cc3a6; --accent-fg: #0f1110; --code: #262521;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833;
+    --accent: #5cc3a6; --accent-fg: #0f1110; --code: #262521;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 22px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 2.1em; line-height: 1.15; margin: 0 0 .3em; }
+  h2 { font-size: 1.35em; margin: 1.6em 0 .5em; border-bottom: 2px solid var(--line); padding-bottom: .2em; }
+  p, li { max-width: 46em; }
+  .sub { color: var(--muted); font-size: .9em; margin: 0 0 1em; }
+  blockquote { margin: 1em 0; padding: .6em 1em; border-left: 6px solid var(--accent); background: var(--card); border-radius: 6px; }
+  ul { padding-left: 1.2em; } li { margin: .3em 0; }
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; }
+  .chart svg { max-width: 100%; height: auto; }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
+  button { font: inherit; font-size: .85em; padding: .55em 1em; border-radius: 8px; border: 2px solid var(--accent);
+    background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  button.ghost { background: transparent; color: var(--fg); }
+  details { margin-top: 16px; } summary { cursor: pointer; font-weight: 600; }
+  pre { background: var(--code); padding: 14px; border-radius: 8px; overflow-x: auto; font-size: .7em; line-height: 1.45; }
+  table { border-collapse: collapse; width: 100%; font-size: .95em; }
+  td { border-bottom: 1px solid var(--line); padding: .45em .3em; vertical-align: top; }
+  td:first-child { font-weight: 700; white-space: nowrap; width: 6.5em; }
+  footer { margin-top: 3em; color: var(--muted); font-size: .8em; }
+  a { color: var(--accent); }
+  @media (max-width: 600px) { body { font-size: 19px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>🔐➡️📤 Oct 28: two encrypted replies, read and answered by 4:20 PM</h1>
+  <p class="sub">phone+net+I.C.K.S. · one afternoon, one caregiver, home hospice care going on at the same time · counts and steps only: no names, no content, no medical detail</p>
+
+  <blockquote>⏱️ <b>2 h 23 min</b> from the first reply (1:57 PM) to the last send (4:20 PM). The caregiver set the 4:20 PM deadline. 🧑‍🤝‍🧑 Officials and advocates who had been left off got the full text.</blockquote>
+
+  <h2>🗺️ The workflow</h2>
+  <div class="chart" id="chart" aria-label="Flowchart of the Oct 28 steps, from two encrypted replies arriving to three sends by 4:20 PM">Loading diagram…</div>
+  <div class="btns">
+    <button id="dl-svg" type="button">⬇️ Download SVG</button>
+    <button id="dl-mmd" class="ghost" type="button">⬇️ Download Mermaid (.mmd text)</button>
+  </div>
+  <details><summary>📝 Show the raw Mermaid text</summary><pre id="raw"></pre></details>
+
+  <h2>🔢 By the numbers</h2>
+  <table>
+    <tr><td>📨 2</td><td>encrypted portal replies on Oct 28 (payroll company 1:57 PM · care agency 3:53 PM)</td></tr>
+    <tr><td>🔑 several</td><td>login attempts before each one would open</td></tr>
+    <tr><td>🚫 2</td><td>people left off both replies: the ombudsman and the hospice advocate</td></tr>
+    <tr><td>✍️ 3</td><td>drafts ready (2 portal replies to all · 1 plain email with both replies in full and every open question)</td></tr>
+    <tr><td>📤 3 · 5 min</td><td>sends by the caregiver, 4:17 to 4:20 PM</td></tr>
+    <tr><td>📬 1 · 1</td><td>written replies so far, agency · payroll company (it was 0 · 0 the night before)</td></tr>
+  </table>
+
+  <h2>🛡️ How it stayed safe</h2>
+  <ul>
+    <li>💾 Each reply saved as text with its attachments, hashed, and logged before anyone acted on it.</li>
+    <li>🔎 Senders, times and recipients checked against the saved copies, not from memory.</li>
+    <li>🏠 Family recordings and health details stayed on the home computers. No cloud model read them.</li>
+    <li>✋ The AI wrote drafts only. The caregiver read, changed and sent each one.</li>
+  </ul>
+
+  <footer>Session <code>18860528</code> · © 2026 M.A.N.A.G.E.R. LLC — <i>prepare for the care when we cannot be there</i> · <a href="index.html">back to the main page</a></footer>
+</main>
+
+<script id="mmd" type="text/plain">flowchart TD
+  A["📨 1:57 PM<br/>Encrypted reply #1<br/>(payroll company)"] --> L
+  B["📨 3:53 PM<br/>Encrypted reply #2<br/>(care agency)"] --> L
+  L["🔑 Several login attempts<br/>+ password resets<br/>to open each one"] --> S
+  S["💾 Save text + attachments<br/>🔏 hash + custody log"] --> C
+  C{"🔎 Who got it?<br/>check To / Cc<br/>against saved copy"}
+  C -- "🚫 ombudsman + hospice<br/>advocate left off" --> R
+  R["🧠 Quick context review<br/>open questions · deadlines<br/>earlier asks"] --> D
+  D["✍️ Draft emails<br/>📧 1 plain email with both<br/>replies in full + every question<br/>↩️ 2 portal replies to all"] --> K
+  K["📋 One-page cheat sheet<br/>large type · copy and paste"] --> T
+  T(["⏰ 4:20 PM<br/>caregiver's own deadline"]) --> X
+  X["📤 Caregiver sends 3<br/>4:17 → 4:20 PM"] --> V
+  V["✅ Check the sent copies<br/>right draft? right people?"] --> P
+  P["🌐 Public counts updated<br/>🛡️ no names · PHI scan"]
+  H["🏠 Same afternoon:<br/>hospice care at home ·<br/>phone recordings pulled<br/>and transcribed locally"] -.-> R
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  var src = document.getElementById("mmd").textContent.trim();
+  document.getElementById("raw").textContent = src;
+  var svgText = "";
+  function dl(name, type, text) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: type }));
+    a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  document.getElementById("dl-mmd").onclick = function () { dl("oct28-workflow.mmd", "text/plain", src + "\n"); };
+  document.getElementById("dl-svg").onclick = function () {
+    if (svgText) dl("oct28-workflow.svg", "image/svg+xml", svgText);
+  };
+  var dark = document.documentElement.dataset.theme === "dark" ||
+    (document.documentElement.dataset.theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  try {
+    mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default", securityLevel: "strict",
+      flowchart: { htmlLabels: true, curve: "basis" }, themeVariables: { fontSize: "18px" } });
+    mermaid.render("wf", src).then(function (r) {
+      document.getElementById("chart").innerHTML = r.svg; svgText = r.svg;
+    }).catch(function () { document.getElementById("chart").textContent = "Diagram could not render. Use the raw text below."; });
+  } catch (e) { document.getElementById("chart").textContent = "Diagram could not load. Use the raw text below."; }
+})();
+</script>
+</body>
+</html>
