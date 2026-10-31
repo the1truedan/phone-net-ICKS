@@ -35,7 +35,7 @@ of meeting promises (1 of 10 items arrived) and turned the gaps into numbered qu
 - **One address, three microphones:** an email address spelled aloud at a meeting was found on 1 of 3 recordings.
 - **Portal that cannot forward:** export the sent text, then paste it into a plain email that uses initials only.
 - **Old budget sheet vs new:** compared on the home computer only. Exact hours stay in the private record.
-- **Hospice care at home since Oct 14, 2026.** At the Oct 21 meeting the team said 10.5 h a day and listed 10 items to send. By Oct 27, 1 had arrived and 0 of the hours were in writing. [Live stats](https://the1truedan.github.io/phone-net-ICKS/#totals).
+- **Hospice care at home since Oct 14, 2026.** At the Oct 21 meeting the team said 10.5 h a day and listed 10 items to send. By Oct 27, 1 had arrived and 0 of the hours were in writing. **Update Oct 28:** both offices confirmed in writing 10.5 h a day for Oct 21 to 31, and the corrected 6.5 h from Sep 1. From Nov 1: not in writing yet. [Live stats](https://the1truedan.github.io/phone-net-ICKS/#totals).
 - **53 old files into custody** with SHA-256, originals not moved. Details: [CHANGELOG](CHANGELOG.md).
 
 ### v0.7.7 · Disclosure Edition (2026-10-19)
