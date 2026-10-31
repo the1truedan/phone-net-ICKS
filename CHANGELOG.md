@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.7.9 — 2026-10-30 · Spit Take edition
+- **Breakthrough: a DNA file read after 9 years on the shelf.** A raw genotype file from a 2017 research study (23andMe text
+  format) sat unread for 9 years, 63 days. Chat assistants had only seen 45 pasted markers. In one evening, on local hardware:
+  563,289 markers (100% called), 731 Y and 310 mitochondrial markers. New `scripts/dna/` and `docs/DNA_MODULE.md`.
+- **Father's and mother's lines offline:** 23andMe's open-source yhaplo (pip install from GitHub) and haplogrep3 (release
+  tarball, Java 17) classify the Y and mtDNA haplogroups. `dna_prep.py` builds their inputs from the raw file.
+- **Known-variant check without sending DNA:** public ClinVar pathogenic / likely pathogenic lists are downloaded by gene name
+  only and matched on the home computer. Strict rule: same rsID and the changed letter present. A loose position-only pass gave
+  false alarms (a common harmless variant at the same spot as a rare frameshift); the strict rule removes that class of error.
+- **Ancestry check:** 1000 Genomes frequencies for 26 populations (Ensembl, IDs only), scored locally with a likelihood
+  ranking and an admixture fit with bootstrap ranges. Network bound; next step is a local reference on the storage server.
+- **Paper trail beside the DNA:** three genealogy programs exported to GEDCOM and cross-checked slot by slot; one birth
+  certificate settled a name and a birth year that the trees disagreed on.
+- **Job board:** DNA jobs (ClinVar lookup, ancestry scoring, yhaplo, haplogrep3) added to the process list.
+- **Privacy:** results went into private large-type PDFs for the family. No genotype, haplogroup or health result is in this
+  repository or on the site.
+
 ## v0.7.8 — 2026-10-27 · na^3 boo x2 edition (work from 2026-10-23 to 2026-10-26; temp name "Gonna Need a Bigger Book")
 - **Breakthrough (Dan, 2026-10-23):** a model's "red flag" only counts when it cites its evidence. "Contradicts self" must name the
   other statement; "conflicts with the record" must name a numbered record line. A script checks every cite. The first 9B pass

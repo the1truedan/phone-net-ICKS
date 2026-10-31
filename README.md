@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.7.8 na^3 boo x2 edition (2026-10-27) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.7.9 Spit Take edition (2026-10-30) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,20 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Latest · v0.7.8 · na^3 boo x2 edition (2026-10-27)
+## Latest · v0.7.9 · Spit Take edition (2026-10-30)
+
+**A DNA file read after 9 years on the shelf.** A raw genotype file from a 2017 research study had only ever been glanced at
+(45 pasted markers). In one evening, on the home computers, the new DNA module read all of it and gave the family private,
+large-type pages. No DNA left the house: only gene names and marker IDs went to public databases.
+
+- **Scope:** 563,289 markers (100% called), 731 Y and 310 mitochondrial markers.
+- **Tools:** yhaplo (23andMe, `pip install` from GitHub) for the father's line, haplogrep3 (release tarball, Java 17) for the mother's line, numpy / pandas / matplotlib for checks and charts.
+- **Known-variant check:** public ClinVar lists matched locally with a strict rule (same rsID and the changed letter). A loose first pass gave a false alarm; the strict rule removed it.
+- **Ancestry:** 1000 Genomes frequencies (26 populations), scored locally. The slow part is the network, not the computer.
+- **Paper trail:** three genealogy programs exported and cross-checked; one birth certificate settled the disagreements.
+- How to run it: [`docs/DNA_MODULE.md`](docs/DNA_MODULE.md). Details: [CHANGELOG](CHANGELOG.md).
+
+### v0.7.8 · na^3 boo x2 edition (2026-10-27)
 
 **Hard week, calm letters.** In a week of round-the-clock care, the toolkit checked a late agency reply against the written list
 of meeting promises (1 of 10 items arrived) and turned the gaps into numbered questions with one answer date.
@@ -135,7 +148,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.7.8"><img src="https://img.shields.io/badge/release-v0.7.8_na%5E3_boo_x2_edition-3dcaa0?style=for-the-badge" alt="v0.7.8 na^3 boo x2 edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.7.9"><img src="https://img.shields.io/badge/release-v0.7.9_Spit_Take_edition-3dcaa0?style=for-the-badge" alt="v0.7.9 Spit Take edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>

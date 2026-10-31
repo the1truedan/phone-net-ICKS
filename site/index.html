@@ -210,7 +210,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">v0.7.8 na^3 boo x2 edition · 2026-10-27</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a> <a class="private-chip" href="sessions.html">sessions of therapy →</a>
+    <span class="private-chip">v0.7.9 Spit Take edition · 2026-10-30</span> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a> <a class="private-chip" href="sessions.html">sessions of therapy →</a>
   </div>
 </header>
 
@@ -401,7 +401,7 @@
     <p class="section-sub">Built between care tasks with several AI assistants. Citations are commit IDs and session IDs from the owner's private records;
       they are listed so each step can be traced, not as public links. Sources were checked against three records (session index, Grok export, chat-history import); the session index had filed early grok.com chats as ChatGPT, and these entries use the corrected source.</p>
   </div>
-  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of twenty-two coding breakthroughs from April to October 2026, clustered from the last week of September"></svg><div class="tip" hidden></div></div></div>
+  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of twenty-four coding breakthroughs from April to October 2026, clustered from the last week of September"></svg><div class="tip" hidden></div></div></div>
   <ol class="bt">
     <li><span class="bt-date">2026-04-14</span><span class="bt-tool">Grok (grok.com)</span><b>Coding pivot + AI certificate enrollment</b><span class="bt-help">Moved from chatting about the situation to building tools for it.</span>
       <span class="bt-cite">grok.com chat <code>a368cd55</code> (first build question: a Dockerfile) · AI/ML certificate acceptance, same night</span></li>
@@ -451,12 +451,14 @@
       <span class="bt-cite">session <code>7fc6d390</code> · local model only (PHI rule)</span></li>
     <li><span class="bt-date">2026-10-28</span><span class="bt-tool">Claude · local models</span><b>Two encrypted replies read and answered the same afternoon</b><span class="bt-help">Two secure-portal replies arrived on Oct 28 (payroll company 1:57 PM, care agency 3:53 PM). Each opened only after several login attempts. Both were saved and read within minutes. The check found that the ombudsman and the hospice advocate were left off both replies. After a quick review of the saved context, draft emails were ready for the caregiver's own 4:20 PM deadline. The caregiver sent them: one plain email with both replies in full (so the officials and advocates could see them) and two portal replies to all.</span>
       <span class="bt-cite">session <code>18860528</code> · drafts only; the caregiver sent each one · <a href="oct28-workflow.html">🗺️ workflow diagram (SVG / Mermaid download)</a></span></li>
+    <li><span class="bt-date">2026-10-30</span><span class="bt-tool">Claude · open-source DNA tools</span><b>A DNA file read after 9 years on the shelf</b><span class="bt-help">A raw genotype file from a 2017 research study had never been read in full. In one evening, on the home computers: 563,289 markers, the father's and mother's lines (yhaplo, haplogrep3), a known-variant check against public ClinVar lists (gene names out, no DNA out), and an ancestry check against 1000 Genomes. A strict match rule removed a false alarm. Results went to the family in private large-type pages, not to this site.</span>
+      <span class="bt-cite">session <code>c12db0ab</code> · <code>scripts/dna/</code> · <code>docs/DNA_MODULE.md</code> · local only</span></li>
   </ol>
 </section>
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.7.8 na^3 boo x2 edition · totals as of 2026-10-19 · meeting and follow-ups to 2026-10-28</p>
+    <p class="section-eyebrow">By the numbers · v0.7.9 Spit Take edition · totals as of 2026-10-19 · meeting and follow-ups to 2026-10-28</p>
     <h2 class="section-title">Everything in one place</h2>
     <p class="section-sub">Totals from Jan 2024 to Oct 19, 2026; meeting and follow-up counts to Oct 28, 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
@@ -723,7 +725,7 @@
 </section>
 
 <footer><div class="mu-footer">
-  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.7.8 na^3 boo x2 edition · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.7.9 Spit Take edition · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
   <nav>
     <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
     <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>
@@ -912,10 +914,10 @@ function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Ma
   hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${AIH[MONTHS[i][0]] || 0} h</b> active`);
 })();
 
-const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"], ["2026-09-29", "Claude \u00b7 adb", "Payroll truth, straight from the payroll app"], ["2026-10-02", "Claude", "Two computers at once: Mac quick pass + GPU deep pass"], ["2026-10-03", "Claude", "Every pull covered, broken files recovered"], ["2026-10-11", "Claude \u00b7 adb", "Camera clips saved with a person in the loop"], ["2026-10-12", "Claude", "A six-year-old phone backup opened without the vendor app"], ["2026-10-15", "Claude", "The whole care-record export, read on the home computers"], ["2026-10-16", "Claude", "One visit fully mapped; what was said in one place"], ["2026-10-16", "Claude", "Bottlenecks visible per job; a side matter handed to counsel"], ["2026-10-19", "Claude", "A misheard word settled from the audio"], ["2026-10-19", "Claude", "Phone answers set beside the written questions"], ["2026-10-19", "Claude \u00b7 adb", "Private-care windows the camera tools must skip"], ["2026-10-19", "Claude", "Visit recordings found from the calendar"]];
+const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"], ["2026-09-29", "Claude \u00b7 adb", "Payroll truth, straight from the payroll app"], ["2026-10-02", "Claude", "Two computers at once: Mac quick pass + GPU deep pass"], ["2026-10-03", "Claude", "Every pull covered, broken files recovered"], ["2026-10-11", "Claude \u00b7 adb", "Camera clips saved with a person in the loop"], ["2026-10-12", "Claude", "A six-year-old phone backup opened without the vendor app"], ["2026-10-15", "Claude", "The whole care-record export, read on the home computers"], ["2026-10-16", "Claude", "One visit fully mapped; what was said in one place"], ["2026-10-16", "Claude", "Bottlenecks visible per job; a side matter handed to counsel"], ["2026-10-19", "Claude", "A misheard word settled from the audio"], ["2026-10-19", "Claude", "Phone answers set beside the written questions"], ["2026-10-19", "Claude \u00b7 adb", "Private-care windows the camera tools must skip"], ["2026-10-19", "Claude", "Visit recordings found from the calendar"], ["2026-10-28", "Claude", "Two encrypted replies read and answered the same afternoon"], ["2026-10-30", "Claude", "A DNA file read after 9 years on the shelf"]];
 (function bt() {
   const root = document.getElementById("viz-bt"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900;
-  const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-10-20"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
+  const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-11-05"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
   el("line", { x1: x0, x2: x1, y1: y, y2: y, stroke: "#273044", "stroke-width": 2 }, svg);
   ["2026-04","2026-05","2026-06","2026-07","2026-08","2026-09","2026-10"].forEach(m => el("text", { x: X(m + "-01"), y: y + 40, "text-anchor": "middle" }, svg, label(m).split(" ")[0]));
   BT.forEach(([d, t, w], k) => { const cy = y - (k >= 5 ? (k - 5) * 4 : 0);
