@@ -63,7 +63,12 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
   page changes. Johnny Appleseed indexes the kits. Never stores passwords or codes. Stays a how-to: the person signs up.
 - **Way later: port Unlimited-OCR (Baidu, 3.3B, MIT) off CUDA.** As shipped it needs NVIDIA (`.cuda()`, bf16, sglang
   wheel): fits MRGPU 16 GB, not the Tower P2000 (5 GB, Pascal has no bf16). Port targets: Mac (MPS, fp16) and Xeon (CPU,
-  int8). glm-ocr already runs on the P2000 and the Mac in the meantime.
+  int8). glm-ocr already runs on the P2000 and the Mac in the meantime. Community ports exist to try first:
+  `FluidInference/unlimited-ocr-mlx-coreml` (Mac) and `sahilchachra/Unlimited-OCR-GGUF` / `AtomicChat/Unlimited-OCR-2-GGUF` (llama.cpp).
+- **OCR bake-off candidates (Nov 2026, self-reported scores):** PaddleOCR-VL-1.6 and MinerU2.5-Pro (OmniDocBench top),
+  Chandra OCR 2 (olmOCR-Bench top), GLM-OCR (installed), DeepSeek-OCR (installed), MiniCPM-OCR-1.0 (GGUF), Xiaomi-OCR-0,
+  Falcon-OCR, surya-ocr-2.5. Score them on our own scans (word recall vs a hand-checked page, time, memory) before picking.
+- **Blank-back threshold:** a legal packet still let 3 near-blank backs through at 0.2% ink; also treat "OCR words < 5" as blank.
 
 ## Earmarks (2026-10-16, local)
 - **Fax tooling:** compare FaxZero (current; $3.29/send, 25-page cap, confirmation email per job) with alternatives that give a delivery
