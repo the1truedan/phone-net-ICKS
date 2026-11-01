@@ -46,6 +46,7 @@ join at one USB-C plug, and points of light rise from it up the corridor into th
  <linearGradient id="bottom" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0a0d14" stop-opacity=".9"/><stop offset="1" stop-color="#0a0d14" stop-opacity="0"/></linearGradient>
  <radialGradient id="halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#6ee7ff" stop-opacity=".55"/><stop offset="1" stop-color="#6ee7ff" stop-opacity="0"/></radialGradient>
  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <linearGradient id="stem" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8414b"/><stop offset=".5" stop-color="#9bdfff"/><stop offset="1" stop-color="#3ddc97"/></linearGradient>
  <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
  <g id="chip"><rect x="-26" y="-26" width="52" height="52" rx="5" fill="#121722" stroke="currentColor" stroke-width="3"/>
   <rect x="-15" y="-15" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/>
@@ -132,7 +133,7 @@ o.append(f'<rect x="{f0[0]}" y="{f0[1]}" width="{2 * e}" height="{2 * e}" fill="
 o.append(f'<text x="{cxc}" y="{cyc + e * .52:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.7:.0f}" font-style="italic" fill="#6ee7ff" text-anchor="middle" filter="url(#glow)">μ</text>')
 
 # particles: from the USB-C up the corridor into the cube
-ux, uy = VX, H - 34
+ux, uy = VX, H - 92   # top of the Y-split plug: the light starts here
 paths = []
 for k in range(7):
     sway = (k - 3) * 55
@@ -164,23 +165,58 @@ for i, p in enumerate(paths):
                  f'<animate attributeName="opacity" values="0;1;.8;0" dur="{4 + i * .3:.1f}s" begin="{j * 1.4 + i * .2:.1f}s" repeatCount="indefinite"/></circle>')
 o.append('</g>')
 
-# phones in the foreground (bottom left iOS, bottom right Android) and one USB-C
-def phone(cx, cy, rot, color, label, notch):
-    g = [f'<g transform="translate({cx} {cy}) rotate({rot})">',
-         f'<rect x="-70" y="-125" width="140" height="250" rx="{28 if notch else 18}" fill="#0f141e" stroke="{color}" stroke-width="4"/>']
-    g.append('<rect x="-20" y="-114" width="40" height="11" rx="5.5" fill="#05070b"/>' if notch else '<circle cx="0" cy="-110" r="5" fill="#05070b"/>')
-    g.append(f'<g color="{color}" transform="translate(0 -18)"><use href="#chip"/></g>')
-    g.append(f'<text x="0" y="-14" fill="{color}" font-family="ui-monospace,Menlo,monospace" font-size="{13 if len(label) < 5 else 9}" font-weight="700" text-anchor="middle">{label}</text></g>')
+# two hands hold two phones up in landscape; a Y-split USB-C joins them; the light rises off the plug
+LINE = "#9bdfff"; HANDF = "#1b2232"
+
+
+def hand(cx, cy, side):
+    """Line-art hand under a landscape phone at (cx, cy); side = -1 left hand, +1 right hand. Forearm runs off the bottom."""
+    g = []
+    wx = cx - side * 20
+    g.append(f'<path d="M{wx - 52} {H + 10} C {wx - 50} {H - 40}, {wx - 46} {cy + 120}, {wx - 40} {cy + 82} L {wx + 40} {cy + 82} C {wx + 46} {cy + 120}, {wx + 52} {H - 40}, {wx + 56} {H + 10} Z" fill="{HANDF}" stroke="{LINE}" stroke-width="2.4"/>')
+    g.append(f'<path d="M{wx - 78} {cy + 60} C {wx - 82} {cy + 20}, {wx + 82} {cy + 20}, {wx + 78} {cy + 60} C {wx + 70} {cy + 96}, {wx - 70} {cy + 96}, {wx - 78} {cy + 60} Z" fill="{HANDF}" stroke="{LINE}" stroke-width="2.4"/>')
     return "".join(g)
 
 
-o.append(f'<path d="M232 600 C 360 660, 470 650, {ux - 36} {uy}" fill="none" stroke="#e7eef8" stroke-width="7" stroke-linecap="round"/>')
-o.append(f'<path d="M968 600 C 840 660, 730 650, {ux + 36} {uy}" fill="none" stroke="#3ddc97" stroke-width="7" stroke-linecap="round"/>')
-o.append(phone(150, 560, -12, "#e7eef8", "iOS", True))
-o.append(phone(1050, 560, 12, "#3ddc97", "ANDROID", False))
-o.append(f'<circle cx="{ux}" cy="{uy}" r="48" fill="url(#halo)"/>')
-o.append(f'<rect x="{ux - 38}" y="{uy - 17}" width="76" height="34" rx="17" fill="#181e2c" stroke="#6ee7ff" stroke-width="3"/>')
-o.append(f'<rect x="{ux - 20}" y="{uy - 5.5}" width="40" height="11" rx="5.5" fill="#6ee7ff"/>')
+def fingers(cx, cy, side):
+    """Finger tips curling over the bottom edge, thumb on the front corner (drawn over the phone)."""
+    g = []
+    wx = cx - side * 20
+    for i, dx in enumerate((-48, -18, 12, 42)):
+        g.append(f'<rect x="{wx + dx - 12}" y="{cy + 54}" width="24" height="30" rx="12" fill="{HANDF}" stroke="{LINE}" stroke-width="2"/>')
+    tx = cx - side * 112
+    g.append(f'<g transform="rotate({side * -38} {tx} {cy + 40})"><rect x="{tx - 15}" y="{cy + 2}" width="30" height="66" rx="15" fill="{HANDF}" stroke="{LINE}" stroke-width="2.2"/>'
+             f'<path d="M{tx - 9} {cy + 12} q 9 -7 18 0" fill="none" stroke="{LINE}" stroke-width="1.6" opacity=".7"/></g>')
+    return "".join(g)
+
+
+def phone_land(cx, cy, rot, frame, emoji):
+    return (f'<g transform="translate({cx} {cy}) rotate({rot})">'
+            f'<rect x="-150" y="-78" width="300" height="156" rx="26" fill="{frame}" stroke="{frame}" stroke-width="3"/>'
+            f'<rect x="-140" y="-68" width="280" height="136" rx="18" fill="#0a0d14"/>'
+            f'<rect x="-140" y="-68" width="280" height="136" rx="18" fill="url(#halo)" opacity=".35"/>'
+            f'<text x="0" y="22" font-size="74" text-anchor="middle" font-family="\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif">{emoji}</text>'
+            f'</g>')
+
+
+lx, ly, lrot = 250, 520, -9
+rx_, ry_, rrot = 950, 520, 9
+hub = (VX, H - 40)
+# cable: each phone's USB-C port is on the inner short edge in landscape
+lport = (lx + 150 * math.cos(math.radians(lrot)) + 6, ly + 150 * math.sin(math.radians(lrot)))
+rport = (rx_ - 150 * math.cos(math.radians(rrot)) - 6, ry_ - 150 * math.sin(math.radians(rrot)))
+o.append(hand(lx, ly, -1)); o.append(hand(rx_, ry_, 1))
+o.append(f'<path d="M{lport[0]:.0f} {lport[1]:.0f} C {lport[0] + 90:.0f} {lport[1] + 10:.0f}, {hub[0] - 120} {hub[1] + 10}, {hub[0] - 14} {hub[1]}" fill="none" stroke="#e8414b" stroke-width="7" stroke-linecap="round"/>')
+o.append(f'<path d="M{rport[0]:.0f} {rport[1]:.0f} C {rport[0] - 90:.0f} {rport[1] + 10:.0f}, {hub[0] + 120} {hub[1] + 10}, {hub[0] + 14} {hub[1]}" fill="none" stroke="#3ddc97" stroke-width="7" stroke-linecap="round"/>')
+o.append(phone_land(lx, ly, lrot, "#d7263d", "🍎"))
+o.append(phone_land(rx_, ry_, rrot, "#2fbf71", "🤖"))
+o.append(fingers(lx, ly, -1)); o.append(fingers(rx_, ry_, 1))
+# Y-split: the two leads meet in a small hub, one stem rises to the plug
+o.append(f'<path d="M{hub[0]} {hub[1]} V{uy + 30}" stroke="url(#stem)" stroke-width="9" stroke-linecap="round"/>')
+o.append(f'<rect x="{hub[0] - 22}" y="{hub[1] - 12}" width="44" height="24" rx="10" fill="#181e2c" stroke="#9bdfff" stroke-width="2.4"/>')
+o.append(f'<circle cx="{ux}" cy="{uy}" r="54" fill="url(#halo)"/>')
+o.append(f'<rect x="{ux - 15}" y="{uy - 6}" width="30" height="38" rx="12" fill="#181e2c" stroke="#6ee7ff" stroke-width="3"/>')
+o.append(f'<rect x="{ux - 5}" y="{uy - 2}" width="10" height="20" rx="5" fill="#6ee7ff"/>')
 
 # wordmark
 o.append('''<g font-family="ui-monospace,'SF Mono',Menlo,monospace" text-anchor="middle">
