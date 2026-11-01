@@ -13,3 +13,4 @@ ui/pages/vendor/
 !src-tauri/tauri.conf.json
 !src-tauri/capabilities/*.json
 !ui/sources.json
+src-tauri/target*/
