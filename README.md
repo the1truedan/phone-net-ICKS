@@ -28,7 +28,7 @@ step away while the computer secures everything, with a status screen on the lov
   button and lists who and when.
 - **Status on their phone:** a full-screen progress page served through the same USB cable (counts only, no names).
 - **The person / machine line:** consent steps stay with the person (Trust, Google and Facebook exports, passwords).
-- **Desktop app:** the first installable build (Mac, Windows, Linux; unsigned, checksums on the release page). See below.
+- **Desktop app:** the first installable build, for Mac (Apple silicon), unsigned, checksum on the release page. **Windows and Linux follow in the next few days** after testing. See below.
 - **Earmarked next:** an Android app (a pocket recon kit: one phone saves another over USB-C) and an iOS app (status and capture).
 - **Rest first:** after a final night of care, one nap; then 1 h 54 min from the first word to this release. [The one-pager](https://the1truedan.github.io/phone-net-ICKS/greek-squat.html).
 - For the executor or next of kin, with the device passcode. Archive **before** reporting the death to Google, Yahoo or Facebook.
@@ -84,8 +84,8 @@ on the release page (`shasum -a 256 <file>` on Mac and Linux, `certutil -hashfil
 | Computer | File | First time you open it |
 | --- | --- | --- |
 | **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.0_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
-| **Windows** 10 or 11 | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
-| **Linux** (64-bit Intel/AMD) | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.0_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
+| **Windows** 10 or 11 *(in the next few days)* | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
+| **Linux** (64-bit Intel/AMD) *(in the next few days)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.0_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
 
 Older Macs (Intel) are not supported in v0.8.0. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
 

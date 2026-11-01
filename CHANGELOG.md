@@ -5,9 +5,9 @@
   their phone. A caregiver plugs the phone in (Android or Apple, one USB-C cable), walks through the human steps (Trust,
   Takeout, Facebook export) with the tool, then the computer does the rest while they grieve. A reverse prep: *prepare for the
   care when we cannot be there.*
-- **Desktop app (first installable build):** Mac (Apple silicon), Windows and Linux installers, unsigned, with
-  `SHA256SUMS.txt` on the release page. Built on GitHub from the tag by `.github/workflows/release.yml` (public build only:
-  `sync_pages.sh` without `ADMIN=1`, so no owner pages or admin sources are bundled).
+- **Desktop app (first installable build):** Mac (Apple silicon) installer, unsigned, with `SHA256SUMS.txt` on the release
+  page. Public build only (`sync_pages.sh` without `ADMIN=1`: no owner pages or admin sources bundled; checked in the binary).
+  **Windows and Linux follow in the next few days:** their build workflow is being tested on the `ci/desktop-release` branch.
 - **Earmarked (no code yet):** Android app (APK, a pocket recon kit: one phone saves another over USB-C OTG, on-device status
   screen) and iOS app (status and capture; iOS cannot pull another device). See TODO.md.
 - **`scripts/greek_squat/device_pull.sh`:** Android raw pull over adb (texts, picture messages and every attachment, calls,
