@@ -47,6 +47,7 @@ join at one USB-C plug, and points of light rise from it up the corridor into th
  <radialGradient id="halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#6ee7ff" stop-opacity=".55"/><stop offset="1" stop-color="#6ee7ff" stop-opacity="0"/></radialGradient>
  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
  <linearGradient id="stem" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8414b"/><stop offset=".5" stop-color="#9bdfff"/><stop offset="1" stop-color="#3ddc97"/></linearGradient>
+ <filter id="cloud" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="6"/></filter>
  <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
  <g id="chip"><rect x="-26" y="-26" width="52" height="52" rx="5" fill="#121722" stroke="currentColor" stroke-width="3"/>
   <rect x="-15" y="-15" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/>
@@ -61,6 +62,14 @@ hy = VY + 0.62 * B * FAR   # horizon inside the far opening
 # distant hills through the far end and between columns
 hills = [(fx0 - 400, hy + 6)] + [(x, hy - 6 - 10 * math.sin(x / 37) - 6 * math.sin(x / 13)) for x in range(int(fx0) - 400, W + 20, 12)] + [(W + 20, hy + 6)]
 o.append(poly(hills + [(W + 20, H), (fx0 - 400, H)], fill="#2c3a4a", opacity=".9"))
+
+# clouds: soft banks across the sky (the cloud the black box sits in front of)
+CL = []
+for (x, y, rx, ry, op) in [(600, 270, 118, 26, .9), (548, 286, 80, 20, .85), (660, 290, 86, 19, .85), (590, 252, 62, 20, .9), (640, 258, 48, 18, .85),
+                           (510, 268, 56, 14, .6), (700, 270, 58, 14, .6), (604, 300, 120, 12, .55), (900, 170, 160, 26, .25), (1080, 110, 150, 24, .22),
+                           (820, 240, 110, 18, .25), (1010, 250, 140, 20, .22)]:
+    CL.append(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#e7eef8" opacity="{op}"/>')
+o.append('<g filter="url(#cloud)">' + "".join(CL) + '</g>')
 
 # floor
 o.append(poly([P(L, B, 1), P(R, B, 1), P(R, B, FAR), P(L, B, FAR)], fill="url(#floor)"))
@@ -87,7 +96,7 @@ while zd + 0.3 < ZFAR:
     zd += 0.62
 
 # far end wall with its opening (the light)
-ow0, ow1, oh0 = -260, 260, -285
+ow0, ow1, oh0 = -260, 260, T
 o.append(poly([P(L, T, FAR), P(R, T, FAR), P(R, oh0, FAR), P(L, oh0, FAR)], fill="#6d665a"))
 o.append(poly([P(L, oh0, FAR), P(ow0, oh0, FAR), P(ow0, B, FAR), P(L, B, FAR)], fill="#6d665a"))
 o.append(poly([P(ow1, oh0, FAR), P(R, oh0, FAR), P(R, B, FAR), P(ow1, B, FAR)], fill="#5d574d"))
@@ -119,18 +128,21 @@ for zc in reversed(cols):
 o.append(f'<rect width="{W}" height="150" fill="url(#top)"/>')
 o.append(f'<rect y="{H - 190}" width="{W}" height="190" fill="url(#bottom)"/>')
 
-# the cube: small, black, face-on, in the sky above the horizon, with mu on its front
-cxc, cyc, e = VX, VY - 22, 30          # front face centre and half-size
-f0 = (cxc - e, cyc - e); f1 = (cxc + e, cyc + e)
-k = .80                                 # back face scaled toward the vanishing point (we are below it: see its underside)
-bk = lambda x, y: (VX + (x - VX) * k, VY + (y - VY) * k + 0)
-o.append(f'<circle cx="{cxc}" cy="{cyc}" r="88" fill="url(#halo)"/>')
-# underside and sides that recede toward the vanishing point
-o.append(poly([(f0[0], f1[1]), (f1[0], f1[1]), bk(f1[0], f1[1]), bk(f0[0], f1[1])], fill="#0b0f17", stroke="#6ee7ff", stroke_width="1.2"))
-o.append(poly([(f0[0], f0[1]), (f0[0], f1[1]), bk(f0[0], f1[1]), bk(f0[0], f0[1])], fill="#070a10", stroke="#6ee7ff", stroke_width="1.2"))
-o.append(poly([(f1[0], f0[1]), (f1[0], f1[1]), bk(f1[0], f1[1]), bk(f1[0], f0[1])], fill="#070a10", stroke="#6ee7ff", stroke_width="1.2"))
-o.append(f'<rect x="{f0[0]}" y="{f0[1]}" width="{2 * e}" height="{2 * e}" fill="#05070b" stroke="#6ee7ff" stroke-width="2"/>')
-o.append(f'<text x="{cxc}" y="{cyc + e * .52:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.7:.0f}" font-style="italic" fill="#6ee7ff" text-anchor="middle" filter="url(#glow)">μ</text>')
+# the cube: a small black box tilted in the sky, in front of the clouds, mu on its face
+cxc, cyc, e = VX, VY - 44, 20
+dx, dy = 13, 11                         # depth of the box (we are below it: side + underside show)
+fr = [(-e, -e), (e, -e), (e, e), (-e, e)]
+bk = [(x + dx, y + dy) for x, y in fr]
+pt = lambda q: f"{cxc + q[0]:.1f} {cyc + q[1]:.1f}"
+cg = [f'<g transform="rotate(-11 {cxc} {cyc})">']
+cg.append(f'<path d="M{pt(fr[1])} L{pt(bk[1])} L{pt(bk[2])} L{pt(fr[2])} Z" fill="#11161f" stroke="#6ee7ff" stroke-width="1.3" stroke-linejoin="round"/>')
+cg.append(f'<path d="M{pt(fr[3])} L{pt(fr[2])} L{pt(bk[2])} L{pt(bk[3])} Z" fill="#1a2130" stroke="#6ee7ff" stroke-width="1.3" stroke-linejoin="round"/>')
+cg.append(f'<path d="M{pt(fr[0])} L{pt(fr[1])} L{pt(fr[2])} L{pt(fr[3])} Z" fill="#04060a" stroke="#6ee7ff" stroke-width="2" stroke-linejoin="round"/>')
+cg.append(f'<path d="M{pt((-e + 3, -e + 3))} L{pt((e - 3, -e + 3))}" stroke="#9bdfff" stroke-width="1" opacity=".5"/>')
+cg.append(f'<text x="{cxc}" y="{cyc + e * .5:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.6:.0f}" font-style="italic" fill="#6ee7ff" text-anchor="middle" filter="url(#glow)">μ</text>')
+cg.append('</g>')
+o.append(f'<circle cx="{cxc}" cy="{cyc}" r="52" fill="url(#halo)" opacity=".8"/>')
+o.extend(cg)
 
 # particles: from the USB-C up the corridor into the cube
 ux, uy = VX, H - 92   # top of the Y-split plug: the light starts here
