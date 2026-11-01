@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased · GREEK SQUAT edition (rush patch, target Mon 2026-11-02 11:30 CST)
+- **GREEK SQUAT** ("it's all Greek to me"; squat = the data left behind). When a loved one passes, their heart and mind are on
+  their phone. A caregiver plugs the phone in (Android or Apple, one USB-C cable), walks through the human steps (Trust,
+  Takeout, Facebook export) with the tool, then the computer does the rest while they grieve. A reverse prep: *prepare for the
+  care when we cannot be there.*
+- **`scripts/greek_squat/device_pull.sh`:** Android raw pull over adb (texts, picture messages and every attachment, calls,
+  contacts, calendar, shared storage, app usage, install times), resumable attachment copy; then waits for an iPad/iPhone,
+  pairs, refuses an encrypted backup it cannot read, runs a full unencrypted `idevicebackup2` backup. Local disk only.
+- **`scripts/greek_squat/vvm_share_all.py`:** saves every Samsung Visual Voicemail through the app's own Share button (the
+  audio is app-private), with a manifest of sender, date, time and length per file (file names carry the save time only).
+  Taps by resource id, never Delete. Scrolls to the top of each tab first; dedupe by SHA-256.
+- **`stack/jobboard/phone_status.py`:** full-screen status page **on the phone being pulled** (site look, animated logo,
+  progress rings, ETA, wake lock). Reached over the same cable with `adb reverse`; counts only, no names or text. Only for
+  background steps, never while a script drives the phone's screen.
+- **`stack/jobboard/status_merge.py`:** one "status to date" page from every job-board report (freshness LED + headline), batch
+  job and source, plus a private notes file; rebuilt every 10 minutes, no LLM.
+- **Logo:** `docs/img/greek_squat_logo.svg` (iOS + Android silicon, one USB-C, the black cube with session and archive clusters).
+- **Lessons (rack-and-ruin 0882, 0883):** decide device owner from the full account string, never a masked prefix; in a mobile
+  browser never swipe down at the page top (pull-to-refresh resets forms) and check the device before answering the operator.
+
 ## v0.7.9 — 2026-10-30 · Spit Take edition
 - **Breakthrough: a DNA file read after 9 years on the shelf.** A raw genotype file from a 2017 research study (23andMe text
   format) sat unread for 9 years, 63 days. Chat assistants had only seen 45 pasted markers. In one evening, on local hardware:
