@@ -1,6 +1,7 @@
 mod ask;
 mod scan;
 mod check;
+mod pull;
 
 /// "Check my computer" screen: read-only tool and phone detection.
 #[tauri::command]
@@ -58,6 +59,24 @@ async fn ask_records(folder: String, model: String, question: String) -> Result<
     .map_err(|e| e.to_string())?
 }
 
+/// The owner's pull workflows (from ~/phone-net-ICKS/pulls.json): connected?, last pull, running?
+#[tauri::command]
+async fn pull_jobs() -> Result<Vec<pull::PullJob>, String> {
+  tauri::async_runtime::spawn_blocking(pull::jobs).await.map_err(|e| e.to_string())?
+}
+
+/// Start one pull: the owner's own script, continuing from the last pull's time.
+#[tauri::command]
+async fn pull_start(id: String) -> Result<String, String> {
+  tauri::async_runtime::spawn_blocking(move || pull::start(&id)).await.map_err(|e| e.to_string())?
+}
+
+/// Progress of a pull folder, read from its PULL_LOG.txt.
+#[tauri::command]
+async fn pull_progress(folder: String) -> Result<pull::Progress, String> {
+  tauri::async_runtime::spawn_blocking(move || pull::progress(&folder)).await.map_err(|e| e.to_string())?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -72,7 +91,7 @@ pub fn run() {
       }
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![check_computer, check_phone, check_speakers, check_hf, list_phones, scan_phone, open_external, ollama_models, ask_records])
+    .invoke_handler(tauri::generate_handler![check_computer, check_phone, check_speakers, check_hf, list_phones, scan_phone, open_external, ollama_models, ask_records, pull_jobs, pull_start, pull_progress])
     .run(tauri::generate_context!())
     .expect("error while building tauri application");
 }
