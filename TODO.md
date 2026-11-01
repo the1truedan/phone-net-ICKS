@@ -46,6 +46,24 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
 - **Desktop app:** a "Scan paper" card next to "Pull new files": scanner model, Re-identify, Scan button, page count.
 - **Sort, don't read:** filename by date and sender from the OCR'd first page; anything medical stays local (PHI rule).
 - **Puns welcome:** Pape Bull (the release note), Paper Infallibility (the checksum), Habemus Papyrum (the finish screen).
+- **P.A.P.E. = Paper Accessibility, Parsing & Evidence.** Accessibility: every scan comes out a searchable, readable PDF and
+  gets an ada-doc-check pass (WCAG 2.1 AA first-pass triage; tagged PDF/UA and alt text later). Parsing: Tesseract/ocrmypdf
+  first, then a vision OCR model for hard pages, then a small local model for "what is this". Evidence: hashes, custody line,
+  originals kept, git history for anything public.
+- **Why (the want):** a public-college Digital Accessibility Specialist listing (2024 web accessibility rule, WCAG 2.1 AA,
+  audits of PDF/Word/PowerPoint, remediation, training, progress reporting) reads like P.A.P.E.'s job description.
+  Reuse, don't rebuild: `ada-doc-check` (score, triage, fail closed), `aida-complex-doc-lab` (multi-document harness, scrubber),
+  `ocr-tua` (OCR/vision test service). Add: per-scan accessibility report, page count / words / time stats.
+- **Smoke test 2026-11-01 (local):** scan + Tesseract 22-53 s per stack; blank backs set aside; rotation threshold lowered
+  (upside-down pages scored 12-15, under the default 14). Vision OCR on a single listing page: glm-ocr 139 s (clean text),
+  deepseek-ocr 95 s (layout boxes + tables). Context: gemma4:12b with thinking off 117 s; the 4B translation model ignores
+  instructions, so don't use it as the clerk.
+- **Signup kits:** any handout for an online signup (care agency, hospice, county) becomes a kit: plain HOWTO from the paper,
+  official pages snapshotted with hashes (C.H.I.P.P.E.R. manifest), an update log per fetch (C.H.A.I.N.S.), git diff when a
+  page changes. Johnny Appleseed indexes the kits. Never stores passwords or codes. Stays a how-to: the person signs up.
+- **Way later: port Unlimited-OCR (Baidu, 3.3B, MIT) off CUDA.** As shipped it needs NVIDIA (`.cuda()`, bf16, sglang
+  wheel): fits MRGPU 16 GB, not the Tower P2000 (5 GB, Pascal has no bf16). Port targets: Mac (MPS, fp16) and Xeon (CPU,
+  int8). glm-ocr already runs on the P2000 and the Mac in the meantime.
 
 ## Earmarks (2026-10-16, local)
 - **Fax tooling:** compare FaxZero (current; $3.29/send, 25-page cap, confirmation email per job) with alternatives that give a delivery
