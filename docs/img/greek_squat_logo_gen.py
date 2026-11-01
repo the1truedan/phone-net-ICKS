@@ -67,7 +67,7 @@ o.append(poly(hills + [(W + 20, H), (fx0 - 400, H)], fill="#2c3a4a", opacity=".9
 
 # clouds: soft banks across the sky (the cloud the black box sits in front of)
 CL = []
-for (x, y, rx, ry, op) in [(600, 270, 118, 26, .9), (548, 286, 80, 20, .85), (660, 290, 86, 19, .85), (590, 252, 62, 20, .9), (640, 258, 48, 18, .85),
+for (x, y, rx, ry, op) in [(600, 290, 118, 24, .9), (552, 304, 76, 18, .85), (656, 306, 80, 18, .85), (592, 274, 58, 18, .9), (636, 280, 46, 16, .85),
                            (510, 268, 56, 14, .6), (700, 270, 58, 14, .6), (604, 300, 120, 12, .55), (900, 170, 160, 26, .25), (1080, 110, 150, 24, .22),
                            (820, 240, 110, 18, .25), (1010, 250, 140, 20, .22)]:
     CL.append(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#e7eef8" opacity="{op}"/>')
@@ -131,7 +131,7 @@ o.append(f'<rect width="{W}" height="150" fill="url(#top)"/>')
 o.append(f'<rect y="{H - 190}" width="{W}" height="190" fill="url(#bottom)"/>')
 
 # the cube: a small black box tilted in the sky, in front of the clouds, mu on its face
-cxc, cyc, e = VX, VY - 44, 20
+cxc, cyc, e = VX, VY - 24, 16
 dx, dy = 13, 11                         # depth of the box (we are below it: side + underside show)
 fr = [(-e, -e), (e, -e), (e, e), (-e, e)]
 bk = [(x + dx, y + dy) for x, y in fr]
@@ -143,8 +143,12 @@ cg.append(f'<path d="M{pt(fr[0])} L{pt(fr[1])} L{pt(fr[2])} L{pt(fr[3])} Z" fill
 cg.append(f'<path d="M{pt((-e + 3, -e + 3))} L{pt((e - 3, -e + 3))}" stroke="#9bdfff" stroke-width="1" opacity=".5"/>')
 cg.append(f'<text x="{cxc}" y="{cyc + e * .5:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.6:.0f}" font-style="italic" fill="#6ee7ff" text-anchor="middle" filter="url(#glow)">μ</text>')
 cg.append('</g>')
-o.append(f'<circle cx="{cxc}" cy="{cyc}" r="52" fill="url(#halo)" opacity=".8"/>')
+ox0, oy0 = P(ow0, T, FAR); ox1, oy1 = P(ow1, B, FAR)   # the far opening: the cube lives only in this sky
+o.append(f'<clipPath id="opening"><rect x="{ox0:.1f}" y="{oy0 + 3:.1f}" width="{ox1 - ox0:.1f}" height="{oy1 - oy0 - 3:.1f}"/></clipPath>')
+o.append('<g clip-path="url(#opening)">')
+o.append(f'<circle cx="{cxc}" cy="{cyc}" r="44" fill="url(#halo)" opacity=".8"/>')
 o.extend(cg)
+o.append('</g>')
 
 # particles: from the USB-C up the corridor into the cube
 ux, uy = VX, H - 96   # top of the Mac mini: the light starts here
