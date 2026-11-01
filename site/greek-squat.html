@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GREEK SQUAT</title>
+<meta name="description" content="GREEK SQUAT: how a caregiver secures a loved one's phone and tablet after they pass, with the computer doing the work and a status screen on the device. Steps and counts only: no names, no content, no medical detail.">
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1c1a; --muted: #5d5a54; --card: #ffffff; --line: #d9d5cc;
+    --accent: #1f6f5c; --accent-fg: #ffffff; --code: #f1eee7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833;
+      --accent: #5cc3a6; --accent-fg: #0f1110; --code: #262521;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833;
+    --accent: #5cc3a6; --accent-fg: #0f1110; --code: #262521;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 22px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 2.1em; line-height: 1.15; margin: 0 0 .3em; }
+  h2 { font-size: 1.35em; margin: 1.6em 0 .5em; border-bottom: 2px solid var(--line); padding-bottom: .2em; }
+  p, li { max-width: 46em; }
+  .sub { color: var(--muted); font-size: .9em; margin: 0 0 1em; }
+  blockquote { margin: 1em 0; padding: .6em 1em; border-left: 6px solid var(--accent); background: var(--card); border-radius: 6px; }
+  ul { padding-left: 1.2em; } li { margin: .3em 0; }
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; }
+  .chart svg { max-width: 100%; height: auto; }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
+  button { font: inherit; font-size: .85em; padding: .55em 1em; border-radius: 8px; border: 2px solid var(--accent);
+    background: var(--accent); color: var(--accent-fg); cursor: pointer; }
+  button.ghost { background: transparent; color: var(--fg); }
+  details { margin-top: 16px; } summary { cursor: pointer; font-weight: 600; }
+  pre { background: var(--code); padding: 14px; border-radius: 8px; overflow-x: auto; font-size: .7em; line-height: 1.45; }
+  table { border-collapse: collapse; width: 100%; font-size: .95em; }
+  td { border-bottom: 1px solid var(--line); padding: .45em .3em; vertical-align: top; }
+  td:first-child { font-weight: 700; white-space: nowrap; width: 6.5em; }
+  footer { margin-top: 3em; color: var(--muted); font-size: .8em; }
+  a { color: var(--accent); }
+  @media (max-width: 600px) { body { font-size: 19px; } }
+</style>
+</head>
+<body>
+<main>
+  <img src="greek_squat_logo.svg" alt="GREEK SQUAT logo: an iOS phone and an Android phone, drawn as their silicon chips, join into one USB-C cable that runs into a black cube showing session clusters and archive clusters" style="width:100%;height:auto;border-radius:12px;margin:0 0 18px">
+  <h1>🏛️📲 GREEK SQUAT: plug in their phone, then go grieve</h1>
+  <p class="sub">phone+net+I.C.K.S. · rush patch for Mon Nov 2, 2026 · built in one night, the day after the loss of the person in care · steps and counts only: no names, no content, no medical detail</p>
+
+  <blockquote>🫀 People keep their heart and mind on their phone. When they pass, that phone is the <b>squat</b>: the data left behind, and to most families it's <b>all Greek</b>. GREEK SQUAT is a reverse prep: one cable, a few steps only a person can do, and then the computer does the rest while a status screen on <i>their own phone</i> says what is happening.</blockquote>
+
+  <h2>🌱 How it came about</h2>
+  <ul>
+    <li>🛋️ The caregiver sat in the empty chair, saw the phone and the tablet, and thought: <i>I'll need to check this out.</i> Recipes saved for years, recordings of stories in their own voice, photos of costumes they made.</li>
+    <li>🔌 One working data cable. The ask that night: pull texts, calls, voicemails, notes, photos and saved recipes, and make a report, without the caregiver living at the computer.</li>
+    <li>🧰 The tools already existed for the care record (phone pulls, the job board, local models). That night they were pointed at a goodbye instead.</li>
+    <li>🏷️ The name: "it's all Greek to me" + "squat" (slang for nothing, and here the stale data a life leaves behind). Keep it secret, keep it local.</li>
+  </ul>
+
+  <h2>🗺️ The workflow</h2>
+  <div class="chart" id="chart" aria-label="Flowchart: plug in a phone, check whose it is, pull everything over one cable, a person does the consent steps, voicemails saved, status screen on the phone, then the tablet backup">Loading diagram…</div>
+  <div class="btns">
+    <button id="dl-svg" type="button">⬇️ Download SVG</button>
+    <button id="dl-mmd" class="ghost" type="button">⬇️ Download Mermaid (.mmd text)</button>
+  </div>
+  <details><summary>📝 Show the raw Mermaid text</summary><pre id="raw"></pre></details>
+
+  <h2>💡 Breakthroughs</h2>
+  <table>
+    <tr><td>🎙️ Voicemail</td><td>Carrier voicemail lives inside the voicemail app, out of reach of a normal pull. The app's own <b>Share</b> button writes each one to the phone's storage. A script taps Share (never Delete) on every message and logs who and when, because the saved file is named by the save time, not the call time.</td></tr>
+    <tr><td>🔀 One cable</td><td>The pull was reordered on request: storage and records first (5 minutes), the slow attachment copy made resumable, so the single data cable could move to the tablet and come back.</td></tr>
+    <tr><td>📟 Status on their phone</td><td>The phone being saved shows a full-screen status page (logo, a ring per step, time left) served from the home computer <b>through the same USB cable</b>. No Wi-Fi, no app to install, counts only.</td></tr>
+    <tr><td>🧾 Status to date</td><td>Twenty older reports, every running job and every data source merged into one page with fresh/stale lights, rebuilt every 10 minutes without an AI model.</td></tr>
+    <tr><td>✋ Person / machine line</td><td>Consent steps stay with the person: Trust on the tablet, the Google export, the Facebook export, passwords. The machine does the background copying. Two failed tries on a screen step = hand it back to the person.</td></tr>
+    <tr><td>🍎 + 🤖</td><td>Android over adb, Apple over a full local backup that starts on its own when the tablet says Trust. Same storage, same reports.</td></tr>
+  </table>
+
+  <h2>🔢 By the numbers (rounded)</h2>
+  <table>
+    <tr><td>💬 ~4.7k</td><td>texts, plus ~4.5k picture messages and ~6.5k attachments</td></tr>
+    <tr><td>📞 ~2k</td><td>call-log rows · ~100 contacts · ~700 calendar entries</td></tr>
+    <tr><td>🎙️ 13</td><td>voicemails saved from inside the voicemail app (duplicates removed by content hash)</td></tr>
+    <tr><td>📁 ~550 MB</td><td>phone storage, ~1k files</td></tr>
+    <tr><td>🧾 20</td><td>older reports merged into one status page</td></tr>
+  </table>
+
+  <h2>🧯 What went wrong, and the rule it left</h2>
+  <ul>
+    <li>🪪 <b>Wrong owner:</b> the AI guessed whose phone it was from three letters of a hidden account name. Rule: compare the full value on the home computer, show only "match / no match". <span class="sub">(rack-and-ruin CVE-FAUX-2026-0882)</span></li>
+    <li>🔄 <b>Scroll loop:</b> a "check" pass scrolled up at the top of a mobile web page, which reloaded it and undid the choices; then the AI called the person's screen stale. Rule: the person's screen is the record; a check that scrolls is an action. <span class="sub">(CVE-FAUX-2026-0883)</span></li>
+    <li>🏷️ <b>Mixed labels:</b> the first voicemail pass gave each file the time of the message above it. Caught from the log in minutes, fixed, rerun; the bad list kept aside.</li>
+  </ul>
+
+  <h2>🛡️ How it stays safe</h2>
+  <ul>
+    <li>🏠 Everything lands on a local disk, locked to one user. Messages and recordings are read by local models only.</li>
+    <li>🔑 Only for the executor or next of kin, with the device passcode. Needing the passcode is the consent line.</li>
+    <li>⚠️ Archive <b>before</b> telling Google, Yahoo or Facebook about the death; reporting can close the account.</li>
+    <li>👀 The on-phone status page shows counts, never names or message text.</li>
+  </ul>
+
+  <footer>Session <code>6d0b256a</code> (AgentsView, IDs only) · lessons in rack-and-ruin 0882 · 0883 · © 2026 M.A.N.A.G.E.R. LLC — <i>prepare for the care when we cannot be there</i> · <a href="index.html">back to the main page</a></footer>
+</main>
+
+<script id="mmd" type="text/plain">flowchart TD
+  A["🛋️ Their phone + tablet<br/>one working USB-C cable"] --> O
+  O{"🪪 Whose device?<br/>full account check,<br/>match / no match only"} --> P
+  P["🤖 Android pull over adb<br/>texts · calls · contacts ·<br/>calendar · storage · app use"] --> V
+  V["🎙️ Voicemail app → Share<br/>each message saved +<br/>who/when manifest"] --> H
+  H["✋ Person does consent steps<br/>📦 Google export (picked items)<br/>🍳 Facebook export on tablet"] --> S
+  S["📟 Status screen on their phone<br/>through the same cable<br/>counts only · time left"] --> C
+  C["🔀 Free the cable:<br/>storage first, attachments<br/>resume later"] --> T
+  T["🍎 Tablet: tap Trust →<br/>full local backup starts<br/>on its own"] --> R
+  R["🧾 Status to date page<br/>+ local-model reports:<br/>recipes · stories · photos"]
+  G["🫀 Meanwhile: the person<br/>sleeps, showers, gets a<br/>haircut, grieves"] -.-> R
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  var src = document.getElementById("mmd").textContent.trim();
+  document.getElementById("raw").textContent = src;
+  var svgText = "";
+  function dl(name, type, text) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: type }));
+    a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  document.getElementById("dl-mmd").onclick = function () { dl("greek-squat-workflow.mmd", "text/plain", src + "\n"); };
+  document.getElementById("dl-svg").onclick = function () {
+    if (svgText) dl("greek-squat-workflow.svg", "image/svg+xml", svgText);
+  };
+  var dark = document.documentElement.dataset.theme === "dark" ||
+    (document.documentElement.dataset.theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  try {
+    mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default", securityLevel: "strict",
+      flowchart: { htmlLabels: true, curve: "basis" }, themeVariables: { fontSize: "18px" } });
+    mermaid.render("wf", src).then(function (r) {
+      document.getElementById("chart").innerHTML = r.svg; svgText = r.svg;
+    }).catch(function () { document.getElementById("chart").textContent = "Diagram could not render. Use the raw text below."; });
+  } catch (e) { document.getElementById("chart").textContent = "Diagram could not load. Use the raw text below."; }
+})();
+</script>
+</body>
+</html>

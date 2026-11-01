@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="t d">
+  <title id="t">GREEK SQUAT · phone-net-ICKS</title>
+  <desc id="d">Two phones, one iOS and one Android, each drawn as its silicon chip, join into one USB-C cable that runs into a black cube. The cube shows session clusters on top and archive clusters on its sides.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10223a"/><stop offset=".55" stop-color="#0a0d14"/></linearGradient>
+    <linearGradient id="cable" x1="0" x2="1"><stop offset="0" stop-color="#6ee7ff"/><stop offset="1" stop-color="#8a6fd1"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#6ee7ff" stop-opacity=".35"/><stop offset="1" stop-color="#6ee7ff" stop-opacity="0"/></radialGradient>
+    <pattern id="meander" width="40" height="20" patternUnits="userSpaceOnUse">
+      <path d="M0 18 H30 V4 H10 V12 H20 V8" fill="none" stroke="#f0b429" stroke-width="2.2" stroke-linecap="square"/>
+      <path d="M30 18 H40" stroke="#f0b429" stroke-width="2.2"/>
+    </pattern>
+    <g id="chip">
+      <rect x="-34" y="-34" width="68" height="68" rx="6" fill="#121722" stroke="currentColor" stroke-width="3"/>
+      <rect x="-20" y="-20" width="40" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/>
+      <g stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <path d="M-22 -34v-10M-8 -34v-10M8 -34v-10M22 -34v-10M-22 34v10M-8 34v10M8 34v10M22 34v10"/>
+        <path d="M-34 -22h-10M-34 -8h-10M-34 8h-10M-34 22h-10M34 -22h10M34 -8h10M34 8h10M34 22h10"/>
+      </g>
+    </g>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="20" fill="url(#meander)" opacity=".85"/>
+  <rect x="0" y="655" width="1200" height="20" fill="url(#meander)" opacity=".85"/>
+
+  <!-- phone 1: iOS -->
+  <g transform="translate(170 192) scale(.9)">
+    <rect x="-80" y="-130" width="160" height="290" rx="34" fill="#121722" stroke="#e7eef8" stroke-width="4"/>
+    <rect x="-24" y="-118" width="48" height="12" rx="6" fill="#0a0d14"/>
+    <g color="#e7eef8" transform="translate(0 0)"><use href="#chip"/></g>
+    <text x="0" y="6" fill="#e7eef8" font-family="ui-monospace,Menlo,monospace" font-size="15" font-weight="700" text-anchor="middle">iOS</text>
+    <text x="0" y="105" fill="#8b97ad" font-family="ui-monospace,Menlo,monospace" font-size="16" text-anchor="middle">iPhone · iPad</text>
+  </g>
+  <!-- phone 2: Android -->
+  <g transform="translate(170 502) scale(.9)">
+    <rect x="-80" y="-130" width="160" height="290" rx="22" fill="#121722" stroke="#3ddc97" stroke-width="4" transform="translate(0 -20)"/>
+    <circle cx="0" cy="-138" r="6" fill="#0a0d14"/>
+    <g color="#3ddc97" transform="translate(0 -20)"><use href="#chip"/></g>
+    <text x="0" y="-14" fill="#3ddc97" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" text-anchor="middle">ANDROID</text>
+    <text x="0" y="85" fill="#8b97ad" font-family="ui-monospace,Menlo,monospace" font-size="16" text-anchor="middle">any phone</text>
+  </g>
+
+  <!-- two leads merge into one USB-C -->
+  <g fill="none" stroke-width="7" stroke-linecap="round">
+    <path d="M242 192 C 340 192, 360 340, 440 340" stroke="#e7eef8"/>
+    <path d="M242 484 C 340 484, 360 340, 440 340" stroke="#3ddc97"/>
+    <path d="M440 340 H 600" stroke="url(#cable)" stroke-width="10"/>
+  </g>
+  <g transform="translate(470 340)">
+    <rect x="-34" y="-16" width="68" height="32" rx="16" fill="#181e2c" stroke="#6ee7ff" stroke-width="3"/>
+    <rect x="-18" y="-5" width="36" height="10" rx="5" fill="#6ee7ff"/>
+  </g>
+  <text x="470" y="390" fill="#6ee7ff" font-family="ui-monospace,Menlo,monospace" font-size="18" text-anchor="middle">one USB-C</text>
+  <g fill="#6ee7ff">
+    <circle cx="530" cy="340" r="4"><animate attributeName="cx" values="510;600" dur="1.2s" repeatCount="indefinite"/></circle>
+    <circle cx="560" cy="340" r="4"><animate attributeName="cx" values="540;630" dur="1.2s" repeatCount="indefinite"/></circle>
+  </g>
+
+  <!-- the black cube (isometric) -->
+  <ellipse cx="800" cy="350" rx="230" ry="200" fill="url(#glow)"/>
+  <g transform="translate(800 340)">
+    <!-- top face: session clusters -->
+    <path d="M0 -170 L170 -85 L0 0 L-170 -85 Z" fill="#141a27" stroke="#6ee7ff" stroke-width="2.5"/>
+    <!-- left face: archive clusters -->
+    <path d="M-170 -85 L0 0 L0 190 L-170 105 Z" fill="#07090e" stroke="#273044" stroke-width="2.5"/>
+    <!-- right face: memory archive -->
+    <path d="M170 -85 L0 0 L0 190 L170 105 Z" fill="#0c1018" stroke="#273044" stroke-width="2.5"/>
+    <path d="M-170 -85 L0 0 L170 -85" fill="none" stroke="#6ee7ff" stroke-width="2.5"/>
+    <path d="M0 0 V190" stroke="#6ee7ff" stroke-width="2" opacity=".6"/>
+
+    <!-- session clusters on top: linked nodes -->
+    <g stroke="#6ee7ff" stroke-width="1.6" opacity=".9" fill="none">
+      <path d="M-70 -90 L-30 -110 L10 -95 M-30 -110 L-25 -70 M40 -60 L75 -80 L60 -45 Z M10 -95 L40 -60 M-70 -90 L-25 -70"/>
+    </g>
+    <g>
+      <circle cx="-70" cy="-90" r="7" fill="#6ee7ff"><animate attributeName="opacity" values="1;.3;1" dur="2.4s" repeatCount="indefinite"/></circle>
+      <circle cx="-30" cy="-110" r="8" fill="#8a6fd1"/>
+      <circle cx="10" cy="-95" r="6" fill="#6ee7ff"/>
+      <circle cx="-25" cy="-70" r="6" fill="#f0b429"><animate attributeName="opacity" values=".3;1;.3" dur="2.4s" repeatCount="indefinite"/></circle>
+      <circle cx="40" cy="-60" r="7" fill="#6ee7ff"/>
+      <circle cx="75" cy="-80" r="6" fill="#8a6fd1"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" repeatCount="indefinite"/></circle>
+      <circle cx="60" cy="-45" r="5" fill="#3ddc97"/>
+    </g>
+
+    <!-- left face: archive clusters (stacked shelves, phone models without PII) -->
+    <g transform="matrix(1 .5 0 1 -150 -55)" fill="none" stroke="#2a97c4" stroke-width="2">
+      <rect x="10" y="20" width="120" height="22" rx="3"/><rect x="10" y="52" width="120" height="22" rx="3"/>
+      <rect x="10" y="84" width="120" height="22" rx="3"/><rect x="10" y="116" width="120" height="22" rx="3"/>
+      <g fill="#2a97c4" stroke="none"><circle cx="24" cy="31" r="4"/><circle cx="24" cy="63" r="4"/><circle cx="24" cy="95" r="4"/><circle cx="24" cy="127" r="4"/></g>
+    </g>
+    <!-- right face: legacy memory archive (lock + waveform) -->
+    <g transform="matrix(1 -.5 0 1 20 30)">
+      <path d="M10 60 l12 -18 l12 30 l12 -40 l12 46 l12 -26 l12 14 l12 -6" fill="none" stroke="#f0b429" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="50" y="95" width="44" height="34" rx="6" fill="none" stroke="#e7eef8" stroke-width="3"/>
+      <path d="M58 95 v-10 a14 14 0 0 1 28 0 v10" fill="none" stroke="#e7eef8" stroke-width="3"/>
+    </g>
+  </g>
+  <g font-family="ui-monospace,Menlo,monospace" font-size="16" fill="#8b97ad">
+    <text x="800" y="135" text-anchor="middle" fill="#6ee7ff">session clusters</text>
+    <text x="655" y="575" text-anchor="middle">archive clusters · no PII</text>
+    <text x="950" y="575" text-anchor="middle">legacy memory · local</text>
+  </g>
+
+  <!-- wordmark -->
+  <g font-family="ui-monospace,'SF Mono',Menlo,monospace" text-anchor="end">
+    <text x="1160" y="80" font-size="58" font-weight="800" fill="#e7eef8" letter-spacing="3">GREEK <tspan fill="#f0b429">SQUAT</tspan></text>
+    <text x="1160" y="112" font-size="18" fill="#6ee7ff">phone<tspan fill="#f0b429">+</tspan>net<tspan fill="#f0b429">+</tspan>I.C.K.S.</text>
+    <text x="1160" y="630" font-size="17" fill="#8b97ad">prepare for the care when we cannot be there</text>
+  </g>
+</svg>

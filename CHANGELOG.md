@@ -16,6 +16,7 @@
   background steps, never while a script drives the phone's screen.
 - **`stack/jobboard/status_merge.py`:** one "status to date" page from every job-board report (freshness LED + headline), batch
   job and source, plus a private notes file; rebuilt every 10 minutes, no LLM.
+- **Site:** `site/greek-squat.html` one-pager (how it came about, breakthroughs, rounded counts, Mermaid workflow with SVG/.mmd download) and a breakthrough entry on the main page; session `6d0b256a`, IDs only.
 - **Logo:** `docs/img/greek_squat_logo.svg` (iOS + Android silicon, one USB-C, the black cube with session and archive clusters).
 - **Lessons (rack-and-ruin 0882, 0883):** decide device owner from the full account string, never a masked prefix; in a mobile
   browser never swipe down at the page top (pull-to-refresh resets forms) and check the device before answering the operator.
