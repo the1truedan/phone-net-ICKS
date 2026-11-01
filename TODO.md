@@ -29,6 +29,14 @@ phone+net+I.C.K.S. is a **self-collected evidence record**. The items below were
 
 Optional background for the white paper's release rule: ISO/IEC 27045 (big data security and privacy; draft). Its aggregation, inference and re-identification risks support "aggregate the disclosure". This is not a compliance claim.
 
+## Earmarks (2026-11-01, GREEK SQUAT v0.8.0)
+- **Android app (APK):** GREEK SQUAT in a pocket. One Android phone saves another over a USB-C OTG cable (adb host over libusb):
+  texts, calls, contacts, calendar, storage, voicemail through Share, then the status screen on both phones. Local models where the
+  phone can (speech-to-text, small vision captions, embeddings). Overlay badge (draw over other apps) for background jobs.
+- **iOS app:** status and capture only (iOS cannot pull another device). Shows a running pull from the home computer over the LAN,
+  records stories, and hands files to the desktop app.
+- **Desktop app signing:** still unsigned (cost); revisit if a grant or sponsor covers it.
+
 ## Earmarks (2026-10-16, local)
 - **Fax tooling:** compare FaxZero (current; $3.29/send, 25-page cap, confirmation email per job) with alternatives that give a delivery
   report per page and an API or CLI: e.g. eFax / HelloFax / Fax.Plus / iFax / SRFax; check price per page, HIPAA BAA, inbound fax

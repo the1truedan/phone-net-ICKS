@@ -1,10 +1,15 @@
 # Changelog
 
-## Unreleased · GREEK SQUAT edition (rush patch, target Mon 2026-11-02 11:30 CST)
+## v0.8.0 — 2026-11-02 · GREEK SQUAT edition
 - **GREEK SQUAT** ("it's all Greek to me"; squat = the data left behind). When a loved one passes, their heart and mind are on
   their phone. A caregiver plugs the phone in (Android or Apple, one USB-C cable), walks through the human steps (Trust,
   Takeout, Facebook export) with the tool, then the computer does the rest while they grieve. A reverse prep: *prepare for the
   care when we cannot be there.*
+- **Desktop app (first installable build):** Mac (Apple silicon), Windows and Linux installers, unsigned, with
+  `SHA256SUMS.txt` on the release page. Built on GitHub from the tag by `.github/workflows/release.yml` (public build only:
+  `sync_pages.sh` without `ADMIN=1`, so no owner pages or admin sources are bundled).
+- **Earmarked (no code yet):** Android app (APK, a pocket recon kit: one phone saves another over USB-C OTG, on-device status
+  screen) and iOS app (status and capture; iOS cannot pull another device). See TODO.md.
 - **`scripts/greek_squat/device_pull.sh`:** Android raw pull over adb (texts, picture messages and every attachment, calls,
   contacts, calendar, shared storage, app usage, install times), resumable attachment copy; then waits for an iPad/iPhone,
   pairs, refuses an encrypted backup it cannot read, runs a full unencrypted `idevicebackup2` backup. Local disk only.

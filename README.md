@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.7.9 Spit Take edition (2026-10-30) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.8.0 GREEK SQUAT edition (2026-11-02) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,27 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Latest · v0.7.9 · Spit Take edition (2026-10-30)
+## Latest · v0.8.0 · GREEK SQUAT edition (2026-11-02)
+
+<p align="center"><img src="docs/img/greek_squat_logo.svg" alt="Two hands hold up two phones, a red one with an apple emoji and a green one with a robot emoji. Each is plugged into the front of a small silver desktop on the floor of a stone colonnade. Light runs along the cables into it, then rises up the colonnade into a small black cube with a gold mu, floating in front of the clouds." width="100%"></p>
+
+**When someone you love passes, their heart and mind are on their phone.** GREEK SQUAT ("it's all Greek to me"; *squat*,
+the data left behind) lets a caregiver or next of kin plug that phone in, do the few steps only a person can do, and then
+step away while the computer secures everything, with a status screen on the loved one's own phone. A reverse prep:
+*prepare for the care when we cannot be there.*
+
+- **One cable, Android or Apple:** texts, picture messages and attachments, calls, contacts, calendar and storage over adb; a full
+  local backup for iPhone and iPad that starts by itself when the device says Trust. Local disk only.
+- **Voicemail:** carrier voicemail is locked inside the voicemail app; GREEK SQUAT saves each one through the app's own Share
+  button and lists who and when.
+- **Status on their phone:** a full-screen progress page served through the same USB cable (counts only, no names).
+- **The person / machine line:** consent steps stay with the person (Trust, Google and Facebook exports, passwords).
+- **Desktop app:** the first installable build (Mac, Windows, Linux; unsigned, checksums on the release page). See below.
+- **Earmarked next:** an Android app (a pocket recon kit: one phone saves another over USB-C) and an iOS app (status and capture).
+- **Rest first:** after a final night of care, one nap; then 1 h 54 min from the first word to this release. [The one-pager](https://the1truedan.github.io/phone-net-ICKS/greek-squat.html).
+- For the executor or next of kin, with the device passcode. Archive **before** reporting the death to Google, Yahoo or Facebook.
+
+### v0.7.9 · Spit Take edition (2026-10-30)
 
 **A DNA file read after 9 years on the shelf.** A raw genotype file from a 2017 research study had only ever been glanced at
 (45 pasted markers). In one evening, on the home computers, the new DNA module read all of it and gave the family private,
@@ -52,6 +72,22 @@ checked against its source before it went out.
 **No PHI. No PII.** These numbers tell the story with counts alone. That is possible because the record is **disaggregated**: each
 recording, note and letter is its own checksummed item, and its date, source and hash are kept apart from its content. The content
 stays on local hardware. Only the counts travel. *More on the method soon.*
+
+## Desktop app (from v0.8.0): install
+
+Download the file for your computer from the [Releases](https://github.com/the1truedan/phone-net-ICKS/releases) page.
+
+**The installers are not signed.** Code signing costs money every year, and this app is free and open source. Your computer
+will warn you the first time. That is expected. To check that your download is the real one, compare it with `SHA256SUMS.txt`
+on the release page (`shasum -a 256 <file>` on Mac and Linux, `certutil -hashfile <file> SHA256` on Windows).
+
+| Computer | File | First time you open it |
+| --- | --- | --- |
+| **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.0_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
+| **Windows** 10 or 11 | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
+| **Linux** (64-bit Intel/AMD) | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.0_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
+
+Older Macs (Intel) are not supported in v0.8.0. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
 
 ## Job board (v0.5.0, updated v0.6.0)
 A local page (127.0.0.1 only) to watch and steer the GPU transcription queues: GPU host CPU/memory/GPU and temperature,
@@ -148,7 +184,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.7.9"><img src="https://img.shields.io/badge/release-v0.7.9_Spit_Take_edition-3dcaa0?style=for-the-badge" alt="v0.7.9 Spit Take edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.0"><img src="https://img.shields.io/badge/release-v0.8.0_GREEK_SQUAT_edition-3dcaa0?style=for-the-badge" alt="v0.8.0 GREEK SQUAT edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>
