@@ -14,3 +14,4 @@ ui/pages/vendor/
 !src-tauri/capabilities/*.json
 !ui/sources.json
 src-tauri/target*/
+!pulls.json.example

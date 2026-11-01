@@ -1,0 +1,8 @@
+{
+  "_about": "Copy to ~/phone-net-ICKS/pulls.json and fill in your own phones. Each script must take SINCE (env) and a folder letter (arg 1), write <dest_prefix><YYYY-MM-DD><letter>/PULL_LOG.txt and custody_log.txt.",
+  "status_page": "~/path/to/phone-net-ICKS/stack/jobboard/phone_status.py",
+  "pulls": [
+    { "id": "play", "name": "Second phone · new since last pull", "serial": "YOURSERIAL", "script": "~/path/to/play_delta_pull.sh",
+      "dest_prefix": "/path/to/backups/_phone_play_YOURSERIAL_delta_" }
+  ]
+}
