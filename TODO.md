@@ -68,6 +68,15 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
 - **OCR bake-off candidates (Nov 2026, self-reported scores):** PaddleOCR-VL-1.6 and MinerU2.5-Pro (OmniDocBench top),
   Chandra OCR 2 (olmOCR-Bench top), GLM-OCR (installed), DeepSeek-OCR (installed), MiniCPM-OCR-1.0 (GGUF), Xiaomi-OCR-0,
   Falcon-OCR, surya-ocr-2.5. Score them on our own scans (word recall vs a hand-checked page, time, memory) before picking.
+- **Accessibility tools the listing names that P.A.P.E. doesn't cover yet:** veraPDF (PDF/UA check; installed on the Mac,
+  not wired), tagged-PDF output (ocrmypdf makes untagged PDFs: render OCR'd markdown to HTML, print a tagged PDF with headless
+  Chromium, then veraPDF), axe-core / Pa11y (open stand-ins for WAVE and axe DevTools on web pages), Word/PowerPoint checks
+  (headings, alt text, reading order via python-docx / python-pptx), local alt text from a vision model, and a screen-reader
+  pass (VoiceOver on the Mac; NVDA/JAWS are Windows-only, manual). Color contrast and alt-text fields already exist in ada-doc-check.
+- **Speech side (not OCR):** NVIDIA Nemotron-3.5-Transcribe-30B-A4B as a second-opinion transcriber next to WhisperX
+  (two-model agreement). Full model too big for MRGPU 16 GB / Mac 24 GB; try the small variants
+  (`akhaliq/nemotron-3.5-transcribe-mini-64e`, `FluidInference/nemotron-3.5-transcribe-lite-coreml`) or a 4-bit GGUF with MoE
+  experts on the CPU. Cloud providers exist but care recordings stay local.
 - **Blank-back threshold:** a legal packet still let 3 near-blank backs through at 0.2% ink; also treat "OCR words < 5" as blank.
 
 ## Earmarks (2026-10-16, local)
