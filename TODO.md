@@ -77,6 +77,11 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
   (two-model agreement). Full model too big for MRGPU 16 GB / Mac 24 GB; try the small variants
   (`akhaliq/nemotron-3.5-transcribe-mini-64e`, `FluidInference/nemotron-3.5-transcribe-lite-coreml`) or a 4-bit GGUF with MoE
   experts on the CPU. Cloud providers exist but care recordings stay local.
+- **Windows edition (later): old laptop, WSL Ubuntu, one-click install.** Draft, untested: `grokcode/scripts/windows/
+  pape_install_wsl.ps1` (turns on WSL, installs Ubuntu, usbipd-win for the USB scanner) + `pape_install_wsl.sh` (CPU-only kit).
+  Low-power smoke test 2026-11-01 (Mac, CPU only, 2 threads, 6 scan pages): Tesseract 0.9 s/page; RapidOCR (PP-OCR in ONNX,
+  ~15 MB) 5.2 s/page with 95% agreement both ways. Plan: Tesseract + RapidOCR, and a page goes to a vision model only
+  where the two disagree. Tiny vision models (MinerU2.5-Pro 1.2B, Xiaomi-OCR-0, PaddleOCR-VL 0.9B) are next once they download.
 - **Blank-back threshold:** a legal packet still let 3 near-blank backs through at 0.2% ink; also treat "OCR words < 5" as blank.
 
 ## Earmarks (2026-10-16, local)
