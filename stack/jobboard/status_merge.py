@@ -57,6 +57,37 @@ def headline(path, n=3):
     return out
 
 
+AUDIO = re.compile(r"\.(m4a|mp3|wav|amr|aac|ogg|opus)$|/\.pending-", re.I)
+
+
+def newest_file(globs, pattern=None, limit_dirs=8):
+    """Newest file (path, mtime) under the newest few folders matched by globs; optional regex filter."""
+    dirs = sorted({d for g in globs for d in glob.glob(g)}, key=lambda d: os.path.getmtime(d), reverse=True)[:limit_dirs]
+    best = (None, 0)
+    for d in dirs:
+        if os.path.isfile(d):
+            cand = [(d, os.path.getmtime(d))]
+        else:
+            cand = []
+            for root, _, files in os.walk(d):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    if pattern and not pattern.search(fp):
+                        continue
+                    try:
+                        cand.append((fp, os.path.getmtime(fp)))
+                    except OSError:
+                        pass
+        for c in cand:
+            if c[1] > best[1]:
+                best = c
+    return best
+
+
+def when(t):
+    return time.strftime("%a %b %-d, %-I:%M %p", time.localtime(t)) if t else "—"
+
+
 def build(c):
     sm = c.get("status_merge", {})
     srcs = c.get("freshness_sources", {})
@@ -83,12 +114,29 @@ def build(c):
                 L.append(f"- {l}")
         L += [f"- last log line {age(os.path.getmtime(log))} ago", ""]
 
+    # latest context: what is newest right now
+    L += ["## 🆕 Latest context", ""]
+    rg = sm.get("recordings_globs", [])
+    if rg:
+        f, t = newest_file(rg, AUDIO)
+        L.append(f"- 🎙️ **Most recent recording:** {when(t)} · `{os.path.basename(f) if f else '—'}`")
+    st = sm.get("sent_stamp")
+    if st and os.path.exists(st):
+        L.append(f"- 📧 **Most recent Gmail sent:** {when(os.path.getmtime(st))} (stamp; re-stamp after new sends)")
+    pulls = sorted(glob.glob(sm.get("pull_dirs_glob", "")), key=os.path.getmtime, reverse=True)[:4] if sm.get("pull_dirs_glob") else []
+    for d in pulls:
+        cl = os.path.join(d, "custody_log.txt")
+        line = open(cl, encoding="utf-8", errors="replace").read().strip().splitlines()[-1][:150] if os.path.exists(cl) else "running"
+        L.append(f"- 📱 **Pull** `{os.path.basename(d)}`: {line}")
+    L.append("")
+
     # sources
     L += ["## 🗃️ Sources (newest file)", "", "| Source | Newest | Files |", "|---|---|---:|"]
-    src_t = {}
+    src_t, src_f = {}, {}
     for k, gl in srcs.items():
         files = [p for g in gl for p in glob.glob(g)]
         src_t[k] = newest(gl)
+        src_f[k] = max(files, key=lambda p: os.path.getmtime(p), default="") if files else ""
         L.append(f"| {k} | {time.strftime('%m-%d %H:%M', time.localtime(src_t[k])) if src_t[k] else '—'} ({age(src_t[k])}) | {len(files)} |")
     L.append("")
 
@@ -112,6 +160,8 @@ def build(c):
         stale = [s for s in names if src_t.get(s, 0) > rt]
         body += [f"### {led} {r['name']}", f"- updated {age(rt)} ago" + (f" · newer data in: {', '.join(stale)}" if stale else " · current"),
                  f"- file: `{p}`"]
+        for sname in stale:
+            body.append(f"  - 🆕 {sname}: newest {when(src_t[sname])} · `{os.path.basename(src_f.get(sname, '')) or '—'}`")
         body += [f"  - {h}" for h in headline(p)]
         body.append("")
     L += [f"## 📚 Reports ({len(reps)}): 🟢 {green} · 🟡 {yellow} · 🔴 {red}", ""] + body
