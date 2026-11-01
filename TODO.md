@@ -37,6 +37,16 @@ Optional background for the white paper's release rule: ISO/IEC 27045 (big data 
   records stories, and hands files to the desktop app.
 - **Desktop app signing:** still unsigned (cost); revisit if a grant or sponsor covers it.
 
+## Earmark (2026-11-01): ALL YOUR PAPES ARE BELONG TO US edition ("THE PAPE")
+The head of the paper scroll order. The phones are saved; now the paper trail joins the paper parade.
+- **Hardware:** a used Fujitsu ScanSnap S1500M (Mac edition, duplex sheet feeder). Driver path is the free, open-source
+  SANE `fujitsu` backend (`brew install sane-backends`, `scanimage`). No vendor account, no cloud.
+- **Flow:** stack of paper → duplex scan → `ocrmypdf` (local Tesseract) → searchable PDF + SHA256SUMS + custody line,
+  same folder and log format as a phone pull, so the job board and the on-phone status screen show it (pages k/N).
+- **Desktop app:** a "Scan paper" card next to "Pull new files": scanner model, Re-identify, Scan button, page count.
+- **Sort, don't read:** filename by date and sender from the OCR'd first page; anything medical stays local (PHI rule).
+- **Puns welcome:** Pape Bull (the release note), Paper Infallibility (the checksum), Habemus Papyrum (the finish screen).
+
 ## Earmarks (2026-10-16, local)
 - **Fax tooling:** compare FaxZero (current; $3.29/send, 25-page cap, confirmation email per job) with alternatives that give a delivery
   report per page and an API or CLI: e.g. eFax / HelloFax / Fax.Plus / iFax / SRFax; check price per page, HIPAA BAA, inbound fax
