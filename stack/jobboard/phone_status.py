@@ -61,6 +61,25 @@ def status():
         for st in steps:
             if st["name"] == "Message attachments":
                 st["done"] = st["total"] = int(md[-1]); st["note"] = "all saved"
+    pl, pr = os.path.join(R, "_pull_list.txt"), os.path.join(R, "_prior.txt")
+    if os.path.exists(pl):
+        prior = set(open(pr).read().split("\n")) if os.path.exists(pr) else set()
+        kinds = {"rec": ("🎙️", "New recordings", r"\.(m4a|mp3|wav|amr|aac|ogg|opus)$|/\.pending-"),
+                 "vid": ("🎬", "New videos", r"\.(mp4|mov|3gp)$"), "pic": ("🖼️", "New pictures", r"\.(jpe?g|png|heic)$")}
+        want = {k: 0 for k in kinds}; have = {k: 0 for k in kinds}
+        for line in open(pl, errors="replace"):
+            parts = line.rstrip("\n").split("|", 2)
+            if len(parts) < 3 or f"{parts[1]}|{os.path.basename(parts[2])}" in prior:
+                continue
+            for k, (_, _, rx) in kinds.items():
+                if re.search(rx, parts[2], re.I):
+                    want[k] += 1
+                    if os.path.exists(os.path.join(R, parts[2].replace("/storage/", "", 1))):
+                        have[k] += 1
+                    break
+        for k, (ic, name, _) in kinds.items():
+            if want[k]:
+                add(ic, name, have[k], want[k])
     nf = re.findall(r"new files (\d+)/(\d+)", log)
     if nf:
         k, tot = map(int, nf[-1])
