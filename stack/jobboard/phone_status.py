@@ -55,6 +55,11 @@ def status():
             m = int((parts_total - n) / rate / 60)
             eta = f"about {m // 60} h {m % 60} min left" if m >= 60 else f"about {m} min left"
         add("📎", "Message attachments", n, parts_total, eta)
+    md = re.findall(r"mms part binaries=(\d+) \(resume done\)", log)
+    if md:
+        for st in steps:
+            if st["name"] == "Message attachments":
+                st["done"] = st["total"] = int(md[-1]); st["note"] = "all saved"
     m = re.search(r"sdcard \+ system done \(([^,]+), (\d+) files\)", log)
     if m:
         add("📁", "Phone storage", int(m.group(2)), int(m.group(2)), m.group(1))
@@ -69,6 +74,11 @@ def status():
         add("📲", "iPad backup", 0, None, f"{du(ios) / 1e9:.1f} GB so far")
     elif "phase2 waiting" in log:
         add("📲", "iPad backup", 0, None, "waiting for the iPad")
+    phone_steps = [st for st in steps if st["name"] != "iPad backup"]
+    complete = bool(phone_steps) and all(st["total"] and st["done"] >= st["total"] for st in phone_steps)
+    summary = {st["name"]: st["done"] for st in phone_steps}
+    if m:
+        summary["Storage"] = m.group(1)
     total = sum(s["total"] or 0 for s in steps) or 1
     done = sum(min(s["done"], s["total"] or 0) for s in steps)
     last = log.strip().splitlines()[-1][:19] if log.strip() else ""
@@ -77,7 +87,10 @@ def status():
         for st in steps:
             st["done"], st["total"] = rnd(st["done"]), rnd(st["total"])
             st["note"] = re.sub(r"\d+(\.\d+)?\s?(M|GB)", "", st["note"]).strip(" ·")
-    return {"title": "Saving a loved one's phone" if ARGS.redact else ARGS.title, "steps": steps, "pct": round(100 * done / total, 1), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
+    if ARGS.redact:
+        summary = {k: (rnd(v) if isinstance(v, int) else "") for k, v in summary.items()}
+    return {"complete": complete, "summary": summary,
+            "title": "Saving a loved one's phone" if ARGS.redact else ARGS.title, "steps": steps, "pct": 100.0 if complete else round(100 * done / total, 1), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
 
 
 PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -104,6 +117,15 @@ background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),
 @keyframes spin{to{transform:rotate(270deg)}}
 .ring text{fill:var(--fg);font:600 13px var(--mono);text-anchor:middle;dominant-baseline:central}
 .name{font-size:clamp(17px,4.6vw,22px);font-weight:600}.meta{color:var(--dim);font-family:var(--mono);font-size:clamp(13px,3.4vw,15px)}
+.done{display:none;width:min(94vw,560px);text-align:center;margin:0 0 2vh}
+.done h2{font-family:var(--mono);font-size:clamp(30px,9vw,52px);letter-spacing:.06em;color:#3ddc97;margin:.2em 0;text-shadow:0 0 22px #3ddc9755}
+.done p{font-size:clamp(17px,4.6vw,21px);line-height:1.5;margin:.4em 0;color:var(--fg)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 8px}
+.stat b{display:block;font-family:var(--mono);font-size:clamp(20px,6vw,28px);color:var(--accent)}
+.stat span{color:var(--dim);font-size:clamp(13px,3.6vw,15px)}
+.next{background:#3ddc9718;border:1px solid #3ddc97;border-radius:14px;padding:12px;font-size:clamp(17px,4.6vw,20px);margin-top:8px}
+body.finished .bar,body.finished #pct{display:none}body.finished .done{display:block}
 .foot{color:var(--dimmer);font-family:var(--mono);font-size:12px;margin-top:2vh;text-align:center}
 .tap{color:var(--dimmer);font-size:12px;margin-top:6px}
 .brand{color:var(--dimmer);font-family:var(--mono);font-size:12px;margin-top:10px;text-align:center;line-height:1.6}.brand i{color:var(--dim)}.brand b{color:var(--mu);font-weight:400}
@@ -137,6 +159,10 @@ background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),
 <div class="sub" id="title">Recon in progress</div>
 <div class="big" id="pct">–</div>
 <div class="bar"><div id="bar"></div></div>
+<div class="done" id="done"><h2>WORK COMPLETED</h2>
+<p>Everything on this phone is safe now: the words, the voices, the pictures.<br>Nothing left the house. Take a breath. You did this.</p>
+<div class="stats" id="stats"></div>
+<div class="next">✅ <b>Safe to unplug this phone.</b><br>📲 When you're ready: connect the iPad, unlock it, tap <b>Trust</b>.</div></div>
 <div class="steps" id="steps"></div>
 <div class="foot">please leave plugged in · <span id="upd"></span></div>
 <div class="tap" id="tap">tap for full screen</div>
@@ -148,8 +174,12 @@ function ring(s){const pct=s.total?Math.min(1,s.done/s.total):0;const cls=s.tota
  return `<svg class="ring ${cls}" viewBox="0 0 60 60"><circle class="bg" cx="30" cy="30" r="24"/><circle class="fg" cx="30" cy="30" r="24" stroke-dasharray="${C}" stroke-dashoffset="${off}"/><text x="30" y="30">${label}</text></svg>`}
 function fmt(n){return n.toLocaleString()}
 async function tick(){try{const r=await fetch('status.json',{cache:'no-store'});const j=await r.json();
- document.getElementById('title').textContent=j.title;document.getElementById('pct').textContent=j.pct+'%';
+ document.getElementById('title').textContent=j.complete?j.title.replace('saving','saved'):j.title;document.getElementById('pct').textContent=j.pct+'%';
  document.getElementById('bar').style.width=j.pct+'%';document.getElementById('upd').textContent='updated '+j.updated;
+ document.body.classList.toggle('finished',!!j.complete);
+ if(j.complete){const ic={"Texts":"💬","Picture messages":"🖼️","Calls":"📞","Contacts":"👥","Calendar":"📅","Message attachments":"📎","Phone storage":"📁","Voicemails":"🎙️","Storage":"💾"};
+  const lab={"Message attachments":"attachments","Picture messages":"picture msgs","Phone storage":"files","Storage":"storage"};
+  document.getElementById('stats').innerHTML=Object.entries(j.summary).filter(([k,v])=>v!=='').map(([k,v])=>`<div class="stat"><b>${typeof v==='number'?fmt(v):v}</b><span>${ic[k]||''} ${(lab[k]||k).toLowerCase()}</span></div>`).join('');}
  document.getElementById('steps').innerHTML=j.steps.map(s=>`<div class="step">${ring(s)}<div><div class="name">${s.icon} ${s.name}</div><div class="meta">${s.total?fmt(s.done)+' / '+fmt(s.total):''}${s.note?(s.total?' · ':'')+s.note:''}</div></div></div>`).join('');
 }catch(e){document.getElementById('upd').textContent='waiting for the Mac…'}}
 tick();setInterval(tick,3000);

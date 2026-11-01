@@ -14,7 +14,8 @@
 - **`stack/jobboard/phone_status.py`:** full-screen status page **on the phone being pulled** (site look, animated logo,
   progress rings, ETA, wake lock). Reached over the same cable with `adb reverse`; counts only, no names or text. Only for
   background steps, never while a script drives the phone's screen. `--redact` = screenshot mode (generic title,
-  rounded counts). Logo sizing fixed (it collapsed to zero height in the centred column).
+  rounded counts). Finish state: WORK COMPLETED, a short note to the caregiver, the final counts, "safe to unplug" and
+  the next device. Logo sizing fixed (it collapsed to zero height in the centred column).
 - **Site:** `site/greek-squat.html` one-pager (how it came about, breakthroughs, rounded counts, Mermaid workflow with SVG/.mmd download) and a breakthrough entry on the main page; session `6d0b256a`, IDs only.
 - **Logo:** `docs/img/greek_squat_logo.svg` (animated; `greek_squat_logo_gen.py` redraws it): two hands hold a red 🍎 phone and a green
   🤖 phone, cabled to a small desktop on the floor of a stone colonnade; light runs along the cables, then rises to a black μ
