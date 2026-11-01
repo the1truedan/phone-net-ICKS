@@ -73,6 +73,14 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
   Chromium, then veraPDF), axe-core / Pa11y (open stand-ins for WAVE and axe DevTools on web pages), Word/PowerPoint checks
   (headings, alt text, reading order via python-docx / python-pptx), local alt text from a vision model, and a screen-reader
   pass (VoiceOver on the Mac; NVDA/JAWS are Windows-only, manual). Color contrast and alt-text fields already exist in ada-doc-check.
+- **Fold in A.I.D.A. (grokcode `agents/aida/`, reuse, don't rebuild):** `layman_relay` (dual-audience plain-language
+  briefs: caregiver actions + gentle bullets for the person receiving care; pulls dates and money amounts) for every scan
+  and signup kit · `assurance` (Section 508 / WCAG 2.1 AA / PDF/UA deep pass, fail-closed approver) after veraPDF ·
+  `document_accessibility_gate` (checksum + accessibility score before anything is filed) · `aida_pdf_bridge`
+  (ocrmypdf queue) · `manager/ingestion/caption_rag` (local VLM captions = alt text for figures in the tagged PDF) ·
+  V.O.X. + Kokoro TTS on MRGPU (read any scan aloud: an audio copy for low vision) · `video_scan` for video evidence.
+- **Email formatting check (P.A.P.E. for inboxes):** same audit for HTML email bodies: images without alt, layout tables,
+  fixed widths (no reflow on phones), tiny footers, "click here" links, content only inside a PDF attachment.
 - **Speech side (not OCR):** NVIDIA Nemotron-3.5-Transcribe-30B-A4B as a second-opinion transcriber next to WhisperX
   (two-model agreement). Full model too big for MRGPU 16 GB / Mac 24 GB; try the small variants
   (`akhaliq/nemotron-3.5-transcribe-mini-64e`, `FluidInference/nemotron-3.5-transcribe-lite-coreml`) or a 4-bit GGUF with MoE
