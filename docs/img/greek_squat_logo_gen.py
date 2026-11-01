@@ -50,6 +50,11 @@ join at one USB-C plug, and points of light rise from it up the corridor into th
  <filter id="cloud" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="6"/></filter>
  <linearGradient id="alu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9ecf0"/><stop offset="1" stop-color="#b7bcc4"/></linearGradient>
  <linearGradient id="alu2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9aeb6"/><stop offset="1" stop-color="#7c818a"/></linearGradient>
+ <linearGradient id="cubeFront" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a414d"/><stop offset=".45" stop-color="#151a22"/><stop offset="1" stop-color="#030406"/></linearGradient>
+ <linearGradient id="cubeSide" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2028"/><stop offset="1" stop-color="#020304"/></linearGradient>
+ <linearGradient id="cubeUnder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262c36"/><stop offset="1" stop-color="#0a0c10"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".55" stop-color="#f0b429"/><stop offset="1" stop-color="#a8741a"/></linearGradient>
+ <radialGradient id="warmhalo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff4d6" stop-opacity=".55"/><stop offset="1" stop-color="#fff4d6" stop-opacity="0"/></radialGradient>
  <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
  <g id="chip"><rect x="-26" y="-26" width="52" height="52" rx="5" fill="#121722" stroke="currentColor" stroke-width="3"/>
   <rect x="-15" y="-15" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/>
@@ -130,23 +135,24 @@ for zc in reversed(cols):
 o.append(f'<rect width="{W}" height="150" fill="url(#top)"/>')
 o.append(f'<rect y="{H - 190}" width="{W}" height="190" fill="url(#bottom)"/>')
 
-# the cube: a small black box tilted in the sky, in front of the clouds, mu on its face
-cxc, cyc, e = VX, VY - 24, 16
-dx, dy = 13, 11                         # depth of the box (we are below it: side + underside show)
+# the cube: a small black box tilted in the sky, in front of the clouds, a gold mu inscribed on its face
+cxc, cyc, e = VX, VY - 22, 12
+dx, dy = 9, 8                           # depth of the box (we are below it: side + underside show)
 fr = [(-e, -e), (e, -e), (e, e), (-e, e)]
 bk = [(x + dx, y + dy) for x, y in fr]
 pt = lambda q: f"{cxc + q[0]:.1f} {cyc + q[1]:.1f}"
+EDGE = "#d9dee6"
 cg = [f'<g transform="rotate(-11 {cxc} {cyc})">']
-cg.append(f'<path d="M{pt(fr[1])} L{pt(bk[1])} L{pt(bk[2])} L{pt(fr[2])} Z" fill="#11161f" stroke="#6ee7ff" stroke-width="1.3" stroke-linejoin="round"/>')
-cg.append(f'<path d="M{pt(fr[3])} L{pt(fr[2])} L{pt(bk[2])} L{pt(bk[3])} Z" fill="#1a2130" stroke="#6ee7ff" stroke-width="1.3" stroke-linejoin="round"/>')
-cg.append(f'<path d="M{pt(fr[0])} L{pt(fr[1])} L{pt(fr[2])} L{pt(fr[3])} Z" fill="#04060a" stroke="#6ee7ff" stroke-width="2" stroke-linejoin="round"/>')
-cg.append(f'<path d="M{pt((-e + 3, -e + 3))} L{pt((e - 3, -e + 3))}" stroke="#9bdfff" stroke-width="1" opacity=".5"/>')
-cg.append(f'<text x="{cxc}" y="{cyc + e * .5:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.6:.0f}" font-style="italic" fill="#6ee7ff" text-anchor="middle" filter="url(#glow)">μ</text>')
+cg.append(f'<path d="M{pt(fr[1])} L{pt(bk[1])} L{pt(bk[2])} L{pt(fr[2])} Z" fill="url(#cubeSide)" stroke="{EDGE}" stroke-width=".7" stroke-opacity=".55" stroke-linejoin="round"/>')
+cg.append(f'<path d="M{pt(fr[3])} L{pt(fr[2])} L{pt(bk[2])} L{pt(bk[3])} Z" fill="url(#cubeUnder)" stroke="{EDGE}" stroke-width=".7" stroke-opacity=".45" stroke-linejoin="round"/>')
+cg.append(f'<path d="M{pt(fr[0])} L{pt(fr[1])} L{pt(fr[2])} L{pt(fr[3])} Z" fill="url(#cubeFront)" stroke="{EDGE}" stroke-width=".9" stroke-opacity=".8" stroke-linejoin="round"/>')
+cg.append(f'<path d="M{pt((-e + 1.5, -e + 1.2))} L{pt((e - 1.5, -e + 1.2))}" stroke="#ffffff" stroke-width=".8" opacity=".55"/>')
+cg.append(f'<text x="{cxc}" y="{cyc + e * .5:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.55:.0f}" font-style="italic" fill="url(#gold)" text-anchor="middle">μ</text>')
 cg.append('</g>')
 ox0, oy0 = P(ow0, T, FAR); ox1, oy1 = P(ow1, B, FAR)   # the far opening: the cube lives only in this sky
 o.append(f'<clipPath id="opening"><rect x="{ox0:.1f}" y="{oy0 + 3:.1f}" width="{ox1 - ox0:.1f}" height="{oy1 - oy0 - 3:.1f}"/></clipPath>')
 o.append('<g clip-path="url(#opening)">')
-o.append(f'<circle cx="{cxc}" cy="{cyc}" r="44" fill="url(#halo)" opacity=".8"/>')
+o.append(f'<circle cx="{cxc}" cy="{cyc}" r="30" fill="url(#warmhalo)"/>')
 o.extend(cg)
 o.append('</g>')
 
