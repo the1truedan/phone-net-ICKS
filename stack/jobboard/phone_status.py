@@ -106,6 +106,7 @@ background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),
 .name{font-size:clamp(17px,4.6vw,22px);font-weight:600}.meta{color:var(--dim);font-family:var(--mono);font-size:clamp(13px,3.4vw,15px)}
 .foot{color:var(--dimmer);font-family:var(--mono);font-size:12px;margin-top:2vh;text-align:center}
 .tap{color:var(--dimmer);font-size:12px;margin-top:6px}
+.brand{color:var(--dimmer);font-family:var(--mono);font-size:12px;margin-top:10px;text-align:center;line-height:1.6}.brand i{color:var(--dim)}.brand b{color:var(--mu);font-weight:400}
 /* logo animation */
 .pulse{animation:pulse 2.4s ease-out infinite;transform-origin:center}
 .pulse.d2{animation-delay:.8s}.pulse.d3{animation-delay:1.6s}
@@ -139,6 +140,7 @@ background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),
 <div class="steps" id="steps"></div>
 <div class="foot">please leave plugged in · <span id="upd"></span></div>
 <div class="tap" id="tap">tap for full screen</div>
+<div class="brand"><i>prepare for the care when we cannot be there</i><br><b>μ</b> M.A.N.A.G.E.R. LLC © 2026 · MIT License</div>
 <script>
 const C=2*Math.PI*24;
 function ring(s){const pct=s.total?Math.min(1,s.done/s.total):0;const cls=s.total&&s.done>=s.total?'done':(s.total?'':'spin');
