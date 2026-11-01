@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ask my records · phone-net-ICKS</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body class="chat-page">
+<main class="chat">
+  <p class="eyebrow"><a href="index.html">← home</a> · ask my records</p>
+  <h1>💬 Ask my records</h1>
+  <p class="sub">A chat that runs on this computer only (Ollama). It searches the folder you choose, sends the best matching lines to the model,
+    and shows which file and line each part of the answer came from. Nothing goes to the internet.</p>
+
+  <div class="settings">
+    <label>Records folder <input id="folder" placeholder="/path/to/your/records" /></label>
+    <label>Model <select id="model"><option>loading…</option></select></label>
+  </div>
+  <p class="warn-note">⚠️ Answers are a starting point. Before you put a date, amount or event in a letter, open the cited file and check it.</p>
+
+  <div id="log" class="log"></div>
+  <form id="ask" class="ask">
+    <textarea id="q" rows="2" placeholder="e.g. When did the nurse last visit? Which texts mention the pharmacy?"></textarea>
+    <button class="btn" id="send" type="submit">Ask</button>
+  </form>
+</main>
+<script>
+const T = window.__TAURI__;
+const $ = id => document.getElementById(id);
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function store(k, v) { try { v === undefined ? (v = localStorage.getItem(k)) : localStorage.setItem(k, v); } catch (_) {} return v; }
+
+$("folder").value = store("folder") || "";
+$("folder").addEventListener("change", () => store("folder", $("folder").value));
+
+async function loadModels() {
+  if (!T) { $("model").innerHTML = "<option>open inside the app</option>"; return; }
+  try {
+    const ms = await T.core.invoke("ollama_models");
+    const keep = store("model");
+    $("model").innerHTML = ms.length ? ms.map(m => `<option ${m === keep ? "selected" : ""}>${esc(m)}</option>`).join("")
+                                     : "<option value=''>no models: install Ollama and pull one</option>";
+  } catch (e) { $("model").innerHTML = `<option value=''>Ollama not running (${esc(e)})</option>`; }
+}
+$("model").addEventListener("change", () => store("model", $("model").value));
+loadModels();
+
+function add(cls, html) { const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; $("log").appendChild(d); d.scrollIntoView({ block: "end" }); return d; }
+
+$("ask").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const q = $("q").value.trim(); if (!q || !T) return;
+  add("you", esc(q)); $("q").value = ""; $("send").disabled = true;
+  const wait = add("bot", "Searching your folder and asking the model…");
+  try {
+    const r = await T.core.invoke("ask_records", { folder: $("folder").value, model: $("model").value, question: q });
+    const src = r.hits.map((h, i) => `<li><b>[${i + 1}]</b> <code>${esc(h.file)}:${h.line}</code><br><span>${esc(h.text)}</span></li>`).join("");
+    wait.innerHTML = `<div class="answer">${esc(r.answer).replace(/\n/g, "<br>")}</div>` +
+      (src ? `<details><summary>Sources used (${r.hits.length}) · searched ${r.files_searched} files</summary><ol class="src">${src}</ol></details>`
+           : `<p class="dim">No matching lines found in ${r.files_searched} files.</p>`);
+  } catch (e) { wait.innerHTML = `<span class="bad">${esc(e)}</span>`; }
+  $("send").disabled = false;
+});
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("ask").requestSubmit(); } });
+</script>
+<script src="links.js"></script>
+</body>
+</html>

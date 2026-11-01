@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>phone-net-ICKS</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<main>
+  <p class="eyebrow">phone-net · I.C.K.S. v0.8.0 · THE LAST JUDGEMENT</p>
+  <h1>📱 → 🗄️ Keep your own care records</h1>
+  <p class="sub">For family caregivers. Copy what is on your phone and in your care apps to your own computer, keep proof of when each
+    thing happened, and ask questions about it in plain words. Everything runs on this computer.</p>
+
+  <p id="status" class="status">⏳ Checking this computer…</p>
+
+  <section class="cards">
+    <article>
+      <h2>📱 1. Scan my phone</h2>
+      <p>Plug in a phone and see what is on it: photos, videos, recordings, documents, recent calls. Read-only; nothing is copied.</p>
+      <p><a class="btn" href="phone.html">Scan</a></p>
+    </article>
+    <article>
+      <h2>📥 2. Get my records</h2>
+      <p>Tick what you want: phone, texts, calls, care apps and websites. You stay in control: the app never signs, submits or types a password.</p>
+      <p><a class="btn" href="sources.html">Choose</a></p>
+    </article>
+    <article>
+      <h2>💬 3. Ask my records</h2>
+      <p>Chat with a model that runs on this computer. Every answer shows the file and line it came from.</p>
+      <p><a class="btn" href="chat.html">Ask</a></p>
+    </article>
+  </section>
+
+  <section class="cards">
+    <article class="example">
+      <h2>🧪 See an example <span class="chip example">EXAMPLE DATA</span></h2>
+      <p>Follow a made-up caregiver, Sam, step by step: what the computer does, and where Sam stays in charge.</p>
+      <p><a class="btn ghost" href="pages/example.html">Open the example</a></p>
+    </article>
+    <article>
+      <h2>🔒 Your files stay yours</h2>
+      <p>No account, no login, no tracking, no upload. The chat talks only to Ollama on this computer.</p>
+      <p><a class="btn ghost" href="check.html">✅ Check my computer</a></p>
+    </article>
+  </section>
+
+  <div class="theme-pick">Look:
+    <button onclick="setTheme('default')">Default</button>
+    <button onclick="setTheme('classic')">Classic desktop</button>
+    <button onclick="setTheme('terminal')">Terminal</button>
+    <button onclick="setTheme('retro')">Retro big text</button>
+    <button onclick="setTheme('contrast')">High contrast</button>
+  </div>
+
+  <footer>© 2026 M.A.N.A.G.E.R. LLC · MIT license · <i>prepare for the care when we cannot be there</i></footer>
+</main>
+<script src="links.js"></script>
+<script>
+(async () => {
+  const el = document.getElementById("status"), T = window.__TAURI__;
+  if (!T || !T.core) { el.textContent = ""; return; }
+  let py = ""; try { py = localStorage.getItem("pyannote-python") || ""; } catch (_) {}
+  try {
+    const rows = (await T.core.invoke("check_computer")).concat(await T.core.invoke("check_speakers", { python: py || null }));
+    const n = s => rows.filter(r => r.status === s).length;
+    const miss = rows.filter(r => r.status === "missing").map(r => r.name);
+    el.innerHTML = `🟢 ${n("ok")} ready · 🟡 ${n("warn")} optional · 🔴 ${n("missing")} missing` +
+      (miss.length ? ` (${miss.join(", ")}) · <a href="check.html">see Check</a>` : " · all set");
+  } catch (e) { el.textContent = "Check failed: " + e; }
+})();
+</script>
+</body>
+</html>

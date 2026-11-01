@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scan my phone · phone-net-ICKS</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css" />
+<style>
+  .flow { display: flex; align-items: center; justify-content: center; gap: 1rem; font-size: 3rem; margin: 1.4rem 0 .4rem; }
+  .dots { display: flex; gap: .45rem; }
+  .dots i { width: .7rem; height: .7rem; border-radius: 50%; background: var(--warn); opacity: .2; }
+  .busy .dots i { animation: hop 1.2s infinite; }
+  .dots i:nth-child(2) { animation-delay: .2s; } .dots i:nth-child(3) { animation-delay: .4s; }
+  .dots i:nth-child(4) { animation-delay: .6s; } .dots i:nth-child(5) { animation-delay: .8s; }
+  @keyframes hop { 0%, 100% { opacity: .2; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-6px); } }
+  @media (prefers-reduced-motion: reduce) { .busy .dots i { animation: none; opacity: .8; } }
+  .stages { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-bottom: 1rem; }
+  .stage { padding: .3rem .7rem; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); font-size: .85rem; }
+  .stage.on { border-color: var(--warn); color: var(--warn); } .stage.done { border-color: var(--ok); color: var(--ok); }
+  .big { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+  .big div { flex: 1 1 160px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .8rem 1rem; }
+  .big b { display: block; font-size: 1.9rem; font-variant-numeric: tabular-nums; }
+  .bar { height: .7rem; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: .35rem; }
+  .bar span { display: block; height: 100%; width: 0; background: var(--soft); border-radius: 999px; transition: width 1.2s ease-out; }
+  .cat { margin: .7rem 0; } .cat .n { float: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow"><a href="index.html">← home</a> · scan my phone</p>
+  <h1>📱 Scan my phone</h1>
+  <p class="sub">A quick look at what is on the phone, as if it were new. Only dates, sizes and types are read. No file, message,
+    number or name is copied. A small summary (dates and counts) is saved on this computer.</p>
+
+  <div id="pick"></div>
+  <div id="flow" class="flow"><span>📱</span><span class="dots"><i></i><i></i><i></i><i></i><i></i></span><span>💻</span></div>
+  <div class="stages" id="stages">
+    <span class="stage" data-s="0">1 · find phone</span><span class="stage" data-s="1">2 · list files</span>
+    <span class="stage" data-s="2">3 · recent calls</span><span class="stage" data-s="3">4 · save summary</span>
+  </div>
+  <div id="out"></div>
+  <footer>Read-only. Nothing on the phone is changed.</footer>
+</main>
+<script src="links.js"></script>
+<script>
+const T = window.__TAURI__, $ = id => document.getElementById(id);
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+const gb = b => b >= 1e9 ? (b / 1e9).toFixed(1) + " GB" : b >= 1e6 ? (b / 1e6).toFixed(0) + " MB" : (b / 1e3).toFixed(0) + " KB";
+const day = s => s > 0 ? new Date(s * 1000).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "—";
+const mins = s => s >= 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s} s`;
+const done = new Set(JSON.parse(sessionStorage.getItem("scanned") || "[]"));
+let waitTimer = null;
+
+function stage(n, state) { document.querySelectorAll(".stage").forEach(e => {
+  const i = +e.dataset.s; e.className = "stage" + (i < n || state === "all" ? " done" : i === n ? " on" : ""); }); }
+function busy(on) { $("flow").classList.toggle("busy", on); }
+function countUp(el, to, fmt) { const t0 = performance.now(), d = 1200;
+  (function f(t) { const k = Math.min(1, (t - t0) / d); el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(f); })(t0); }
+
+async function findPhones(auto) {
+  if (!T || !T.core) { $("pick").innerHTML = '<p class="warn-note">Open this page inside the app.</p>'; return; }
+  stage(0); busy(true);
+  const ds = await T.core.invoke("list_phones").catch(() => []);
+  busy(false);
+  const fresh = ds.filter(d => !done.has(d.serial));
+  if (!ds.length) { $("pick").innerHTML = '<p>No phone found. Plug one in, unlock it and tap <b>Allow</b> on the USB debugging prompt.</p>'; waitForPhone(); return; }
+  if (!fresh.length) { $("pick").innerHTML = '<p>✅ Every connected phone has been scanned. Unplug it and plug in the next one.</p>'; waitForPhone(); return; }
+  $("pick").innerHTML = fresh.map(d => `<button class="btn" data-s="${esc(d.serial)}">Scan ${esc(d.model)} (…${esc(d.serial_tail)})</button>`).join(" ");
+  $("pick").querySelectorAll("button").forEach(b => b.addEventListener("click", () => scan(b.dataset.s)));
+  if (auto && fresh.length === 1) scan(fresh[0].serial);
+}
+function waitForPhone() {
+  clearInterval(waitTimer);
+  waitTimer = setInterval(async () => {
+    const ds = await T.core.invoke("list_phones").catch(() => []);
+    if (ds.some(d => !done.has(d.serial))) { clearInterval(waitTimer); findPhones(true); }
+  }, 2000);
+}
+async function scan(serial) {
+  clearInterval(waitTimer); $("pick").innerHTML = ""; $("out").innerHTML = "";
+  stage(1); busy(true);
+  const tick = setTimeout(() => stage(2), 2500);
+  try {
+    const r = await T.core.invoke("scan_phone", { serial });
+    clearTimeout(tick); stage(3); setTimeout(() => stage(4, "all"), 400); busy(false);
+    done.add(serial); sessionStorage.setItem("scanned", JSON.stringify([...done]));
+    show(r);
+  } catch (e) { clearTimeout(tick); busy(false); $("out").innerHTML = `<p class="bad">Scan failed: ${esc(e)}</p>`; }
+}
+function show(r) {
+  const max = Math.max(1, ...r.categories.map(c => c.files));
+  $("out").innerHTML = `
+    <h2 class="sec">${esc(r.model)} · Android ${esc(r.android)} · …${esc(r.serial_tail)}</h2>
+    <div class="big"><div>Files found<b id="nf">0</b></div><div>Total size<b id="nb">0</b></div>
+      <div>Storage areas<b>${r.volumes.length}</b><span class="dim">${r.volumes.length > 1 ? "phone + SD card" : "phone"}</span></div></div>
+    <h2 class="sec">What is on it</h2>
+    ${r.categories.map(c => `<div class="cat"><b>${esc(c.name)}</b><span class="n">${c.files.toLocaleString()} files · ${gb(c.bytes)} · newest ${day(c.newest)}</span>
+      <div class="bar"><span data-w="${(100 * c.files / max).toFixed(1)}"></span></div></div>`).join("")}
+    <h2 class="sec">Most recent recordings (dates only)</h2>
+    ${r.recent_recordings.length ? `<table>${r.recent_recordings.map(a => `<tr><td>${day(a.when)}</td><td class="detail">${gb(a.bytes)}</td><td class="detail">${esc(a.folder)}</td></tr>`).join("")}</table>` : "<p class='dim'>No audio files found.</p>"}
+    <h2 class="sec">Most recent calls (no numbers or names)</h2>
+    ${r.calls_readable ? `<table>${r.recent_calls.map(c => `<tr><td>${day(Math.floor(c.when_ms / 1000))}</td><td>${esc(c.kind)}</td><td class="detail">${mins(c.seconds)}</td></tr>`).join("")}</table>` : "<p class='dim'>This phone does not let the cable read the call log. A helper app can export it instead.</p>"}
+    <h2 class="sec">Biggest folders</h2>
+    <p class="dim">${r.top_folders.map(([f, n]) => `${esc(f || "(top level)")}: ${n.toLocaleString()}`).join(" · ")}</p>
+    <p class="dim">Summary saved: <code>${esc(r.saved_to || "not saved")}</code></p>
+    <p><b>Next phone?</b> Unplug this one and plug in the next. It will be found by itself.</p>`;
+  countUp($("nf"), r.total_files, n => n.toLocaleString());
+  countUp($("nb"), r.total_bytes, gb);
+  requestAnimationFrame(() => document.querySelectorAll(".bar span").forEach(s => s.style.width = s.dataset.w + "%"));
+  waitForPhone();
+}
+findPhones(true);
+</script>
+</body>
+</html>

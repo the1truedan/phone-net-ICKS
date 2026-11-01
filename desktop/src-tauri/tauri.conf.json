@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "phone-net-ICKS",
+  "version": "0.8.0",
+  "identifier": "io.github.the1truedan.phonenet-icks",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "phone-net-ICKS",
+        "width": 1100,
+        "height": 820,
+        "resizable": true,
+        "fullscreen": false,
+        "minWidth": 420,
+        "minHeight": 500
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "debugApplicationIdSuffix": ".debug"
+    },
+    "publisher": "M.A.N.A.G.E.R. LLC",
+    "copyright": "\u00a9 2026 M.A.N.A.G.E.R. LLC",
+    "category": "Productivity",
+    "shortDescription": "Keep your own care records: phone to your own computer, with custody.",
+    "license": "MIT"
+  }
+}

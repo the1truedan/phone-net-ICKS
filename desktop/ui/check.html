@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Check my computer · phone-net-ICKS</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<main>
+  <p class="eyebrow"><a href="index.html">← home</a> · check my computer</p>
+  <h1>✅ Check my computer</h1>
+  <p class="sub">Green means ready. Yellow means optional or not on this phone. Red means missing; the link shows how to get it.
+    These checks only look. Nothing is installed or changed, on the computer or the phone.</p>
+  <p><button class="btn" id="run">Check again</button></p>
+
+  <h2 class="sec">💻 This computer</h2>
+  <table id="pc"></table>
+
+  <h2 class="sec" id="phone">📱 On the phone</h2>
+  <p class="dim">Which care apps are installed, and whether texts can be copied over the cable. Counts only; no message is read.</p>
+  <table id="ph"></table>
+
+  <h2 class="sec" id="speakers">🗣️ Speaker names (optional)</h2>
+  <p class="dim">To label who is talking, a free model (pyannote) runs on this computer. Its makers ask you to accept their terms
+    once on their website, in your own browser, and to save a free access token. The app checks that the token file exists; it never reads it.</p>
+  <p class="settings"><label>Python that has pyannote (optional; remembered)
+    <input id="pypath" placeholder="~/.venvs/pyannote/bin/python" /></label></p>
+  <table id="sp"></table>
+  <p><button class="btn ghost" id="hfbtn" type="button">Check my Hugging Face access</button>
+    <span class="dim">Contacts huggingface.co only when you click. Your token is never shown.</span></p>
+  <table id="hf"></table>
+
+  <footer>Links open in your normal browser.</footer>
+</main>
+<script src="links.js"></script>
+<script>
+const MARK = { ok: "🟢", missing: "🔴", warn: "🟡" };
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function rowsHtml(rows) {
+  return rows.map(r => `<tr>
+    <td class="mark">${MARK[r.status] || "🟡"}</td>
+    <td><b>${esc(r.name)}</b><br>${esc(r.purpose)}${r.status !== "ok" && r.help_url
+      ? `<br><a href="${esc(r.help_url)}">How to get it</a>` : ""}</td>
+    <td class="detail">${esc(r.detail)}</td></tr>`).join("");
+}
+async function fill(id, cmd, args) {
+  const el = document.getElementById(id);
+  el.innerHTML = '<tr><td class="mark">⏳</td><td>Checking…</td><td></td></tr>';
+  const T = window.__TAURI__;
+  if (!T || !T.core) { el.innerHTML = '<tr><td class="mark">🟡</td><td>Open this page inside the app.</td><td></td></tr>'; return; }
+  try { el.innerHTML = rowsHtml(await T.core.invoke(cmd, args || {})); }
+  catch (e) { el.innerHTML = `<tr><td class="mark">🔴</td><td>The check failed.</td><td class="detail">${esc(e)}</td></tr>`; }
+}
+function pyPath() { try { return localStorage.getItem("pyannote-python") || ""; } catch (_) { return ""; } }
+document.getElementById("pypath").value = pyPath();
+document.getElementById("pypath").addEventListener("change", e => { try { localStorage.setItem("pyannote-python", e.target.value.trim()); } catch (_) {} fill("sp", "check_speakers", { python: e.target.value.trim() || null }); });
+function run() { fill("pc", "check_computer"); fill("ph", "check_phone"); fill("sp", "check_speakers", { python: pyPath() || null }); }
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("hfbtn").addEventListener("click", () => fill("hf", "check_hf", { python: pyPath() || null }));
+run();
+</script>
+</body>
+</html>

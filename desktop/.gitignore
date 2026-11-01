@@ -1,0 +1,15 @@
+# build output
+src-tauri/target/
+# admin-only (ADMIN=1 ./sync_pages.sh); never in a public commit
+ui/admin.json
+ui/pages/workflow.html
+ui/pages/oct28-workflow.html
+# downloaded by sync_pages.sh
+ui/pages/vendor/
+# app icons are reviewed artwork (the repo blocks *.png by default)
+!app-icon.png
+!src-tauri/icons/**
+# app config (the repo blocks *.json by default)
+!src-tauri/tauri.conf.json
+!src-tauri/capabilities/*.json
+!ui/sources.json

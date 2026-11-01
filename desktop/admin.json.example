@@ -1,0 +1,11 @@
+{
+  "_about": "Admin-only sources. ADMIN=1 ./sync_pages.sh copies this to ui/admin.json (git-ignored). Public builds have no ui/admin.json, so these never show.",
+  "steps": [
+    { "id": "agentsview", "icon": "🧠", "name": "AgentsView sessions (Tower)", "mode": "auto", "status": "planned",
+      "what": "Pull your own agent-session history from the AgentsView instance already running on your server (session IDs and the day/week pages you pick), read-only. No Docker needed on this computer.",
+      "gets": "Your agent sessions alongside your records, searchable in Ask my records." },
+    { "id": "case_pages", "icon": "📁", "name": "Owner case pages", "mode": "auto", "status": "ready",
+      "what": "Your own workflow pages, bundled only in your admin build.",
+      "gets": "Your real workflow next to the example.", "link": "pages/workflow.html", "link_text": "Open" }
+  ]
+}

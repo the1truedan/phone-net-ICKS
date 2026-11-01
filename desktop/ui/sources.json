@@ -1,0 +1,200 @@
+{
+  "_about": "Steps and sources shown on the 'Get my records' page. Add a source here; no code change needed. mode: auto = the app does it over USB; addon = needs a helper app on the phone first; hitl = you open the app or site and tap, the app saves what you see. status: ready | planned.",
+  "steps": [
+    {
+      "id": "connect",
+      "icon": "🔌",
+      "name": "Connect your phone",
+      "mode": "auto",
+      "status": "ready",
+      "what": "Plug in the USB cable, unlock the phone and tap Allow when it asks about USB debugging.",
+      "gets": "A working link to the phone.",
+      "link": "check.html#phone",
+      "link_text": "Check the connection and apps"
+    },
+    {
+      "id": "media",
+      "icon": "🎙️",
+      "name": "Recordings, photos and videos",
+      "mode": "auto",
+      "status": "planned",
+      "what": "Copies only what is new since the last time, then writes a SHA-256 fingerprint for every file.",
+      "gets": "Voice recordings, camera photos and videos, with their true dates."
+    },
+    {
+      "id": "sms",
+      "icon": "💬",
+      "name": "Text messages (SMS/MMS)",
+      "mode": "auto",
+      "status": "planned",
+      "what": "Many phones let the app read texts straight over the cable, including long texts saved as MMS. If yours does not, install a helper app (for example SMS Backup & Restore), make a backup, and the app copies that file.",
+      "gets": "Every text with sender, time and pictures.",
+      "link": "check.html#phone",
+      "link_text": "Check this phone"
+    },
+    {
+      "id": "calls",
+      "icon": "📞",
+      "name": "Call log and caller ID",
+      "mode": "addon",
+      "status": "planned",
+      "what": "Uses the same backup app for the call log. If a caller-ID app (for example Truecaller) is installed, its export is copied too.",
+      "gets": "Who called, when and for how long, with names where the caller-ID app knows them."
+    },
+    {
+      "id": "notes",
+      "icon": "🗒️",
+      "name": "Notes, calendar and tasks",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "You ask your account for its own export (for example Google Takeout). The app takes the downloaded file.",
+      "gets": "What you wrote down and when."
+    },
+    {
+      "id": "caregiver_app",
+      "icon": "🧾",
+      "name": "Caregiver time app (payroll agency)",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "You open the app on the phone and go to each pay period. The app saves each screen as you go. It never taps Submit or Sign; you do.",
+      "gets": "Shifts, approvals and notes as the agency sees them."
+    },
+    {
+      "id": "mychart",
+      "icon": "🏥",
+      "name": "Patient portal (MyChart and similar)",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Best: ask the portal for its full export and give the app the file. Or open each visit yourself and the app saves the visit summary.",
+      "gets": "Visits, notes, medicines and test results. Duplicate copies of the same visit are counted once."
+    },
+    {
+      "id": "pharmacy",
+      "icon": "💊",
+      "name": "Pharmacies (CVS, Walgreens and others)",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "You log in to the pharmacy site or app yourself and open the prescription history. The app saves what is on screen.",
+      "gets": "Fill dates, medicines and prescribers."
+    },
+    {
+      "id": "secure_mail",
+      "icon": "🔐",
+      "name": "Secure email (Zix and similar)",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Agencies often send 'secure' messages you can only read on a website. You log in; the app saves each message you open, with a fingerprint.",
+      "gets": "The agency's own words, kept even after the website deletes them."
+    },
+    {
+      "id": "speakers",
+      "icon": "🗣️",
+      "name": "Speaker names (optional)",
+      "mode": "hitl",
+      "status": "ready",
+      "what": "Accept the speaker model's terms once on its website, in your own browser, and save a free token. The model then runs on this computer.",
+      "gets": "Transcripts that say who is talking.",
+      "link": "check.html#speakers",
+      "link_text": "See the steps"
+    },
+    {
+      "id": "medicare",
+      "icon": "🧾",
+      "name": "Medicare claims (Blue Button)",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Log in to Medicare.gov yourself and use 'Download claims'. The app takes the file.",
+      "gets": "Every billed visit and service, by date and provider."
+    },
+    {
+      "id": "health",
+      "icon": "❤️",
+      "name": "Health apps and devices",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Export from Apple Health, Health Connect, Samsung Health, Fitbit, or a blood-pressure cuff, pulse oximeter or glucose app.",
+      "gets": "Vitals, sleep and readings with timestamps."
+    },
+    {
+      "id": "location",
+      "icon": "🗺️",
+      "name": "Location history",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Export the phone's Maps Timeline (Settings, Location, Timeline). Life360 and Waze recents with you in the loop.",
+      "gets": "Trips to appointments, with times."
+    },
+    {
+      "id": "usage",
+      "icon": "📊",
+      "name": "App usage and notifications (Android)",
+      "mode": "auto",
+      "status": "planned",
+      "what": "Read-only over the cable: when each app was opened and when notifications arrived.",
+      "gets": "Proof of when a message came in or an app was used."
+    },
+    {
+      "id": "voicemail",
+      "icon": "📼",
+      "name": "Voicemail",
+      "mode": "auto",
+      "status": "planned",
+      "what": "Visual voicemail files over the cable where the phone allows; Google Voice through its export.",
+      "gets": "Messages left, with time and caller."
+    },
+    {
+      "id": "other_msgs",
+      "icon": "💭",
+      "name": "Other messages and video calls",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "WhatsApp per-chat export, Signal's own backup, Messenger and Instagram downloads, Zoom, Meet and Teams logs. iPhone call and FaceTime records come from an encrypted local backup.",
+      "gets": "Messages and calls outside regular texts (who, when, how long)."
+    },
+    {
+      "id": "assistants",
+      "icon": "🔊",
+      "name": "Voice assistants and home cameras",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Request your Alexa or Google Assistant history; save clips from Ring, Wyze, Nest or Blink.",
+      "gets": "Requests and visits, with times."
+    },
+    {
+      "id": "documents",
+      "icon": "📄",
+      "name": "Downloads, scans and signed forms",
+      "mode": "auto",
+      "status": "planned",
+      "what": "The phone's Downloads folder and scanner apps over the cable; DocuSign, Drive, Keep and Notes through their exports.",
+      "gets": "Saved letters, scanned paper and signed forms."
+    },
+    {
+      "id": "logistics",
+      "icon": "🚗",
+      "name": "Rides and supplies",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Ride receipts (Uber, Lyft, medical transport) and online order history for care supplies.",
+      "gets": "Rides that match appointments; supplies bought and when."
+    },
+    {
+      "id": "plans",
+      "icon": "🏛️",
+      "name": "Health plan and Medicaid portals",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Log in yourself; the app saves the claims and authorizations you open.",
+      "gets": "What the plan approved, denied or paid."
+    },
+    {
+      "id": "other",
+      "icon": "➕",
+      "name": "Any other site or app",
+      "mode": "hitl",
+      "status": "planned",
+      "what": "Same as above: you open it, the app saves what you see and when.",
+      "gets": "Hospice, insurance, Medicaid or Medicare sites, and more."
+    }
+  ]
+}

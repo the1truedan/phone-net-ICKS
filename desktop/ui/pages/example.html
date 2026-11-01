@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Example workflow · phone-net-ICKS</title>
+<script src="../theme.js"></script>
+<link rel="stylesheet" href="../app.css" />
+</head>
+<body>
+<div class="example-banner">EXAMPLE DATA · a made-up family, shown so you can see how it works · <a href="../index.html">back to the app</a></div>
+<main>
+  <p class="eyebrow">example · hypothetical</p>
+  <h1>🧪 Example: Sam and Grandma Rose</h1>
+  <p class="sub">Sam is a made-up caregiver. Grandma Rose is made up too. Nothing on this page is a real person, date or record.
+    It shows the order of steps, which tool does each one, and where a person stays in charge.</p>
+
+  <figure class="diagram">
+    <pre class="mermaid">
+flowchart TD
+  A["📱 Sam's phone<br/>voice notes · photos · texts · calls"] -->|USB cable| B["📥 Copy what is new<br/>adb"]
+  B --> C["🔏 Fingerprint every file<br/>SHA-256 + true date (ffprobe)"]
+  H1["🙋 Sam opens each care app or site<br/>payroll · patient portal · pharmacy · secure mail"] -->|app saves what Sam sees| C
+  C --> D["🗂️ Catalog<br/>one row per file, duplicates counted once"]
+  D --> E["🎙️ Speech to text<br/>whisper.cpp on Sam's computer"]
+  E --> F["🧠 Short summaries + search<br/>local model (Ollama)"]
+  F --> G["💬 Sam asks: 'When did the nurse last visit?'<br/>answer cites file + line"]
+  G --> H{"✅ Sam checks the cited file"}
+  H -->|correct| I["✉️ Sam writes the letter<br/>Sam signs and sends"]
+  H -->|wrong or unclear| E
+    </pre>
+  </figure>
+
+  <section class="cards">
+    <article>
+      <h2>What Sam did</h2>
+      <ol>
+        <li>Plugged in the phone and copied only what was new.</li>
+        <li>Opened Grandma Rose's patient portal and pharmacy app himself; the app saved each screen he opened.</li>
+        <li>Let the computer turn voice notes into text overnight.</li>
+        <li>Asked plain questions and opened the cited file before using any date.</li>
+      </ol>
+    </article>
+    <article>
+      <h2>What the app never did</h2>
+      <ul>
+        <li>Type a password, sign, submit or send.</li>
+        <li>Upload anything. Every step ran on Sam's computer.</li>
+        <li>Change or delete an original file.</li>
+      </ul>
+    </article>
+  </section>
+  <footer>© 2026 M.A.N.A.G.E.R. LLC · MIT license · <i>prepare for the care when we cannot be there</i></footer>
+</main>
+<script src="vendor/mermaid.min.js"></script>
+<script>
+  const dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", securityLevel: "strict" });
+</script>
+<script src="../links.js"></script>
+</body>
+</html>

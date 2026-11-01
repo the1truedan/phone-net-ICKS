@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Get my records · phone-net-ICKS</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<main>
+  <p class="eyebrow"><a href="index.html">← home</a> · get my records</p>
+  <h1>📥 Get my records</h1>
+  <p class="sub">Tick what you want to pull, then make your pull list. Skip anything you don't use. Every file the app saves gets a date
+    and a fingerprint, so you can show it was not changed.</p>
+  <p class="legend">
+    <span class="chip auto">⚙️ automatic</span> the app does it over the cable ·
+    <span class="chip addon">🧩 helper app</span> install a free app on the phone first ·
+    <span class="chip hitl">🙋 with you</span> you open it and tap; the app saves what you see. It never signs or submits for you.
+  </p>
+  <p><button class="btn ghost" id="all" type="button">Tick all</button> <button class="btn ghost" id="none" type="button">Clear</button></p>
+  <ol id="steps" class="steps"></ol>
+  <div id="admin"></div>
+  <p><button class="btn" id="plan" type="button">Make my pull list</button></p>
+  <div id="out"></div>
+  <footer>v0.8.0 makes the list and runs the checks. Copying starts with v0.8.1. Sources come from <code>sources.json</code>.</footer>
+</main>
+<script>
+const MODE = { auto: "⚙️ automatic", addon: "🧩 helper app", hitl: "🙋 with you" };
+const KEY = "pull-selection";
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function load() { try { return new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (_) { return new Set(); } }
+function save(s) { try { localStorage.setItem(KEY, JSON.stringify([...s])); } catch (_) {} }
+let steps = [], picked = load();
+
+function stepHtml(s) {
+  return `<li class="step">
+    <label class="step-h"><input type="checkbox" class="pick" value="${esc(s.id)}" ${picked.has(s.id) ? "checked" : ""}>
+      <span class="ico">${esc(s.icon)}</span><b>${esc(s.name)}</b>
+      <span class="chip ${esc(s.mode)}">${MODE[s.mode] || esc(s.mode)}</span>
+      <span class="chip ${s.status === "ready" ? "ready" : "planned"}">${s.status === "ready" ? "ready" : "coming in v0.8.1"}</span></label>
+    <p>${esc(s.what)}</p>
+    <p class="gets">You get: ${esc(s.gets)}</p>
+    ${s.link ? `<a class="btn ghost" href="${esc(s.link)}">${esc(s.link_text || "Open")}</a>` : ""}
+  </li>`;
+}
+function render() {
+  document.getElementById("steps").innerHTML = steps.filter(s => !s.admin).map(stepHtml).join("");
+  const adm = steps.filter(s => s.admin);
+  document.getElementById("admin").innerHTML = adm.length
+    ? `<h2 class="sec">🔧 Admin only (this computer's owner)</h2><ol class="steps">${adm.map(stepHtml).join("")}</ol>` : "";
+  document.querySelectorAll(".pick").forEach(b => b.addEventListener("change", () => {
+    b.checked ? picked.add(b.value) : picked.delete(b.value); save(picked);
+  }));
+}
+function plan() {
+  const chosen = steps.filter(s => picked.has(s.id));
+  const out = document.getElementById("out");
+  if (!chosen.length) { out.innerHTML = '<p class="warn-note">Tick at least one source first.</p>'; return; }
+  const order = { auto: 0, addon: 1, hitl: 2 };
+  chosen.sort((a, b) => (order[a.mode] ?? 9) - (order[b.mode] ?? 9));
+  out.innerHTML = `<h2 class="sec">📋 Your pull list (${chosen.length})</h2>
+    <p class="dim">Cable steps first (no phone needed after), then helper apps, then the ones you open yourself.</p>
+    <ol class="steps">${chosen.map(s => `<li class="step"><b>${esc(s.icon)} ${esc(s.name)}</b>
+      <span class="chip ${esc(s.mode)}">${MODE[s.mode] || ""}</span>
+      <span class="chip ${s.status === "ready" ? "ready" : "planned"}">${s.status === "ready" ? "ready now" : "v0.8.1"}</span>
+      <p>${esc(s.what)}</p>${s.link ? `<a class="btn" href="${esc(s.link)}">${esc(s.link_text || "Open")}</a>` : ""}</li>`).join("")}</ol>`;
+  out.scrollIntoView({ behavior: "smooth" });
+}
+Promise.all([
+  fetch("sources.json").then(r => r.json()),
+  fetch("admin.json").then(r => r.ok ? r.json() : { steps: [] }).catch(() => ({ steps: [] }))
+]).then(([d, a]) => {
+  steps = d.steps.concat((a.steps || []).map(s => ({ ...s, admin: true })));
+  render();
+}).catch(e => { document.getElementById("steps").innerHTML = `<li>Could not load the source list: ${esc(e)}</li>`; });
+document.getElementById("all").addEventListener("click", () => { steps.filter(s => !s.admin).forEach(s => picked.add(s.id)); save(picked); render(); });
+document.getElementById("none").addEventListener("click", () => { picked.clear(); save(picked); render(); });
+document.getElementById("plan").addEventListener("click", plan);
+</script>
+<script src="links.js"></script>
+</body>
+</html>
