@@ -55,6 +55,8 @@ join at one USB-C plug, and points of light rise from it up the corridor into th
  <linearGradient id="cubeUnder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262c36"/><stop offset="1" stop-color="#0a0c10"/></linearGradient>
  <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".55" stop-color="#f0b429"/><stop offset="1" stop-color="#a8741a"/></linearGradient>
  <radialGradient id="warmhalo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff4d6" stop-opacity=".55"/><stop offset="1" stop-color="#fff4d6" stop-opacity="0"/></radialGradient>
+ <linearGradient id="handfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3445"/><stop offset="1" stop-color="#121722"/></linearGradient>
+ <linearGradient id="bezelsheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".28"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient>
  <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
  <g id="chip"><rect x="-26" y="-26" width="52" height="52" rx="5" fill="#121722" stroke="currentColor" stroke-width="3"/>
   <rect x="-15" y="-15" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/>
@@ -142,13 +144,13 @@ fr = [(-e, -e), (e, -e), (e, e), (-e, e)]
 bk = [(x + dx, y + dy) for x, y in fr]
 pt = lambda q: f"{cxc + q[0]:.1f} {cyc + q[1]:.1f}"
 EDGE = "#d9dee6"
-cg = [f'<g transform="rotate(-11 {cxc} {cyc})">']
+cg = [f'<g><animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="6s" repeatCount="indefinite"/><g transform="rotate(-11 {cxc} {cyc})"><g><animateTransform attributeName="transform" type="rotate" values="-8 {cxc} {cyc};8 {cxc} {cyc};-8 {cxc} {cyc}" dur="9s" repeatCount="indefinite"/>']
 cg.append(f'<path d="M{pt(fr[1])} L{pt(bk[1])} L{pt(bk[2])} L{pt(fr[2])} Z" fill="url(#cubeSide)" stroke="{EDGE}" stroke-width=".7" stroke-opacity=".55" stroke-linejoin="round"/>')
 cg.append(f'<path d="M{pt(fr[3])} L{pt(fr[2])} L{pt(bk[2])} L{pt(bk[3])} Z" fill="url(#cubeUnder)" stroke="{EDGE}" stroke-width=".7" stroke-opacity=".45" stroke-linejoin="round"/>')
 cg.append(f'<path d="M{pt(fr[0])} L{pt(fr[1])} L{pt(fr[2])} L{pt(fr[3])} Z" fill="url(#cubeFront)" stroke="{EDGE}" stroke-width=".9" stroke-opacity=".8" stroke-linejoin="round"/>')
 cg.append(f'<path d="M{pt((-e + 1.5, -e + 1.2))} L{pt((e - 1.5, -e + 1.2))}" stroke="#ffffff" stroke-width=".8" opacity=".55"/>')
 cg.append(f'<text x="{cxc}" y="{cyc + e * .5:.1f}" font-family="Georgia, \'Times New Roman\', serif" font-size="{e * 1.55:.0f}" font-style="italic" fill="url(#gold)" text-anchor="middle">μ</text>')
-cg.append('</g>')
+cg.append('</g></g></g>')
 ox0, oy0 = P(ow0, T, FAR); ox1, oy1 = P(ow1, B, FAR)   # the far opening: the cube lives only in this sky
 o.append(f'<clipPath id="opening"><rect x="{ox0:.1f}" y="{oy0 + 3:.1f}" width="{ox1 - ox0:.1f}" height="{oy1 - oy0 - 3:.1f}"/></clipPath>')
 o.append('<g clip-path="url(#opening)">')
@@ -157,7 +159,7 @@ o.extend(cg)
 o.append('</g>')
 
 # particles: from the USB-C up the corridor into the cube
-ux, uy = VX, H - 96   # top of the Mac mini: the light starts here
+ux, uy = VX, H - 112  # top of the Mac mini: the light starts here
 paths = []
 for k in range(7):
     sway = (k - 3) * 55
@@ -185,77 +187,104 @@ for i, p in enumerate(paths):
         r = 0.9 + 3.6 * (1 - t) * random.uniform(.5, 1)
         o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.2f}" fill="{random.choice(cols_p)}" opacity="{.45 + .5 * (1 - t):.2f}"/>')
     for j in range(3):  # moving points (animated in browsers)
-        o.append(f'<circle r="2.6" fill="{cols_p[(i + j) % len(cols_p)]}" opacity="0"><animateMotion dur="{4 + i * .3:.1f}s" begin="{j * 1.4 + i * .2:.1f}s" repeatCount="indefinite"><mpath href="#fp{i}"/></animateMotion>'
-                 f'<animate attributeName="opacity" values="0;1;.8;0" dur="{4 + i * .3:.1f}s" begin="{j * 1.4 + i * .2:.1f}s" repeatCount="indefinite"/></circle>')
+        o.append(f'<circle r="2.6" fill="{cols_p[(i + j) % len(cols_p)]}" opacity="0"><animateMotion dur="{4 + i * .3:.1f}s" begin="{1.2 + j * 1.4 + i * .2:.1f}s" repeatCount="indefinite"><mpath href="#fp{i}"/></animateMotion>'
+                 f'<animate attributeName="opacity" values="0;1;.8;0" dur="{4 + i * .3:.1f}s" begin="{1.2 + j * 1.4 + i * .2:.1f}s" repeatCount="indefinite"/></circle>')
 o.append('</g>')
 
-# two hands hold two phones up in landscape; a Y-split USB-C joins them; the light rises off the plug
-LINE = "#9bdfff"; HANDF = "#1b2232"
+# two hands hold two phones up in landscape; each phone's cable runs to the front ports of a small desktop
+SKIN = "url(#handfill)"; HLINE = "#9bdfff"
 
 
-def hand(cx, cy, side):
-    """Line-art hand under a landscape phone at (cx, cy); side = -1 left hand, +1 right hand. Forearm runs off the bottom."""
-    g = []
-    wx = cx - side * 20
-    g.append(f'<path d="M{wx - 52} {H + 10} C {wx - 50} {H - 40}, {wx - 46} {cy + 120}, {wx - 40} {cy + 82} L {wx + 40} {cy + 82} C {wx + 46} {cy + 120}, {wx + 52} {H - 40}, {wx + 56} {H + 10} Z" fill="{HANDF}" stroke="{LINE}" stroke-width="2.4"/>')
-    g.append(f'<path d="M{wx - 78} {cy + 60} C {wx - 82} {cy + 20}, {wx + 82} {cy + 20}, {wx + 78} {cy + 60} C {wx + 70} {cy + 96}, {wx - 70} {cy + 96}, {wx - 78} {cy + 60} Z" fill="{HANDF}" stroke="{LINE}" stroke-width="2.4"/>')
-    return "".join(g)
+def hand_back(side):
+    """Palm and forearm, in the phone's own coordinates (drawn before the phone). side -1 = left hand."""
+    m = side
+    return (f'<path d="M{-62 * m} 330 C {-66 * m} 240, {-74 * m} 160, {-70 * m} 112 C {-68 * m} 88, {-54 * m} 74, {-30 * m} 72 '
+            f'L {40 * m} 72 C {60 * m} 74, {70 * m} 90, {68 * m} 114 C {66 * m} 160, {60 * m} 240, {56 * m} 330 Z" '
+            f'fill="{SKIN}" stroke="{HLINE}" stroke-opacity=".45" stroke-width="1.4"/>')
 
 
-def fingers(cx, cy, side):
-    """Finger tips curling over the bottom edge, thumb on the front corner (drawn over the phone)."""
-    g = []
-    wx = cx - side * 20
-    for i, dx in enumerate((-48, -18, 12, 42)):
-        g.append(f'<rect x="{wx + dx - 12}" y="{cy + 54}" width="24" height="30" rx="12" fill="{HANDF}" stroke="{LINE}" stroke-width="2"/>')
-    tx = cx - side * 112
-    g.append(f'<g transform="rotate({side * -38} {tx} {cy + 40})"><rect x="{tx - 15}" y="{cy + 2}" width="30" height="66" rx="15" fill="{HANDF}" stroke="{LINE}" stroke-width="2.2"/>'
-             f'<path d="M{tx - 9} {cy + 12} q 9 -7 18 0" fill="none" stroke="{LINE}" stroke-width="1.6" opacity=".7"/></g>')
-    return "".join(g)
+def hand_front(side):
+    """Thumb resting on the lower screen edge, and the index finger tip curling round the bottom (drawn over the phone)."""
+    m = side
+    thumb = (f'<path d="M{-62 * m} 100 C {-70 * m} 78, {-60 * m} 52, {-38 * m} 44 C {-26 * m} 40, {-14 * m} 44, {-15 * m} 55 '
+             f'C {-16 * m} 64, {-28 * m} 70, {-36 * m} 76 C {-42 * m} 82, {-46 * m} 92, {-48 * m} 104 Z" '
+             f'fill="{SKIN}" stroke="{HLINE}" stroke-opacity=".55" stroke-width="1.3"/>')
+    nail = f'<path d="M{-33 * m} 47 C {-26 * m} 44, {-19 * m} 46, {-19 * m} 53 C {-23 * m} 55, {-29 * m} 54, {-33 * m} 51 Z" fill="#9bdfff" opacity=".18"/>'
+    tips = "".join(f'<path d="M{x * m - 9 * m} 78 C {x * m - 9 * m} 70, {x * m + 9 * m} 70, {x * m + 9 * m} 78 L {x * m + 8 * m} 86 L {x * m - 8 * m} 86 Z" '
+                   f'fill="{SKIN}" stroke="{HLINE}" stroke-opacity=".35" stroke-width="1"/>' for x in (6, 26, 46))
+    return thumb + nail + tips
 
 
-def phone_land(cx, cy, rot, frame, emoji):
-    return (f'<g transform="translate({cx} {cy}) rotate({rot})">'
-            f'<rect x="-150" y="-78" width="300" height="156" rx="26" fill="{frame}" stroke="{frame}" stroke-width="3"/>'
+def phone_land(cx, cy, rot, frame, emoji, side):
+    return (f'<g transform="translate({cx} {cy}) rotate({rot})">' + hand_back(side) +
+            f'<rect x="-150" y="-78" width="300" height="156" rx="26" fill="{frame}"/>'
+            f'<rect x="-150" y="-78" width="300" height="156" rx="26" fill="url(#bezelsheen)"/>'
             f'<rect x="-140" y="-68" width="280" height="136" rx="18" fill="#0a0d14"/>'
-            f'<rect x="-140" y="-68" width="280" height="136" rx="18" fill="url(#halo)" opacity=".35"/>'
-            f'<text x="0" y="22" font-size="74" text-anchor="middle" font-family="\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif">{emoji}</text>'
-            f'</g>')
+            f'<rect x="-140" y="-68" width="280" height="136" rx="18" fill="url(#halo)" opacity=".3"/>'
+            f'<text x="0" y="22" font-size="70" text-anchor="middle" font-family="\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif">{emoji}</text>'
+            + hand_front(side) + '</g>')
 
 
-lx, ly, lrot = 250, 520, -9
-rx_, ry_, rrot = 950, 520, 9
-# M4 Mac mini on the floor, back panel toward us (plain silver, no logo)
-MW, MH, MD = 200, 34, 46                     # rear-face width, rear-face height, top depth on screen
-mx, my = VX, H - 70                          # centre of the rear face
-mtop = my - MH / 2                           # top edge of the rear face
-usb1 = (mx - 58, my + 2); usb2 = (mx - 2, my + 2)    # two of the three USB-C ports: red left, green right
-# cable: each phone's USB-C port is on the inner short edge in landscape
-lport = (lx + 150 * math.cos(math.radians(lrot)) + 6, ly + 150 * math.sin(math.radians(lrot)))
-rport = (rx_ - 150 * math.cos(math.radians(rrot)) - 6, ry_ - 150 * math.sin(math.radians(rrot)))
-o.append(hand(lx, ly, -1)); o.append(hand(rx_, ry_, 1))
-o.append(phone_land(lx, ly, lrot, "#d7263d", "🍎"))
-o.append(phone_land(rx_, ry_, rrot, "#2fbf71", "🤖"))
-o.append(fingers(lx, ly, -1)); o.append(fingers(rx_, ry_, 1))
-# the Mac mini: soft shadow, top face in perspective, rear face with its ports
-o.append(f'<ellipse cx="{mx}" cy="{my + MH / 2 + 6}" rx="{MW * .62:.0f}" ry="10" fill="#000" opacity=".45" filter="url(#soft)"/>')
-o.append(f'<circle cx="{ux}" cy="{uy}" r="70" fill="url(#halo)"/>')
-o.append(f'<path d="M{mx - MW / 2 + 6} {mtop} L{mx + MW / 2 - 6} {mtop} Q{mx + MW / 2} {mtop} {mx + MW / 2 - 14} {mtop - 6} L{mx + MW / 2 - 34} {mtop - MD + 6} Q{mx + MW / 2 - 40} {mtop - MD} {mx + MW / 2 - 48} {mtop - MD} L{mx - MW / 2 + 48} {mtop - MD} Q{mx - MW / 2 + 40} {mtop - MD} {mx - MW / 2 + 34} {mtop - MD + 6} L{mx - MW / 2 + 14} {mtop - 6} Q{mx - MW / 2} {mtop} {mx - MW / 2 + 6} {mtop} Z" fill="url(#alu)" stroke="#e7eef8" stroke-width="1"/>')
-o.append(f'<rect x="{mx - MW / 2}" y="{mtop}" width="{MW}" height="{MH}" rx="9" fill="url(#alu2)" stroke="#e7eef8" stroke-width="1"/>')
-o.append(f'<ellipse cx="{ux}" cy="{mtop - MD / 2}" rx="34" ry="8" fill="none" stroke="#6ee7ff" stroke-width="1.6" opacity=".7"/>')
-# rear ports, left to right: 2 USB-C (used), 1 USB-C, HDMI, Ethernet, power
-port = lambda x, w, h, r: f'<rect x="{x - w / 2:.1f}" y="{my - h / 2 + 2:.1f}" width="{w}" height="{h}" rx="{r}" fill="#1a1d22" stroke="#5c6470" stroke-width=".8"/>'
-for x in (usb1[0], mx - 30, usb2[0]):
-    o.append(port(x, 16, 6, 3))
-o.append(f'<path d="M{mx + 18} {my - 2} h22 l-3 7 h-16 z" fill="#1a1d22" stroke="#5c6470" stroke-width=".8"/>')
-o.append(port(mx + 58, 15, 11, 1.5))
-o.append(f'<circle cx="{mx + 84}" cy="{my + 2}" r="5" fill="#1a1d22" stroke="#5c6470" stroke-width=".8"/>')
-# cables come toward us, then turn into the rear ports (drawn in front of the box)
-o.append(f'<path d="M{lport[0]:.0f} {lport[1]:.0f} C {lport[0] + 60:.0f} {lport[1] + 70:.0f}, {usb1[0] - 70} {usb1[1] + 70}, {usb1[0]} {usb1[1] + 12}" fill="none" stroke="#e8414b" stroke-width="7" stroke-linecap="round"/>')
-o.append(f'<path d="M{rport[0]:.0f} {rport[1]:.0f} C {rport[0] - 60:.0f} {rport[1] + 80:.0f}, {usb2[0] + 70} {usb2[1] + 72}, {usb2[0]} {usb2[1] + 12}" fill="none" stroke="#3ddc97" stroke-width="7" stroke-linecap="round"/>')
-# plugs seated in the two used ports
-for (x, y), c in ((usb1, "#e8414b"), (usb2, "#3ddc97")):
-    o.append(f'<rect x="{x - 9}" y="{y - 1}" width="18" height="13" rx="4" fill="#222831" stroke="{c}" stroke-width="2"/>')
+lx, ly, lrot = 250, 500, -9
+rx_, ry_, rrot = 950, 500, 9
+
+
+def edge_port(cx, cy, rot, sign):  # centre of the phone's inner short edge
+    r = math.radians(rot)
+    return (cx + sign * 150 * math.cos(r), cy + sign * 150 * math.sin(r))
+
+
+lport = edge_port(lx, ly, lrot, 1); rport = edge_port(rx_, ry_, rrot, -1)
+
+# the desktop (M4 Mac mini proportions: wide, low, rounded), seen from the front, a little above
+MW, MH, MD = 220, 40, 54
+mx, my = VX, H - 64                      # centre of the front face
+ftop = my - MH / 2
+port1 = (mx - 74, my - 2); port2 = (mx - 52, my - 2)   # the two front USB-C ports
+jack = (mx - 32, my - 2); led = (mx + 88, my - 2)
+
+CRED, CGRN = "#c9404a", "#34b37a"
+cab_l = f"M{lport[0] + 10:.1f} {lport[1]:.1f} C {lport[0] + 90:.1f} {lport[1] + 20:.1f}, {port1[0] - 150:.1f} {my + 70:.1f}, {port1[0]:.1f} {port1[1] + 9:.1f}"
+cab_r = f"M{rport[0] - 10:.1f} {rport[1]:.1f} C {rport[0] - 90:.1f} {rport[1] + 30:.1f}, {port2[0] + 220:.1f} {my + 90:.1f}, {port2[0]:.1f} {port2[1] + 9:.1f}"
+
+o.append(phone_land(lx, ly, lrot, "#d7263d", "🍎", -1))
+o.append(phone_land(rx_, ry_, rrot, "#2fbf71", "🤖", 1))
+
+# soft floor shadow, then the box
+o.append(f'<ellipse cx="{mx}" cy="{my + MH / 2 + 4}" rx="{MW * .6:.0f}" ry="9" fill="#000" opacity=".5" filter="url(#soft)"/>')
+o.append(f'<circle cx="{ux}" cy="{uy + 10}" r="80" fill="url(#halo)" opacity=".75"/>')
+tl, tr_ = mx - MW / 2 + 22, mx + MW / 2 - 22
+o.append(f'<path d="M{mx - MW / 2 + 12} {ftop} L{mx + MW / 2 - 12} {ftop} C{mx + MW / 2} {ftop}, {mx + MW / 2 - 8} {ftop - 10}, {tr_ - 4} {ftop - MD + 10} '
+         f'C{tr_ - 10} {ftop - MD}, {tr_ - 18} {ftop - MD}, {tr_ - 26} {ftop - MD} L{tl + 26} {ftop - MD} C{tl + 18} {ftop - MD}, {tl + 10} {ftop - MD}, {tl + 4} {ftop - MD + 10} '
+         f'C{mx - MW / 2 + 8} {ftop - 10}, {mx - MW / 2} {ftop}, {mx - MW / 2 + 12} {ftop} Z" fill="url(#alu)"/>')
+o.append(f'<rect x="{mx - MW / 2}" y="{ftop}" width="{MW}" height="{MH}" rx="12" fill="url(#alu2)"/>')
+o.append(f'<path d="M{mx - MW / 2 + 12} {ftop + .6} H{mx + MW / 2 - 12}" stroke="#ffffff" stroke-width="1.2" opacity=".7"/>')
+o.append(f'<rect x="{mx - MW / 2 + 16}" y="{my + MH / 2 - 3}" width="{MW - 32}" height="5" rx="2.5" fill="#15181d"/>')   # dark foot ring
+# a faint embossed mark on the top (a mu, not a brand)
+o.append(f'<text x="{mx}" y="{(ftop - MD / 2) + 6:.1f}" font-family="Georgia,serif" font-style="italic" font-size="26" fill="#a9aeb6" opacity=".55" text-anchor="middle" transform="translate(0 {(ftop - MD / 2) * .62:.1f}) scale(1 .38)">μ</text>')
+# front ports, headphone jack, status light
+for (x, y) in (port1, port2):
+    o.append(f'<rect x="{x - 7}" y="{y - 2.5}" width="14" height="5" rx="2.5" fill="#1b1e23" stroke="#6b717b" stroke-width=".6"/>')
+o.append(f'<circle cx="{jack[0]}" cy="{jack[1]}" r="2.6" fill="#1b1e23" stroke="#6b717b" stroke-width=".6"/>')
+o.append(f'<circle cx="{led[0]}" cy="{led[1]}" r="1.8" fill="#e9fff4"/><circle cx="{led[0]}" cy="{led[1]}" r="5" fill="#bfffe0" opacity=".35" filter="url(#soft)"/>')
+
+# cables: a dark core line under a slim coloured jacket, moulded plugs at both ends
+for d, c, pid in ((cab_l, CRED, "cabL"), (cab_r, CGRN, "cabR")):
+    o.append(f'<path d="{d}" fill="none" stroke="#05070b" stroke-width="6.5" stroke-linecap="round" opacity=".8"/>')
+    o.append(f'<path id="{pid}" d="{d}" fill="none" stroke="{c}" stroke-width="4" stroke-linecap="round"/>')
+    o.append(f'<path d="{d}" fill="none" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity=".25" transform="translate(0 -1)"/>')
+for (x, y), c in ((port1, CRED), (port2, CGRN)):
+    o.append(f'<rect x="{x - 8}" y="{y - 5}" width="16" height="13" rx="3.5" fill="#2a2f37" stroke="{c}" stroke-width="1.4"/>')
+for (x, y, rot, c) in ((lport[0] + 6, lport[1], lrot, CRED), (rport[0] - 6, rport[1], rrot, CGRN)):
+    o.append(f'<g transform="translate({x:.1f} {y:.1f}) rotate({rot})"><rect x="-8" y="-6" width="16" height="12" rx="3.5" fill="#2a2f37" stroke="{c}" stroke-width="1.4"/></g>')
+
+# stage 1 animation: pulses run along each cable from the phone into the desktop
+o.append('<g filter="url(#glow)">')
+for pid, c in (("cabL", "#ffd2d6"), ("cabR", "#d2ffe9")):
+    for j in range(4):
+        o.append(f'<circle r="2.6" fill="{c}" opacity="0"><animateMotion dur="2.4s" begin="{j * .6:.1f}s" repeatCount="indefinite"><mpath href="#{pid}"/></animateMotion>'
+                 f'<animate attributeName="opacity" values="0;1;1;0" dur="2.4s" begin="{j * .6:.1f}s" repeatCount="indefinite"/></circle>')
+o.append('</g>')
 
 # wordmark
 o.append('''<g font-family="ui-monospace,'SF Mono',Menlo,monospace" text-anchor="middle">
