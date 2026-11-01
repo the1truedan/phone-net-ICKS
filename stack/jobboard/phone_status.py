@@ -19,6 +19,7 @@ A.add_argument("--root", required=True)
 A.add_argument("--port", type=int, default=8799)
 A.add_argument("--bind", default="127.0.0.1")
 A.add_argument("--title", default="Recon in progress")
+A.add_argument("--next", default="📲 When you're ready: connect the iPad, unlock it, tap <b>Trust</b>.", help="finish-screen next step (HTML)")
 A.add_argument("--redact", action="store_true", help="screenshot mode: generic title, counts rounded")
 ARGS = A.parse_args()
 SAMPLES = []  # (time, attachments saved) for the ETA
@@ -60,6 +61,10 @@ def status():
         for st in steps:
             if st["name"] == "Message attachments":
                 st["done"] = st["total"] = int(md[-1]); st["note"] = "all saved"
+    nf = re.findall(r"new files (\d+)/(\d+)", log)
+    if nf:
+        k, tot = map(int, nf[-1])
+        add("🗂️", "New files", tot if "phase1 done" in log else k, tot, re.search(r"SAFE TO UNPLUG: (\d+) new files", log) and f"{re.search(r'SAFE TO UNPLUG: (\d+) new files', log).group(1)} saved, rest already on the drive" or "")
     m = re.search(r"sdcard \+ system done \(([^,]+), (\d+) files\)", log)
     if m:
         add("📁", "Phone storage", int(m.group(2)), int(m.group(2)), m.group(1))
@@ -89,7 +94,7 @@ def status():
             st["note"] = re.sub(r"\d+(\.\d+)?\s?(M|GB)", "", st["note"]).strip(" ·")
     if ARGS.redact:
         summary = {k: (rnd(v) if isinstance(v, int) else "") for k, v in summary.items()}
-    return {"complete": complete, "summary": summary,
+    return {"next": ARGS.next, "complete": complete, "summary": summary,
             "title": "Saving a loved one's phone" if ARGS.redact else ARGS.title, "steps": steps, "pct": 100.0 if complete else round(100 * done / total, 1), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
 
 
@@ -162,7 +167,7 @@ body.finished .bar,body.finished #pct{display:none}body.finished .done{display:b
 <div class="done" id="done"><h2>WORK COMPLETED</h2>
 <p>Everything on this phone is safe now: the words, the voices, the pictures.<br>Nothing left the house. Take a breath. You did this.</p>
 <div class="stats" id="stats"></div>
-<div class="next">✅ <b>Safe to unplug this phone.</b><br>📲 When you're ready: connect the iPad, unlock it, tap <b>Trust</b>.</div></div>
+<div class="next">✅ <b>Safe to unplug this phone.</b><br><span id="next"></span></div></div>
 <div class="steps" id="steps"></div>
 <div class="foot">please leave plugged in · <span id="upd"></span></div>
 <div class="tap" id="tap">tap for full screen</div>
@@ -176,7 +181,7 @@ function fmt(n){return n.toLocaleString()}
 async function tick(){try{const r=await fetch('status.json',{cache:'no-store'});const j=await r.json();
  document.getElementById('title').textContent=j.complete?j.title.replace('saving','saved'):j.title;document.getElementById('pct').textContent=j.pct+'%';
  document.getElementById('bar').style.width=j.pct+'%';document.getElementById('upd').textContent='updated '+j.updated;
- document.body.classList.toggle('finished',!!j.complete);
+ document.body.classList.toggle('finished',!!j.complete);document.getElementById('next').innerHTML=j.next||'';
  if(j.complete){const ic={"Texts":"💬","Picture messages":"🖼️","Calls":"📞","Contacts":"👥","Calendar":"📅","Message attachments":"📎","Phone storage":"📁","Voicemails":"🎙️","Storage":"💾"};
   const lab={"Message attachments":"attachments","Picture messages":"picture msgs","Phone storage":"files","Storage":"storage"};
   document.getElementById('stats').innerHTML=Object.entries(j.summary).filter(([k,v])=>v!=='').map(([k,v])=>`<div class="stat"><b>${typeof v==='number'?fmt(v):v}</b><span>${ic[k]||''} ${(lab[k]||k).toLowerCase()}</span></div>`).join('');}
