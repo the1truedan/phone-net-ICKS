@@ -34,7 +34,7 @@ ZFAR = 1 / FAR
 o = []
 o.append(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" aria-labelledby="t d">
 <title id="t">GREEK SQUAT · phone-net-ICKS</title>
-<desc id="d">A stone colonnade in one-point perspective, after the Stoa at the UCLA Film and Television Archive. At the far end a
+<desc id="d">A stone colonnade in one-point perspective. At the far end a
 small black cube with the Greek letter mu floats in the sky above the horizon. In the foreground an iPhone and an Android phone
 join at one USB-C plug, and points of light rise from it up the corridor into the cube.</desc>
 <defs>

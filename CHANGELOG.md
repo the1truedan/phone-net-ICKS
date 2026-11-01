@@ -14,10 +14,10 @@
 - **`stack/jobboard/phone_status.py`:** full-screen status page **on the phone being pulled** (site look, animated logo,
   progress rings, ETA, wake lock). Reached over the same cable with `adb reverse`; counts only, no names or text. Only for
   background steps, never while a script drives the phone's screen.
-- **`stack/jobboard/status_merge.py`:** one "status to date" page from every job-board report (freshness LED + headline), batch
-  job and source, plus a private notes file; rebuilt every 10 minutes, no LLM.
 - **Site:** `site/greek-squat.html` one-pager (how it came about, breakthroughs, rounded counts, Mermaid workflow with SVG/.mmd download) and a breakthrough entry on the main page; session `6d0b256a`, IDs only.
-- **Logo:** `docs/img/greek_squat_logo.svg` (iOS + Android silicon, one USB-C, the black cube with session and archive clusters).
+- **Logo:** `docs/img/greek_squat_logo.svg` (animated; `greek_squat_logo_gen.py` redraws it): two hands hold a red 🍎 phone and a green
+  🤖 phone, cabled to a small desktop on the floor of a stone colonnade; light runs along the cables, then rises to a black μ
+  cube in front of the clouds.
 - **Lessons (rack-and-ruin 0882, 0883):** decide device owner from the full account string, never a masked prefix; in a mobile
   browser never swipe down at the page top (pull-to-refresh resets forms) and check the device before answering the operator.
 
