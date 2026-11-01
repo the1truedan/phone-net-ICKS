@@ -19,6 +19,7 @@ A.add_argument("--root", required=True)
 A.add_argument("--port", type=int, default=8799)
 A.add_argument("--bind", default="127.0.0.1")
 A.add_argument("--title", default="Recon in progress")
+A.add_argument("--redact", action="store_true", help="screenshot mode: generic title, counts rounded")
 ARGS = A.parse_args()
 SAMPLES = []  # (time, attachments saved) for the ETA
 
@@ -71,7 +72,12 @@ def status():
     total = sum(s["total"] or 0 for s in steps) or 1
     done = sum(min(s["done"], s["total"] or 0) for s in steps)
     last = log.strip().splitlines()[-1][:19] if log.strip() else ""
-    return {"title": ARGS.title, "steps": steps, "pct": round(100 * done / total, 1), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
+    if ARGS.redact:
+        rnd = lambda n: n if n is None or n < 20 else (round(n, -1) if n < 1000 else round(n, -2))
+        for st in steps:
+            st["done"], st["total"] = rnd(st["done"]), rnd(st["total"])
+            st["note"] = re.sub(r"\d+(\.\d+)?\s?(M|GB)", "", st["note"]).strip(" ·")
+    return {"title": "Saving a loved one's phone" if ARGS.redact else ARGS.title, "steps": steps, "pct": round(100 * done / total, 1), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
 
 
 PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -83,7 +89,7 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif}
 body{display:flex;flex-direction:column;align-items:center;padding:max(18px,env(safe-area-inset-top)) 16px 24px;overflow-x:hidden;
 background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),var(--bg)}
-.logo{width:min(62vw,320px);margin-top:2vh}
+.logo{display:block;flex:none;width:min(62vw,320px);height:auto;aspect-ratio:240/200;margin-top:2vh}
 .word{font-family:var(--mono);font-size:clamp(20px,6vw,34px);letter-spacing:.04em;margin:8px 0 2px;text-align:center}
 .word b{color:var(--accent)} .word i{color:var(--mu);font-style:normal}
 .sub{color:var(--dim);font-size:clamp(14px,3.8vw,18px);text-align:center}
@@ -109,7 +115,7 @@ background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),
 .flow{stroke-dasharray:4 6;animation:flow 1.2s linear infinite}@keyframes flow{to{stroke-dashoffset:-20}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style></head><body>
-<svg class="logo" viewBox="0 0 240 200" aria-label="phone-net-ICKS">
+<svg class="logo" width="240" height="200" viewBox="0 0 240 200" aria-label="phone-net-ICKS">
  <g transform="translate(120 100)">
   <circle class="pulse" r="70" fill="none" stroke="#6ee7ff" stroke-width="1.5"/>
   <circle class="pulse d2" r="70" fill="none" stroke="#8a6fd1" stroke-width="1.5"/>

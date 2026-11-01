@@ -29,3 +29,5 @@ config/redact.txt
 
 # public, redacted job board screenshot (checked for PII/PHI 2026-10-02)
 !docs/img/jobboard.png
+!site/greek_squat_status_top.png
+!site/greek_squat_status_bottom.png
