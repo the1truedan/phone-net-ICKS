@@ -48,6 +48,8 @@ join at one USB-C plug, and points of light rise from it up the corridor into th
  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
  <linearGradient id="stem" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8414b"/><stop offset=".5" stop-color="#9bdfff"/><stop offset="1" stop-color="#3ddc97"/></linearGradient>
  <filter id="cloud" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="6"/></filter>
+ <linearGradient id="alu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9ecf0"/><stop offset="1" stop-color="#b7bcc4"/></linearGradient>
+ <linearGradient id="alu2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9aeb6"/><stop offset="1" stop-color="#7c818a"/></linearGradient>
  <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
  <g id="chip"><rect x="-26" y="-26" width="52" height="52" rx="5" fill="#121722" stroke="currentColor" stroke-width="3"/>
   <rect x="-15" y="-15" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/>
@@ -145,7 +147,7 @@ o.append(f'<circle cx="{cxc}" cy="{cyc}" r="52" fill="url(#halo)" opacity=".8"/>
 o.extend(cg)
 
 # particles: from the USB-C up the corridor into the cube
-ux, uy = VX, H - 92   # top of the Y-split plug: the light starts here
+ux, uy = VX, H - 96   # top of the Mac mini: the light starts here
 paths = []
 for k in range(7):
     sway = (k - 3) * 55
@@ -213,22 +215,37 @@ def phone_land(cx, cy, rot, frame, emoji):
 
 lx, ly, lrot = 250, 520, -9
 rx_, ry_, rrot = 950, 520, 9
-hub = (VX, H - 40)
+# M4 Mac mini on the floor, back panel toward us (plain silver, no logo)
+MW, MH, MD = 200, 34, 46                     # rear-face width, rear-face height, top depth on screen
+mx, my = VX, H - 70                          # centre of the rear face
+mtop = my - MH / 2                           # top edge of the rear face
+usb1 = (mx - 58, my + 2); usb2 = (mx - 2, my + 2)    # two of the three USB-C ports: red left, green right
 # cable: each phone's USB-C port is on the inner short edge in landscape
 lport = (lx + 150 * math.cos(math.radians(lrot)) + 6, ly + 150 * math.sin(math.radians(lrot)))
 rport = (rx_ - 150 * math.cos(math.radians(rrot)) - 6, ry_ - 150 * math.sin(math.radians(rrot)))
 o.append(hand(lx, ly, -1)); o.append(hand(rx_, ry_, 1))
-o.append(f'<path d="M{lport[0]:.0f} {lport[1]:.0f} C {lport[0] + 90:.0f} {lport[1] + 10:.0f}, {hub[0] - 120} {hub[1] + 10}, {hub[0] - 14} {hub[1]}" fill="none" stroke="#e8414b" stroke-width="7" stroke-linecap="round"/>')
-o.append(f'<path d="M{rport[0]:.0f} {rport[1]:.0f} C {rport[0] - 90:.0f} {rport[1] + 10:.0f}, {hub[0] + 120} {hub[1] + 10}, {hub[0] + 14} {hub[1]}" fill="none" stroke="#3ddc97" stroke-width="7" stroke-linecap="round"/>')
 o.append(phone_land(lx, ly, lrot, "#d7263d", "🍎"))
 o.append(phone_land(rx_, ry_, rrot, "#2fbf71", "🤖"))
 o.append(fingers(lx, ly, -1)); o.append(fingers(rx_, ry_, 1))
-# Y-split: the two leads meet in a small hub, one stem rises to the plug
-o.append(f'<path d="M{hub[0]} {hub[1]} V{uy + 30}" stroke="url(#stem)" stroke-width="9" stroke-linecap="round"/>')
-o.append(f'<rect x="{hub[0] - 22}" y="{hub[1] - 12}" width="44" height="24" rx="10" fill="#181e2c" stroke="#9bdfff" stroke-width="2.4"/>')
-o.append(f'<circle cx="{ux}" cy="{uy}" r="54" fill="url(#halo)"/>')
-o.append(f'<rect x="{ux - 15}" y="{uy - 6}" width="30" height="38" rx="12" fill="#181e2c" stroke="#6ee7ff" stroke-width="3"/>')
-o.append(f'<rect x="{ux - 5}" y="{uy - 2}" width="10" height="20" rx="5" fill="#6ee7ff"/>')
+# the Mac mini: soft shadow, top face in perspective, rear face with its ports
+o.append(f'<ellipse cx="{mx}" cy="{my + MH / 2 + 6}" rx="{MW * .62:.0f}" ry="10" fill="#000" opacity=".45" filter="url(#soft)"/>')
+o.append(f'<circle cx="{ux}" cy="{uy}" r="70" fill="url(#halo)"/>')
+o.append(f'<path d="M{mx - MW / 2 + 6} {mtop} L{mx + MW / 2 - 6} {mtop} Q{mx + MW / 2} {mtop} {mx + MW / 2 - 14} {mtop - 6} L{mx + MW / 2 - 34} {mtop - MD + 6} Q{mx + MW / 2 - 40} {mtop - MD} {mx + MW / 2 - 48} {mtop - MD} L{mx - MW / 2 + 48} {mtop - MD} Q{mx - MW / 2 + 40} {mtop - MD} {mx - MW / 2 + 34} {mtop - MD + 6} L{mx - MW / 2 + 14} {mtop - 6} Q{mx - MW / 2} {mtop} {mx - MW / 2 + 6} {mtop} Z" fill="url(#alu)" stroke="#e7eef8" stroke-width="1"/>')
+o.append(f'<rect x="{mx - MW / 2}" y="{mtop}" width="{MW}" height="{MH}" rx="9" fill="url(#alu2)" stroke="#e7eef8" stroke-width="1"/>')
+o.append(f'<ellipse cx="{ux}" cy="{mtop - MD / 2}" rx="34" ry="8" fill="none" stroke="#6ee7ff" stroke-width="1.6" opacity=".7"/>')
+# rear ports, left to right: 2 USB-C (used), 1 USB-C, HDMI, Ethernet, power
+port = lambda x, w, h, r: f'<rect x="{x - w / 2:.1f}" y="{my - h / 2 + 2:.1f}" width="{w}" height="{h}" rx="{r}" fill="#1a1d22" stroke="#5c6470" stroke-width=".8"/>'
+for x in (usb1[0], mx - 30, usb2[0]):
+    o.append(port(x, 16, 6, 3))
+o.append(f'<path d="M{mx + 18} {my - 2} h22 l-3 7 h-16 z" fill="#1a1d22" stroke="#5c6470" stroke-width=".8"/>')
+o.append(port(mx + 58, 15, 11, 1.5))
+o.append(f'<circle cx="{mx + 84}" cy="{my + 2}" r="5" fill="#1a1d22" stroke="#5c6470" stroke-width=".8"/>')
+# cables come toward us, then turn into the rear ports (drawn in front of the box)
+o.append(f'<path d="M{lport[0]:.0f} {lport[1]:.0f} C {lport[0] + 60:.0f} {lport[1] + 70:.0f}, {usb1[0] - 70} {usb1[1] + 70}, {usb1[0]} {usb1[1] + 12}" fill="none" stroke="#e8414b" stroke-width="7" stroke-linecap="round"/>')
+o.append(f'<path d="M{rport[0]:.0f} {rport[1]:.0f} C {rport[0] - 60:.0f} {rport[1] + 80:.0f}, {usb2[0] + 70} {usb2[1] + 72}, {usb2[0]} {usb2[1] + 12}" fill="none" stroke="#3ddc97" stroke-width="7" stroke-linecap="round"/>')
+# plugs seated in the two used ports
+for (x, y), c in ((usb1, "#e8414b"), (usb2, "#3ddc97")):
+    o.append(f'<rect x="{x - 9}" y="{y - 1}" width="18" height="13" rx="4" fill="#222831" stroke="{c}" stroke-width="2"/>')
 
 # wordmark
 o.append('''<g font-family="ui-monospace,'SF Mono',Menlo,monospace" text-anchor="middle">
