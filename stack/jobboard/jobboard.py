@@ -23,6 +23,30 @@ def load_toml(path):
         return tomllib.load(fh)
 
 
+def load_registry(path):
+    """Queue registry, tolerant of a repeated [queue.X] header (2026-10-29: a hand-added note reused a placeholder's name
+    and the strict parse stopped the board from starting). The LATER entry wins; earlier copies are skipped and logged."""
+    try:
+        return load_toml(path).get("queue", {})
+    except tomllib.TOMLDecodeError:
+        lines = open(path, encoding="utf-8", errors="replace").read().split("\n")
+        last, cur = {}, None
+        for i, l in enumerate(lines):
+            m = re.match(r"^\[([^\]]+)\]\s*$", l)
+            if m:
+                cur = m.group(1); last[cur] = i
+        keep, cur_start, skip = [], None, False
+        for i, l in enumerate(lines):
+            m = re.match(r"^\[([^\]]+)\]\s*$", l)
+            if m:
+                skip = last[m.group(1)] != i
+                if skip:
+                    print(f"registry: skipped an earlier duplicate [{m.group(1)}] (line {i + 1}); the later entry is used", flush=True)
+            if not skip:
+                keep.append(l)
+        return tomllib.loads("\n".join(keep)).get("queue", {})
+
+
 class Redactor:
     """Blocks out (█) names and identifiers in everything the board serves, for screenshots and demos.
     Terms come from a local, git-ignored file (one per line; lines starting with 'cs:' are matched case-sensitively),
@@ -98,7 +122,7 @@ class Board:
         if os.path.exists(os.path.join(self.c["log_dir"], ".jobboard_priority.json")):
             self.release_priority("left over from a previous board run")
         if self.c.get("registry_file") and os.path.exists(self.c["registry_file"]):
-            self.registry = load_toml(self.c["registry_file"]).get("queue", {})
+            self.registry = load_registry(self.c["registry_file"])
 
     # ---------- queues ----------
 
@@ -118,7 +142,7 @@ class Board:
         try:
             m = os.path.getmtime(rf)
             if m != getattr(self, "_reg_mtime", None):
-                self.registry, self._reg_mtime = load_toml(rf).get("queue", {}), m
+                self.registry, self._reg_mtime = load_registry(rf), m
         except Exception:
             pass
         return self.registry
@@ -251,6 +275,15 @@ class Board:
         queued = set()
         for lb in lm:
             queued |= set(self.H12.findall(lb))
+        # 2026-11-02: other runners' queues and results count too (e.g. a two-model pass with its own queue CSVs and JSON dir)
+        for qp in self.c.get("external_queue_csvs", []):
+            try:
+                queued |= {r.get("hash12", "") for r in csv.DictReader(open(qp, errors="ignore"))}
+            except OSError:
+                pass
+        ed, suf = self.c.get("external_done_dir", ""), self.c.get("external_done_suffix", ".json")
+        if ed and os.path.isdir(ed):
+            done |= {f[:12] for f in os.listdir(ed) if f.endswith(suf)}
         pulls, unc, uncat = {}, [], []
         prob_h = {x for lb in self.problem_labels() for x in self.H12.findall(lb)}   # 2026-10-23: problem files count as ignored, not uncovered
         for h, (pull, path) in self._cov_audio.items():
@@ -289,17 +322,37 @@ class Board:
         name = next(f"{pre}{tag}{s}" for s in [""] + list("bcdefghij") if f"{pre}{tag}{s}" not in self.queue_files())
         path = os.path.join(qdir, f"AV_QUEUE_{name}.tsv")
         lines = [f"{name.lower()}_{h[:12]}\t{p}\n" for h, p in self._uncovered if os.path.exists(p)]
+        if not lines:   # 2026-10-29: these made the 0/0 queues (every uncovered file was missing on disk)
+            return {"error": f"nothing to queue: all {len(self._uncovered)} uncovered recordings are missing on disk (moved, tiered or on a card that is not mounted)"}
         if self.c["dry_run"]:
             return {"dry_run": True, "would_write": path, "items": len(lines)}
         with open(path, "w") as f:
             f.writelines(lines)
         rf = self.c.get("registry_file")
-        if rf:   # purpose note for the new queue (the registry is local; case wording stays out of this code)
+        if rf and f"[queue.{name}]" not in open(rf, encoding="utf-8", errors="replace").read():   # purpose note, once per name
             with open(rf, "a") as f:
                 f.write(f'\n[queue.{name}]\npurpose = "Recordings in phone pulls that no queue or result covered (coverage panel, {time.strftime('%Y-%m-%d %H:%M')})"\n'
                         f'source = "pull manifests: {len(set(self._cov_audio[h][0] for h, _ in self._uncovered))} pull(s)"\n')
-            self.registry = load_toml(rf).get("queue", {})
+            self.registry = load_registry(rf)
         return {"queue": name, "items": len(lines), "missing_on_disk": len(self._uncovered) - len(lines), "file": path}
+
+    def auto_ingest(self):
+        """2026-11-02 (Dan: "auto pulled into catalog and queued"): when a new or changed pull manifest appears, run
+        auto_ingest_cmd (queues new recordings for the transcription runner) and, with auto_catalog, add uncatalogued files
+        to the catalog. Runs once per manifest change; never in dry_run."""
+        if self.c["dry_run"] or getattr(self, "_auto_sig", None) == getattr(self, "_cov_sig", None):
+            return
+        first = getattr(self, "_auto_sig", None) is None
+        self._auto_sig = self._cov_sig
+        if first and not self.c.get("auto_ingest_on_start", False):
+            return   # board just started: only act on manifests that change from now on
+        cmd = self.c.get("auto_ingest_cmd")
+        if cmd:
+            log = open(self.c.get("auto_ingest_log", "/dev/null"), "a")
+            subprocess.Popen(cmd if isinstance(cmd, list) else shlex.split(os.path.expanduser(cmd)), stdout=log, stderr=log,
+                             start_new_session=True)
+        if self.c.get("auto_catalog") and self._uncatalogued:
+            self.catalog_append()
 
     def catalog_append(self):
         """Append one row per uncatalogued audio file to catalog_csv (backup first). Only sha256/hash12/source/date fields are
@@ -388,7 +441,7 @@ class Board:
                 continue
             if True:
                 # macOS hides other processes' environment, so read the queue file the runner holds open
-                held = [x[1:] for x in sh(["lsof", "-Fn", "-p", pid]).splitlines() if x.startswith("n" + qdir) and x.endswith(".tsv")]
+                held = [x[1:] for x in sh(["/usr/sbin/lsof", "-Fn", "-p", pid]).splitlines() if x.startswith("n" + qdir) and x.endswith(".tsv")]
                 rows.append({"pid": int(pid), "elapsed": et, "script": os.path.basename(cmd.split()[-1]),
                              "queue": self.qname(held[0]) if held else "", "paused": stat.startswith("T"),
                              "from_end": bool(held) and os.path.dirname(held[0]) == self.rev_dir()})
@@ -454,6 +507,110 @@ class Board:
             models = []
         return {"procs": out, "models": models}
 
+    # 2026-10-23 (Dan): "I thought the GPU host was free when it was running the big-book queues." The board only asked the Mac's
+    # own Ollama what was loaded, and LLM jobs started from the Mac showed the Mac badge although Ollama ran on the GPU host.
+    # ollama_now() asks every Ollama host what is loaded, how busy its GPU is, and which processes have a request open,
+    # and names each client from [ollama_now].labels or [recon_jobs].jobs in the (git-ignored) config. Read-only.
+    OLLAMA_PORTS = (11434, 11435)
+
+    def _client_label(self, args):
+        for pat, lab in self.c.get("ollama_now", {}).get("labels", []):
+            if re.search(pat, args): return lab
+        for key, lab in self.c.get("recon_jobs", {}).get("jobs", []):
+            if key in args: return lab
+        m = re.search(r"([\w.-]+\.(?:py|sh))\b", args)
+        return m.group(1) if m else args.split()[0].rsplit("/", 1)[-1][:40]
+
+    def _remote_ip(self):
+        if not hasattr(self, "_rip"):
+            hn = re.search(r"^hostname (\S+)", sh(["ssh", "-G", self.c["remote_host"]]) or "", re.M)
+            self._rip = hn.group(1) if hn else ""
+        return self._rip
+
+    def _models(self, js):
+        try: ps = json.loads(js or "{}").get("models", [])
+        except ValueError: return None
+        return [{"name": m.get("name"), "vram_gb": round(m.get("size_vram", 0) / 2**30, 1), "ctx": m.get("context_length")} for m in ps]
+
+    @staticmethod
+    def _state(models, gpu, runner_cpu, n_open):
+        if models is None: return "unreachable"
+        if not models: return "busy (loading)" if n_open else "idle"
+        if (gpu or 0) >= 50 or (n_open and ((gpu or 0) >= 10 or (runner_cpu or 0) >= 30)): return "generating"
+        return "loaded, idle"
+
+    def mac_ollama_clients(self):
+        """{pid: host_key} for Mac processes with an open TCP connection to an Ollama port (local or on the GPU host)."""
+        rip, out = self._remote_ip(), {}
+        for l in (sh(["/usr/sbin/lsof", "-nP", "-iTCP", "-sTCP:ESTABLISHED", "-Fpn"], timeout=8) or "").splitlines():
+            if l.startswith("p"): pid = int(l[1:])
+            elif l.startswith("n") and "->" in l:
+                peer = l.split("->", 1)[1]; host, _, port = peer.rpartition(":")
+                if port.isdigit() and int(port) in self.OLLAMA_PORTS:
+                    out[pid] = "mac" if host in ("127.0.0.1", "[::1]", "localhost") else ("linux" if host == rip else host)
+        return out
+
+    def ollama_now(self):
+        t, cached = getattr(self, "_oll", (0, None))
+        if cached and time.time() - t < 10: return cached
+        hosts = []
+        # this Mac
+        procs = {}
+        for l in (sh(["ps", "-Ao", "pid=,pcpu=,etime=,args="], timeout=8) or "").splitlines():
+            f = l.split(None, 3)
+            if len(f) == 4 and f[0].isdigit(): procs[int(f[0])] = (float(f[1] or 0), f[2], f[3])
+        runner = sum(c for c, _, a in procs.values() if re.search(r"ollama (runner|serve)|ollama_llama_server", a))
+        io = sh(["/usr/sbin/ioreg", "-r", "-d", "1", "-c", "IOAccelerator"], timeout=8)
+        gm = re.search(r'"Device Utilization %"=(\d+)', io or ""); mgpu = int(gm.group(1)) if gm else None
+        mm = self._models(sh(["curl", "-s", "-m", "2", "127.0.0.1:11434/api/ps"], timeout=4))
+        cl = self.mac_ollama_clients()
+        def etime_s(et):
+            e = [int(x) for x in et.replace("-", ":").split(":") if x.isdigit()]; e = [0] * (4 - len(e)) + e
+            return e[0] * 86400 + e[1] * 3600 + e[2] * 60 + e[3]
+        mac_clients = [{"from": "mac", "to": h, "label": self._client_label(procs[p][2]), "elapsed_s": etime_s(procs[p][1])}
+                       for p, h in cl.items() if p in procs and not re.search(r"ollama (serve|runner)|gptoss_shim", procs[p][2])]
+        hosts.append({"host": "mac", "models": mm, "gpu": mgpu, "runner_cpu": round(runner, 1),
+                      "clients": [c for c in mac_clients if c["to"] == "mac"]})
+        # the GPU host (one ssh: loaded models, GPU, open requests and the client processes)
+        cmd = ("curl -s -m 2 127.0.0.1:11434/api/ps; echo; echo ===; "
+               "nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null; echo ===; "
+               "ps -eo pcpu=,args= | grep -E '[o]llama (runner|serve)|[o]llama_llama_server' | awk '{s+=$1} END {print s+0}'; echo ===; "
+               "ss -Htn state established '( sport = :11434 or sport = :11435 )' | awk '{print $4, $3}'; echo ===; "
+               "for p in $(ss -Htnp state established '( dport = :11434 or dport = :11435 )' | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u); do "
+               "echo \"$(ps -o etimes= -p $p | tr -d ' ')|$(ps -o args= -p $p | cut -c1-200)\"; done")
+        r = (sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", self.c["remote_host"], cmd], timeout=20) or "").split("===")
+        if len(r) >= 5:
+            lm_ = self._models(r[0].strip())
+            g = [x.strip() for x in r[1].strip().split(",")]
+            lg = int(g[0]) if len(g) == 3 and g[0].isdigit() else None
+            try: lrun = float(r[2].strip() or 0)
+            except ValueError: lrun = None
+            rip = self._remote_ip()
+            peers = [l.split() for l in r[3].strip().splitlines() if l.strip()]
+            from_mac = sum(1 for pr in peers if len(pr) == 2 and not pr[0].startswith(("127.", "172.", "[::1]")) and pr[0].rsplit(":", 1)[0] != rip)
+            lcl = []
+            for l in r[4].strip().splitlines():
+                if "|" in l:
+                    el, a = l.split("|", 1)
+                    if re.search(r"gptoss_shim|ollama (serve|runner)", a): continue   # the shim relays to Ollama; name the real caller
+                    lcl.append({"from": "linux", "to": "linux", "label": self._client_label(a), "elapsed_s": int(el) if el.isdigit() else None})
+            lcl += [c for c in mac_clients if c["to"] == "linux"]
+            hosts.append({"host": "linux", "models": lm_, "gpu": lg, "gpu_mem": f"{g[1]} / {g[2]} MiB" if len(g) == 3 else None,
+                          "runner_cpu": lrun, "open": len(peers), "from_mac": from_mac, "clients": lcl})
+        else:
+            hosts.append({"host": "linux", "models": None, "clients": [c for c in mac_clients if c["to"] == "linux"]})
+        # optional extra Ollama hosts, e.g. [ollama_now] extra = [["unraid", "http://<ip>:11435"]]
+        for key, url in self.c.get("ollama_now", {}).get("extra", []):
+            hosts.append({"host": key, "models": self._models(sh(["curl", "-s", "-m", "2", url.rstrip("/") + "/api/ps"], timeout=4)),
+                          "clients": [c for c in mac_clients if c["to"] not in ("mac", "linux")]})
+        for h in hosts:
+            h.setdefault("open", len(h.get("clients", [])))
+            h["state"] = self._state(h.get("models"), h.get("gpu"), h.get("runner_cpu"), h.get("open") or len(h.get("clients", [])))
+        order = {"generating": 0, "busy (loading)": 1, "loaded, idle": 2, "idle": 3, "unreachable": 4}
+        hosts.sort(key=lambda h: order.get(h["state"], 5))
+        out = {"time": time.strftime("%H:%M:%S"), "hosts": hosts}
+        self._oll = (time.time(), out); return out
+
     def hosts(self):
         """Host badges: [icon, "name · role"]. Names come from host_labels in the config (defaults are generic)."""
         h = {"mac": ["🍎", "Mac · this computer"], "linux": ["🐧", "GPU host · Linux"], "unraid": ["🗄", "Server · Unraid"], "win": ["🪟", "PC · Windows"]}
@@ -500,7 +657,7 @@ class Board:
             el = int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log)))
             n = len(lines)
             stage = f"batch: {n} of {total} pieces" if total else "running"
-            pids = sh(["lsof", "-t", log]).split()
+            pids = sh(["/usr/sbin/lsof", "-t", log]).split()
             if not total:   # 2026-10-12: open-ended jobs (copies) — check the processes holding the log
                 stats = sh(["ps", "-o", "stat=", "-p", ",".join(pids)]).split() if pids else []
                 idle = int(time.time() - os.path.getmtime(log))
@@ -777,6 +934,8 @@ class Board:
                     q = re.search(r"AV_QUEUE_(\w+)\.tsv|(\w+_1015\w*)", a)
                     x = {"host": "mac", "job": label, "cpu": c_, "res": "GPU" if "Apple GPU" in label else "CPU", "elapsed_s": etim.get(a),
                          "detail": (q.group(0) if q else "")[:40], "pct": None, "gain": GAIN.get(key, "")}
+                    if re.match(r"(\S*/)?ssh\b", a) and self.c["remote_host"] in a.split()[:8]:
+                        x["host"], x["res"] = "linux", "GPU"   # 2026-10-23: started from the Mac over ssh, but runs on the GPU host
                     qn = re.search(r"AV_QUEUE_(\w+)\.tsv", a); qname = qn.group(1) if qn else (rj.get("default_queue", "") if "_deep_run" in a else "")
                     if "deep_run" in key and qname:
                         d_, t_, eta_, rtf_ = deep_progress(qname.upper())
@@ -829,14 +988,19 @@ class Board:
                 try: json.dump(hist, open(HP, "w"))
                 except Exception: pass
         M_, L_ = out["mac"], out["linux"]
+        llm_cl = self.mac_ollama_clients()   # 2026-10-23: which Mac job trees have a request open to which Ollama host
         for x in ext:
             if x["host"] == "mac":
                 a_ = next((a for _, _, a in rows if x["job"] and any(k in a for k, lb in JOBS if lb == x["job"]) and "grep" not in a and not a.startswith("bash -c")), None)
                 u = usage(a_) if a_ else {}
                 x.update(u); x["gpu"] = M_.get("gpu_util") if "GPU" in x["res"] else None
+                to = {llm_cl[p] for p in (tree(pid_of[a_]) if a_ in pid_of else []) if p in llm_cl}
+                if to - {"mac"}:
+                    x["llm_host"] = sorted(to - {"mac"})[0]; x["res"] = "GPU (remote LLM)"; x["gpu"] = L_.get("gpu_util")
                 host_cpu, host_mem = M_.get("cpu_pct"), M_.get("mem_free_pct")
             else:
                 x.update(rx_mbs=L_.get("rx_mbs"), tx_mbs=L_.get("tx_mbs"), net_scope="host"); x["cpu"] = x.get("cpu")
+                if x.get("gpu") is None: x["gpu"] = L_.get("gpu_util")
                 host_cpu, host_mem = L_.get("cpu_pct"), L_.get("mem_free_pct")
             x["host_cpu"], x["host_mem_free"] = host_cpu, host_mem
             x["limit"] = self.limit_of(x)
@@ -1013,6 +1177,10 @@ class Board:
         chain_up = any(re.search(self.c.get("chain_match", r"^$"), r["script"]) for r in runners)
         chained = set(self.c.get("chained_queues", [])) if chain_up else set()
         qs = self.queues(res)
+        if self.c.get("hide_empty_queues", True):   # 2026-10-29 (Dan): 0/0 queues are clutter; hide unless something runs on them
+            run_q = {r.get("queue") for r in self.runners()} if hasattr(self, "runners") and callable(getattr(self, "runners")) else set()
+            self.hidden_empty = [q["queue"] for q in qs if not q.get("total") and q["queue"] not in run_q]
+            qs = [q for q in qs if q.get("total") or q["queue"] in run_q]
         busy = {r["queue"] for r in runners if r["queue"]}
         for q in qs:
             q["in_chain"] = q["queue"] in chained
@@ -1059,11 +1227,17 @@ class Board:
             r["limit"] = self.limit_of(dict(r, gpu=r["gpu"] if any(c.get("queue") == r["queue"] and c.get("stage", 0) >= 2 for c in cur) else None))
         recent = [{"label": lb, "queue": self.queue_of(lb, lm, by_hash), "finished": time.strftime("%m-%d %H:%M", time.localtime(t))}
                   for lb, t in sorted(res.items(), key=lambda x: -x[1])[: self.c.get("recent_n", 15)]]
+        cov = self.coverage(res, lm)
+        if cov:
+            try:
+                self.auto_ingest()
+            except Exception as e:   # never let an ingest problem take the board down
+                print("auto_ingest:", e, file=sys.stderr)
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
                 "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
-                "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "runners": runners,
+                "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "hidden_empty_queues": getattr(self, "hidden_empty", []), "runners": runners,
                 "recent": recent, "mac_jobs": mac_jobs, "logs": self.logs(), "priority": self.priority,
-                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "report_fresh": [self.freshness(k) for k in range(len(self.c.get("reports", [])))], "coverage": self.coverage(res, lm), "flag_label": self.c.get("flag_label", "flagged")}
+                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "report_fresh": [self.freshness(k) for k in range(len(self.c.get("reports", [])))], "coverage": cov, "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
     def _run(self, argv, detach=False):
@@ -1309,7 +1483,7 @@ button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;
 .stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
 </style></head><body>
 <h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
-<div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other recon jobs running (detected from processes)</div><table id="ext"></table></section><section id="comp"></section>
+<section id="oll" style="border-width:2px"><b>Ollama now</b> <span class="muted small">loading…</span></section><div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other recon jobs running (detected from processes)</div><table id="ext"></table></section><section id="comp"></section>
 <section><b>Queues</b> <span class="muted small">(to do first, then finished with the latest on top · click a row for purpose and expected gain)</span><table id="q"></table></section>
 <section id="cov"></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
@@ -1395,7 +1569,18 @@ ${(c.actions||[]).length?`<div style="margin:.4em 0">${c.actions.map(a=>`<span c
 function procAct(id,mode,label){if(!confirm((mode==="kill"?"KILL (forced; unsaved work is lost): ":"Close: ")+label+"?"))return;post("/api/proc",{id,mode}).then(comp);}
 async function ext(){try{const c=await (await fetch("/api/compute")).json();
 document.getElementById("ext").innerHTML=(c.recon_jobs||[]).map(j=>{const use=useBars(j,((c.mac||{}).cpus||10));
-return `<tr><td>${j.gain?`<details><summary>${esc(j.job)}</summary><div class="small muted" style="max-width:420px">🎯 ${esc(j.gain)}</div></details>`:esc(j.job)}</td><td>${hb(j.host)}</td><td class="small">${esc(j.detail)}${j.elapsed_s?` · ${secs(j.elapsed_s)}`:""}</td><td>${j.pct!=null?ubar(j.pct)+` <b>${j.pct}%</b>`:'<span class="small muted">running</span>'}${j.left_s!=null?`<div class="small muted" title="${esc(j.eta_basis||"")}">~${secs(j.left_s)} left${j.eta_basis?` · ${esc(j.eta_basis)}`:""}</div>`:""}</td><td>${use}</td></tr>`}).join("")||`<tr><td class="muted small">none</td></tr>`;}catch(e){}}
+return `<tr><td>${j.gain?`<details><summary>${esc(j.job)}</summary><div class="small muted" style="max-width:420px">🎯 ${esc(j.gain)}</div></details>`:esc(j.job)}</td><td style="white-space:nowrap">${hb(j.host)}${j.llm_host?` → ${hb(j.llm_host)} <span class="small muted">LLM</span>`:""}</td><td class="small">${esc(j.detail)}${j.elapsed_s?` · ${secs(j.elapsed_s)}`:""}</td><td>${j.pct!=null?ubar(j.pct)+` <b>${j.pct}%</b>`:'<span class="small muted">running</span>'}${j.left_s!=null?`<div class="small muted" title="${esc(j.eta_basis||"")}">~${secs(j.left_s)} left${j.eta_basis?` · ${esc(j.eta_basis)}`:""}</div>`:""}</td><td>${use}</td></tr>`}).join("")||`<tr><td class="muted small">none</td></tr>`;}catch(e){}}
+// 2026-10-23 (Dan): Ollama on every host, at the top: what is loaded, whether it is generating, and which job is asking.
+async function oll(){try{const o=await (await fetch("/api/ollama")).json();
+const S={"generating":["🟢","generating","var(--ok,#1fb35a)"],"busy (loading)":["🟡","loading a model","var(--warn)"],"loaded, idle":["🟡","model loaded, idle","var(--warn)"],"idle":["⚪","no model loaded","var(--muted)"],"unreachable":["🔴","not reachable","var(--bad)"]};
+const busy=o.hosts.filter(h=>h.state==="generating"||h.state==="busy (loading)");
+document.getElementById("oll").innerHTML=`<b>Ollama now</b> <span class="muted small">(${esc(o.time)} · every host, busiest first · read-only)</span>
+${busy.length?`<div class="big" style="margin:.3em 0">${busy.map(h=>`${hb(h.host)} <b>busy</b>`).join(" · ")}</div>`:`<div class="muted" style="margin:.3em 0">No Ollama host is generating right now.</div>`}
+<table><tr><th>Host</th><th>State</th><th>Model (VRAM)</th><th>GPU</th><th>Asked by</th></tr>${o.hosts.map(h=>{const s=S[h.state]||["?",h.state,"var(--muted)"];
+const mods=h.models==null?"?":h.models.length?h.models.map(m=>`${esc(m.name)} (${m.vram_gb} GB${m.ctx?`, ctx ${m.ctx}`:""})`).join("<br>"):'<span class="muted">none</span>';
+const cl=(h.clients||[]).map(c=>`${hb(c.from)} ${esc(c.label)}${c.elapsed_s!=null?` <span class="muted small">${secs(c.elapsed_s)}</span>`:""}`).join("<br>")||(h.open?`<span class="muted small">${h.open} open request(s)${h.from_mac?`, ${h.from_mac} from another host`:""}</span>`:'<span class="muted small">no open requests</span>');
+return `<tr><td>${hb(h.host)}</td><td style="white-space:nowrap"><span class="pill" style="border-color:${s[2]};color:${s[2]}">${s[0]} ${s[1]}</span></td><td class="small">${mods}</td><td class="small" style="white-space:nowrap">${h.gpu!=null?`${h.gpu}%`:"?"}${h.gpu_mem?`<div class="muted">${esc(h.gpu_mem)}</div>`:""}${h.runner_cpu?`<div class="muted">runner CPU ${h.runner_cpu}%</div>`:""}</td><td class="small">${cl}</td></tr>`}).join("")}</table>`;}catch(e){}}
+oll();setInterval(oll,10000);
 ext();setInterval(ext,20000);
 comp();setInterval(comp,20000);
 
@@ -1427,6 +1612,8 @@ def make_handler(board):
                 return self._send(200, board.status())
             if self.path == "/api/compute":
                 return self._send(200, board.compute())
+            if self.path == "/api/ollama":
+                return self._send(200, board.ollama_now())
             m = re.fullmatch(r"/report/(\d+)", self.path)
             if m:
                 body, ctype = board.report(int(m.group(1)))
