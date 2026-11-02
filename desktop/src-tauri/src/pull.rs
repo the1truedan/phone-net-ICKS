@@ -86,13 +86,18 @@ fn load() -> Result<Vec<CfgPull>, String> {
 }
 
 /// Progress page on the phone itself: start phone_status.py for this folder, then (once the phone is unlocked)
-/// route its port over the USB cable, keep the screen awake while plugged in, and open the page in Chrome.
+/// route its port over the USB cable, keep the screen awake while plugged in, and open the page in the phone's default browser.
 fn phone_screen(status_page: &Path, folder: &str, title: &str, serial: &str) {
   const SH: &str = r#"pkill -f phone_status.py; sleep 1
 nohup python3 "$1" --root "$2" --title "$3" --next "🎙️ New recordings go to the quick pass next. Nothing else to do." >/dev/null 2>&1 &
 until adb -s "$4" shell dumpsys trust 2>/dev/null | grep -q deviceLocked=0; do sleep 5; done
 adb -s "$4" reverse tcp:8799 tcp:8799; adb -s "$4" shell svc power stayon usb
-adb -s "$4" shell am start -a android.intent.action.VIEW -d http://localhost:8799/ com.android.chrome"#;
+U=http://localhost:8799/
+# Open in the phone's default browser. If none is set (Android would show a chooser), use Brave if installed, then Chrome.
+P=$(adb -s "$4" shell cmd package resolve-activity --brief -a android.intent.action.VIEW -d $U 2>/dev/null | tail -1 | tr -d '\r' | cut -d/ -f1)
+case "$P" in com.*|org.*|net.*) ;; *) PK=$(adb -s "$4" shell pm list packages 2>/dev/null | tr -d '\r')
+  P=; for c in com.brave.browser com.android.chrome; do echo "$PK" | grep -qx "package:$c" && { P=$c; break; }; done;; esac
+adb -s "$4" shell am start -a android.intent.action.VIEW -d $U ${P:+-p $P}"#;
   let _ = Command::new("/bin/bash")
     .args(["-c", SH, "_"])
     .arg(status_page)
