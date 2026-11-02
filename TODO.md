@@ -62,7 +62,7 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
   official pages snapshotted with hashes (C.H.I.P.P.E.R. manifest), an update log per fetch (C.H.A.I.N.S.), git diff when a
   page changes. Johnny Appleseed indexes the kits. Never stores passwords or codes. Stays a how-to: the person signs up.
 - **Way later: port Unlimited-OCR (Baidu, 3.3B, MIT) off CUDA.** As shipped it needs NVIDIA (`.cuda()`, bf16, sglang
-  wheel): fits MRGPU 16 GB, not the Tower P2000 (5 GB, Pascal has no bf16). Port targets: Mac (MPS, fp16) and Xeon (CPU,
+  wheel): fits a 16 GB GPU, not a 5 GB Pascal card (no bf16). Port targets: Mac (MPS, fp16) and Xeon (CPU,
   int8). glm-ocr already runs on the P2000 and the Mac in the meantime. Community ports exist to try first:
   `FluidInference/unlimited-ocr-mlx-coreml` (Mac) and `sahilchachra/Unlimited-OCR-GGUF` / `AtomicChat/Unlimited-OCR-2-GGUF` (llama.cpp).
 - **OCR bake-off candidates (Nov 2026, self-reported scores):** PaddleOCR-VL-1.6 and MinerU2.5-Pro (OmniDocBench top),
@@ -78,11 +78,11 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
   and signup kit · `assurance` (Section 508 / WCAG 2.1 AA / PDF/UA deep pass, fail-closed approver) after veraPDF ·
   `document_accessibility_gate` (checksum + accessibility score before anything is filed) · `aida_pdf_bridge`
   (ocrmypdf queue) · `manager/ingestion/caption_rag` (local VLM captions = alt text for figures in the tagged PDF) ·
-  V.O.X. + Kokoro TTS on MRGPU (read any scan aloud: an audio copy for low vision) · `video_scan` for video evidence.
+  V.O.X. + Kokoro TTS on the GPU box (read any scan aloud: an audio copy for low vision) · `video_scan` for video evidence.
 - **Email formatting check (P.A.P.E. for inboxes):** same audit for HTML email bodies: images without alt, layout tables,
   fixed widths (no reflow on phones), tiny footers, "click here" links, content only inside a PDF attachment.
 - **Speech side (not OCR):** NVIDIA Nemotron-3.5-Transcribe-30B-A4B as a second-opinion transcriber next to WhisperX
-  (two-model agreement). Full model too big for MRGPU 16 GB / Mac 24 GB; try the small variants
+  (two-model agreement). Full model too big for a 16 GB GPU / 24 GB Mac; try the small variants
   (`akhaliq/nemotron-3.5-transcribe-mini-64e`, `FluidInference/nemotron-3.5-transcribe-lite-coreml`) or a 4-bit GGUF with MoE
   experts on the CPU. Cloud providers exist but care recordings stay local.
 - **Windows edition (later): old laptop, WSL Ubuntu, one-click install.** Draft, untested: `grokcode/scripts/windows/
@@ -115,7 +115,7 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
 ## Earmark (Dan, 2026-11-01): auto-queue after a phone pull from the Mac app
 - When the desktop app (or the pull scripts) finishes a phone pull: hash-check, then **auto-add every new recording to the
   catalog and to the transcription queue**, and every new photo/video/receipt to its queue, without a manual "queue uncovered" step.
-- Coverage view: per source (Stylus, Play, Mom's phone, Blink, receipts), show what is pulled, catalogued, transcribed (one model /
+- Coverage view: per source (each phone, a loved one's phone, home cameras, receipts), show what is pulled, catalogued, transcribed (one model /
   two models), embedded, and reviewed, with one button per gap. Reuse the job board's coverage logic (note: 'not fine-combed' is
   not 'unprocessed'; Stylus `.pending-<ts>-RecordNNN.wav` files and subfolder SHA256SUMS paths must be counted correctly).
 - Two-model transcription and P2000 embedding runners already exist in grokcode (`deep_all_transcribe.py`, `deep_all_embed.py`):
