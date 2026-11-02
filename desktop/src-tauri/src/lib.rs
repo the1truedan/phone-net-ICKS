@@ -82,6 +82,8 @@ pub fn run() {
   tauri::Builder::default()
     .runtime(tauri_runtime_wry::Wry::default())
     .setup(|app| {
+      // plug-in auto-pull (only does anything when ~/phone-net-ICKS/pulls.json lists the phone)
+      std::thread::spawn(pull::watch);
       if cfg!(debug_assertions) {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()
