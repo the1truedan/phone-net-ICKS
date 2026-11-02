@@ -111,3 +111,12 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
      field checks (dates, amounts, phone numbers). Grade C/F pages are flagged for a person to check.
   4. Sorting: the type (receipt, letter, invoice, order, handwritten note) and its dates go into the catalog, so paper sits on the
      same timeline as recordings and email. Private pages follow the same rules as recordings: local only, counts only in public.
+
+## Earmark (Dan, 2026-11-01): auto-queue after a phone pull from the Mac app
+- When the desktop app (or the pull scripts) finishes a phone pull: hash-check, then **auto-add every new recording to the
+  catalog and to the transcription queue**, and every new photo/video/receipt to its queue, without a manual "queue uncovered" step.
+- Coverage view: per source (Stylus, Play, Mom's phone, Blink, receipts), show what is pulled, catalogued, transcribed (one model /
+  two models), embedded, and reviewed, with one button per gap. Reuse the job board's coverage logic (note: 'not fine-combed' is
+  not 'unprocessed'; Stylus `.pending-<ts>-RecordNNN.wav` files and subfolder SHA256SUMS paths must be counted correctly).
+- Two-model transcription and P2000 embedding runners already exist in grokcode (`deep_all_transcribe.py`, `deep_all_embed.py`):
+  the app should append to their queue instead of starting new jobs.
