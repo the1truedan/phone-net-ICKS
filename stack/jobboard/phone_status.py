@@ -5,7 +5,7 @@ Shows counts only (no names, no message text), so it is safe on a screen anyone 
 
     python3 stack/jobboard/phone_status.py --root /path/to/recon_dir [--port 8799]
     adb reverse tcp:8799 tcp:8799          # the phone reaches the Mac over the USB cable
-    adb shell am start -a android.intent.action.VIEW -d http://localhost:8799 com.android.chrome
+    adb shell am start -a android.intent.action.VIEW -d http://localhost:8799   (the app picks the default browser, else Brave, else Chrome)
     adb shell svc power stayon usb         # screen stays on while plugged in (undo: svc power stayon false)
 
 Reads from --root: PULL_LOG.txt ("content://X rows=N", "phase... done", "sdcard + system done"),
