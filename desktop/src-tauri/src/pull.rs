@@ -15,6 +15,8 @@ struct Cfg {
   pulls: Vec<CfgPull>,
   /// Optional: path to phone_status.py; when set, Pull also puts a progress page on the phone's own screen.
   status_page: Option<String>,
+  /// Start a pull by itself when a listed phone is plugged in (default on). "auto_pull": false turns it off.
+  auto_pull: Option<bool>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -38,6 +40,9 @@ pub struct PullJob {
   pub last_folder: Option<String>,
   pub since: Option<String>,
   pub running_folder: Option<String>,
+  /// Hours since the last finished pull (for the amber/red reminder).
+  pub age_hours: Option<f64>,
+  pub auto_pull: bool,
 }
 
 #[derive(Serialize)]
@@ -162,7 +167,46 @@ fn running(folder: &Path) -> bool {
   fs::read_to_string(folder.join("PULL_LOG.txt")).map(|t| !t.contains("phase1 done")).unwrap_or(false)
 }
 
+/// Hours since the folder's custody log was last written (= when that pull finished).
+fn age_hours(folder: &Path) -> Option<f64> {
+  let t = fs::metadata(folder.join("custody_log.txt")).ok()?.modified().ok()?;
+  Some(std::time::SystemTime::now().duration_since(t).ok()?.as_secs_f64() / 3600.0)
+}
+
+pub fn auto_on() -> bool {
+  load_cfg().map(|c| c.auto_pull.unwrap_or(true)).unwrap_or(false)
+}
+
+/// Background watcher: when a listed phone shows up (plugged in, USB debugging allowed), start its pull,
+/// unless one is running or the last pull finished under 30 minutes ago. Each plug-in starts at most one pull.
+pub fn watch() {
+  let mut seen: std::collections::HashSet<String> = Default::default();
+  loop {
+    if auto_on() {
+      if let Ok(list) = load() {
+        for c in list {
+          let now = connected(&c.serial);
+          if now && !seen.contains(&c.serial) {
+            seen.insert(c.serial.clone());
+            let fs_ = folders(&c.dest_prefix);
+            let busy = fs_.last().map(|f| running(f)).unwrap_or(false);
+            let recent = fs_.iter().rev().find(|f| f.join("custody_log.txt").exists())
+              .and_then(|f| age_hours(f)).map(|h| h < 0.5).unwrap_or(false);
+            if !busy && !recent {
+              let _ = start(&c.id);
+            }
+          } else if !now {
+            seen.remove(&c.serial);
+          }
+        }
+      }
+    }
+    std::thread::sleep(std::time::Duration::from_secs(10));
+  }
+}
+
 pub fn jobs() -> Result<Vec<PullJob>, String> {
+  let auto = auto_on();
   Ok(load()?
     .into_iter()
     .map(|c| {
@@ -175,8 +219,10 @@ pub fn jobs() -> Result<Vec<PullJob>, String> {
         connected: connected(&c.serial),
         model: if connected(&c.serial) { model(&c.serial) } else { None },
         since: last.as_deref().and_then(since_of),
+        age_hours: last.as_deref().and_then(age_hours),
         last_folder: last.map(|p| p.display().to_string()),
         running_folder: run.map(|p| p.display().to_string()),
+        auto_pull: auto,
         id: c.id,
         name: c.name,
       }

@@ -41,7 +41,7 @@
   </div>
   <div id="out"></div>
   <h2 class="sec" style="margin-top:2rem">🔁 Pull new files (your workflows)</h2>
-  <p class="sub">Runs your own pull scripts, continuing from the last pull. Hashes and custody logs are written by the script, as before.</p>
+  <p class="sub">Plug in a listed phone and unlock it: the pull starts by itself and new recordings go to the job board queue. The button below is there if you want to start one by hand. Hashes and custody logs are written by the script, as before.</p>
   <div id="pulls"><p class="sub">Loading…</p></div>
   <footer>Read-only. Nothing on the phone is changed.</footer>
 </main>
@@ -120,6 +120,10 @@ findPhones(true);
   const T = window.__TAURI__, el = document.getElementById("pulls"); if (!T || !T.core) return;
   const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const watch = {};
+  const age = j => { const h = j.age_hours; if (h == null) return `<span class="sub">Last pull: none yet</span>`;
+    const d = Math.floor(h / 24), txt = h < 1 ? "under an hour ago" : d < 1 ? Math.round(h) + " h ago" : d + (d == 1 ? " day ago" : " days ago");
+    const col = d >= 3 ? "#e5484d" : d >= 1 ? "#f5a524" : "#3ddc97";
+    return `<span style="color:${col};font-weight:600">Last pull: ${e(j.since || "")} (${txt})</span>${!j.connected && d >= 1 ? ` <span class="sub">· plug in to pull</span>` : ""}`; };
   async function draw() {
     let jobs; try { jobs = await T.core.invoke("pull_jobs"); } catch (err) { el.innerHTML = `<p class="warn-note">${e(err)}</p>`; return; }
     const phones = await T.core.invoke("list_phones").catch(() => []);
@@ -127,7 +131,7 @@ findPhones(true);
     const extra = phones.filter(d => !known.has(d.serial_tail));
     el.innerHTML = jobs.map(j => `<div class="cat" style="border:1px solid var(--line);border-radius:12px;padding:.8rem 1rem;margin:.6rem 0;${j.connected ? "border-color:#3ddc97" : "opacity:.75"}">
       <b>${j.model ? "📱 " + e(j.model) : e(j.name)}</b> <span class="n">…${e(j.serial_tail)} · ${j.connected ? "🟢 connected" : "⚪ not connected"}</span><br>
-      <span class="sub">${e(j.name)} · last pull: ${e(j.since || "—")}</span>
+      <span class="sub">${e(j.name)}</span><br>${age(j)}
       <div id="p-${e(j.id)}"></div>
       ${j.running_folder ? "" : (j.connected ? `<button class="btn" data-id="${e(j.id)}">Pull new from ${e(j.model || j.name)} since ${e(j.since || "?")}</button>` : "")}
       <button class="btn ghost" data-reid="1">🔄 Re-identify</button>
