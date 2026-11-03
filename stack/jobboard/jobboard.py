@@ -888,6 +888,10 @@ class Board:
             elif re.fullmatch(r"[\w .-]+", name):
                 acts["mac-" + re.sub(r"\W+", "", name.lower())[:20]] = {"label": name + " on this Mac", "host": "mac",
                     "close": ["osascript", "-e", f'quit app "{name}"'], "kill": ["pkill", "-KILL", "-x", name]}
+        if self.c.get("game_mode", {}).get("script"):  # 2026-11-02: 🚀 toggle state (GAME_ON / steam / runner)
+            st = sh(ssh(f"{shlex.quote(self.c['game_mode']['script'])} status")) or ""
+            out["game"] = {"on": "GAME_ON" in st, "steam": "steam=up" in st, "runner": "runner=up" in st,
+                           "label": self.c["game_mode"].get("label", "Game mode")}
         self._actions = acts
         out["actions"] = [{"id": k, "label": v["label"], "host": v["host"]} for k, v in acts.items()]
         # 2026-10-15 (Dan): list recon jobs started outside the board so "Active jobs" is current.
@@ -1007,6 +1011,16 @@ class Board:
         seen_ = set(); out["recon_jobs"] = [x for x in ext if not ((x["host"], x["job"], x["detail"]) in seen_ or seen_.add((x["host"], x["job"], x["detail"])))]
         out["time"] = time.strftime("%H:%M:%S")
         self._compute = (time.time(), out); return out
+
+    def game(self, mode):
+        """2026-11-02 (Dan): 🚀 game-mode toggle. [game_mode] script = a script on the GPU host taking play|done|status
+        (pause the GPU jobs + open the game launcher / close it + resume). Commands stay server-side; the page sends only the mode."""
+        scr = self.c.get("game_mode", {}).get("script")
+        if not scr or mode not in ("play", "done", "status"):
+            return {"error": "game mode not configured or unknown mode"}
+        res = self._run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=6", self.c["remote_host"], f"{shlex.quote(scr)} {mode}"])
+        self._compute = (0, None); self._remote = (0, {})
+        return {"done": f"game {mode}", "result": res}
 
     def proc_action(self, aid, mode):
         a = getattr(self, "_actions", {}).get(aid)
@@ -1561,11 +1575,13 @@ const k={"recon":"🟢 recon","other-heavy":"🟠 other (heavy)","other":"⚪ ot
 const row=(x,m)=>`<tr><td>${k[x.kind]||x.kind}</td><td>${m}</td><td class="small brk">${esc(x.cmd)}</td></tr>`;
 const L=c.linux||{},M=c.mac||{};
 document.getElementById("comp").innerHTML=`<b>Compute users</b> <span class="muted small">(${esc(c.time||"")} · who is using GPU/CPU on each host; hints only, nothing is stopped automatically)</span>
+${c.game?`<div style="margin:.4em 0"><span class="pill">🚀 ${esc(c.game.label)}: <b>${c.game.on?"ON (jobs paused)":"off (jobs running)"}</b> · Steam ${c.game.steam?"open":"closed"} · GPU runner ${c.game.runner?"up":"stopped"} ${c.game.on?`<button onclick="gameAct('done')">I'm done: close Steam + resume jobs</button>`:`<button onclick="gameAct('play')">Play: pause jobs + open Steam</button>`}</span></div>`:""}
 ${(c.hints||[]).length?`<div style="margin:.4em 0;color:var(--warn)">${c.hints.map(h=>"⚠ "+esc(h)).join("<br>")}</div>`:`<div class="muted small">No outside jobs competing with recon right now.</div>`}
 ${(c.actions||[]).length?`<div style="margin:.4em 0">${c.actions.map(a=>`<span class="pill">${hb(a.host)} ${esc(a.label)} <button onclick="procAct('${a.id}','close','${esc(a.label)}')">Close</button> <button onclick="procAct('${a.id}','kill','${esc(a.label)}')">Kill</button></span>`).join(" ")}</div>`:""}
 <table><tr><th colspan=3>${hb('linux')} GPU ${L.gpu_util??"?"}% · ${L.gpu_used??"?"} / ${L.gpu_total??"?"} MiB</th></tr>${(L.gpu_apps||[]).map(x=>row(x,x.mem_mib+" MiB")).join("")}
 <tr><th colspan=3>${hb('linux')} top CPU</th></tr>${(L.top||[]).slice(0,5).map(x=>row(x,x.cpu+"%")).join("")}
 <tr><th colspan=3>${hb('mac')} GPU ${M.gpu_util??"?"}% · Ollama: ${esc((M.ollama||[]).join(", ")||"none loaded")}</th></tr>${(M.top||[]).slice(0,5).map(x=>row(x,x.cpu+"%")).join("")}</table>`;}catch(e){}}
+function gameAct(mode){if(!confirm(mode==="play"?"Pause the GPU jobs and open Steam on the GPU host?":"Close Steam and resume the GPU jobs?"))return;post("/api/game",{mode}).then(r=>{const o=((r||{}).result||{}).output||(r||{}).error||"";if(o)alert(o);comp();});}
 function procAct(id,mode,label){if(!confirm((mode==="kill"?"KILL (forced; unsaved work is lost): ":"Close: ")+label+"?"))return;post("/api/proc",{id,mode}).then(comp);}
 async function ext(){try{const c=await (await fetch("/api/compute")).json();
 document.getElementById("ext").innerHTML=(c.recon_jobs||[]).map(j=>{const use=useBars(j,((c.mac||{}).cpus||10));
@@ -1637,7 +1653,8 @@ def make_handler(board):
                       "/api/release": lambda: board.hold(int(body.get("pid", 0)), False),
                       "/api/queue_uncovered": lambda: board.queue_uncovered(),
                       "/api/catalog_append": lambda: board.catalog_append(),
-                      "/api/proc": lambda: board.proc_action(str(body.get("id", "")), str(body.get("mode", "")))}
+                      "/api/proc": lambda: board.proc_action(str(body.get("id", "")), str(body.get("mode", ""))),
+                      "/api/game": lambda: board.game(str(body.get("mode", "")))}
             if self.path not in routes:
                 return self._send(404, {"error": "not found"})
             self._send(200, routes[self.path]())
