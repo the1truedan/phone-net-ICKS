@@ -37,6 +37,25 @@ Optional background for the white paper's release rule: ISO/IEC 27045 (big data 
   records stories, and hands files to the desktop app.
 - **Desktop app signing:** still unsigned (cost); revisit if a grant or sponsor covers it.
 
+## Earmark (Dan, 2026-11-03): payroll portal recon for paid family caregivers ("golden for recon")
+Caregivers paid through a fiscal agent (self-directed Medicaid care) get their timesheet and pay records only as one export per
+pay period from a web portal, and the phone app has no export at all. Build this into the Mac app:
+- **Drop folder ingest:** watch the Downloads folder for "Shift Status" and "Pay Stub" exports (xlsx, pdf, csv). Read the pay
+  period from each file, rename it to what it is (type, period, pull time, short hash), copy it to the evidence folder, skip exact
+  duplicates by SHA-256, and write one custody line per file (no file contents in the log). Prototype: grokcode
+  `scripts/gti_export_ingest.py` + `gti_export_diff.py`.
+- **Coverage map:** list every pay period from the first day of service to today, mark which have an export, and show the gaps
+  (the periods the caregiver still needs to download), so "all data to date" is checkable at a glance.
+- **Diff between pulls:** compare two exports of the same period (status changes, paid hours, code changes, approvals,
+  care manager on file), so the caregiver sees what the agency changed and when.
+- **Day ledger:** per day, hours entered vs authorized limit vs paid, duplicate entries (same times under two service codes),
+  temporary-code entries, and days with no entry. Prototype: `gti_reentry_dryrun.py`.
+- **Phone app read-back (no screenshots):** some caregiver apps block screenshots, but the Android accessibility tree can still be
+  read over the cable once the screen has loaded. Read-only walk of each pay period's entries into the same ledger. Any entry or
+  submit stays human: the app fills, the caregiver taps Sign and Submit.
+- Keep names of agency staff out of the tool: a neutral "reason" field (late authorization, temporary code re-entry) plus the
+  record it comes from.
+
 ## Earmark (2026-11-01): ALL YOUR PAPES ARE BELONG TO US edition ("THE PAPE")
 The head of the paper scroll order. The phones are saved; now the paper trail joins the paper parade.
 - **Hardware:** a used Fujitsu ScanSnap S1500M (Mac edition, duplex sheet feeder). Driver path is the free, open-source
