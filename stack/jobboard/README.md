@@ -83,3 +83,7 @@ keeps its peak (~7 GB), and two of them ran the card out of memory. The board sh
 `python3 stack/jobboard/jobboard.py --redact` (or `redact = true`) blocks out every term listed in `redact_file`
 (one per line, git-ignored; prefix `cs:` for case-sensitive short terms) plus phone numbers, emails, street addresses,
 SSNs and long digit runs, in the status data and in every report page. Only the visible text is changed, so the page keeps working.
+
+## Ollama now (2026-10-23)
+
+The top panel asks every Ollama host what is loaded (`/api/ps`), how busy its GPU is, and which processes have a request open (ports 11434 and 11435). The busiest host is shown first. Clients are named from `[ollama_now].labels`, then `[recon_jobs].jobs`, then the script name. Extra hosts go in `[ollama_now].extra`. A job started on this computer that sends its LLM calls to the GPU host shows `this computer → GPU host  LLM`. A job started through `ssh <remote_host>` shows the GPU host badge. Endpoint: `/api/ollama` (read-only, cached 10 s).

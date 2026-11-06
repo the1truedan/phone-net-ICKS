@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.8.0 GREEK SQUAT edition (2026-11-02) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.8.1 PLUG AND PLAY edition (2026-11-05) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,23 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Latest · v0.8.0 · GREEK SQUAT edition (2026-11-02)
+## Latest · v0.8.1 · PLUG AND PLAY edition (2026-11-05)
+
+Plug the phone in; the pull starts on its own. A patch on top of GREEK SQUAT:
+
+- **Auto-pull on plug-in (desktop app):** when a phone listed in `pulls.json` is plugged in, the app runs the owner's own pull
+  once per plug-in (skips if one is running or the last pull was under 30 minutes ago; `auto_pull: false` turns it off).
+  Each phone card shows **Last pull** age: amber after 1 day, red after 3, "plug in to pull".
+- **Pull new files from the app:** picks up from the last custody log, names the next folder, shows live progress, reads the
+  phone model from the phone. The on-phone status page opens in the phone's default browser.
+- **Job board, clearer:** one lane per host, pipelines with stages, a status file a job can write so its row stays honest while
+  the log is quiet, "idle (no update for N min)" instead of a false "running", a 15-day archive, five looks (Default, Classic,
+  High contrast, Terminal, Retro) and a Compact view.
+- **Game mode (optional):** one toggle on the board pauses the GPU jobs and opens the game launcher; "done" closes it and resumes.
+
+Desktop app changes are in source now; the next installer build carries them (the v0.8.0 installers still work).
+
+## v0.8.0 · GREEK SQUAT edition (2026-11-02)
 
 <p align="center"><img src="docs/img/greek_squat_logo.svg" alt="Two hands hold up two phones, a red one with an apple emoji and a green one with a robot emoji. Each is plugged into the front of a small silver desktop on the floor of a stone colonnade. Light runs along the cables into it, then rises up the colonnade into a small black cube with a gold mu, floating in front of the clouds." width="100%"></p>
 
@@ -184,7 +200,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.0"><img src="https://img.shields.io/badge/release-v0.8.0_GREEK_SQUAT_edition-3dcaa0?style=for-the-badge" alt="v0.8.0 GREEK SQUAT edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.1"><img src="https://img.shields.io/badge/release-v0.8.1_PLUG_AND_PLAY_edition-3dcaa0?style=for-the-badge" alt="v0.8.1 PLUG AND PLAY edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>

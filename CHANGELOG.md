@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.1 — 2026-11-05 · PLUG AND PLAY edition
+- **Desktop: auto-pull on plug-in.** A watcher starts the owner's pull once per plug-in for phones listed in `pulls.json`
+  (skips while one runs or within 30 min of the last; `auto_pull: false` off). Phone card shows Last pull age (amber 1 day, red 3).
+- **Desktop: Pull new files from the app.** SINCE from the last custody log, next folder letter, live progress from PULL_LOG,
+  phone model read from the phone, Re-identify, unknown-phone cards, on-phone status page over `adb reverse`.
+- **Phone status page** opens in the phone's default browser (else Brave, else Chrome).
+- **Job board clarity redesign:** host lanes, `[[pipeline]]` stages, per-job status file (`n/total` overrides line count),
+  optional count regex, stale rows shown as idle, 15-day archive (`/archive`), five looks and Compact/Detailed.
+- **Job board game mode (optional):** `[game_mode] script` on the GPU host: play = pause jobs + open launcher, done = resume.
+- Desktop installers stay at 0.8.0 until the next build; these desktop changes are source-only for now.
+
 ## v0.8.0 — 2026-11-02 · GREEK SQUAT edition
 - **GREEK SQUAT** ("it's all Greek to me"; squat = the data left behind). When a loved one passes, their heart and mind are on
   their phone. A caregiver plugs the phone in (Android or Apple, one USB-C cable), walks through the human steps (Trust,
