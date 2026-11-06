@@ -1,0 +1,22 @@
+[package]
+name = "indoc-trin"
+version = "0.1.0"
+description = "I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E.: receipt and paper scans to a private ledger (P.A.P.E. engine)"
+authors = ["the1truedan"]
+license = "MIT"
+repository = "https://github.com/the1truedan/phone-net-ICKS"
+edition = "2024"
+rust-version = "1.95"
+
+[lib]
+name = "indoc_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "3.0.0-alpha.4", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "3.0.0-alpha.5", features = [] }
+tauri-runtime-wry = { version = "3.0.0-alpha.5" }
