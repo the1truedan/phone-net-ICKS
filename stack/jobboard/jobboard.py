@@ -10,7 +10,7 @@ any local report pages come from files that config points at, so nothing case-sp
 import argparse
 import threading, csv, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import urllib.request
+import calendar, fnmatch, urllib.parse, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOKEN = secrets.token_urlsafe(18)
@@ -415,7 +415,7 @@ class Board:
                         "problem": sum(1 for lb in labels if lb not in res and lb in probs and lb not in longs and not covered(lb)),
                         "via_chunks": len(via_chunks), "pending_pieces": pending_pieces,
                         "empty": sum(1 for lb in labels if lb in empty),
-                        "created": time.strftime("%m-%d %H:%M", time.localtime(created)),
+                        "created": time.strftime("%m-%d %H:%M", time.localtime(created)), "created_ts": created,
                         "last_done": time.strftime("%m-%d %H:%M", time.localtime(max(done_t))) if done_t else "",
                         "last_done_ts": max(done_t) if done_t else 0,
                         "first_done": time.strftime("%m-%d %H:%M", time.localtime(min(done_t))) if done_t else "",
@@ -647,16 +647,27 @@ class Board:
             m = re.search(r"scp .*?/([\w]+)(?:\.orig48k)?\.wav \S*:", cmd)
             if m and cmd.startswith("scp"):
                 jobs.append({"label": m.group(1), "stage": "upload to GPU host", "elapsed_s": el, "pids": [pid], "pct": None, "est": True}); continue
-        for name, log, total, *rest in self.batch_jobs():   # [name, log file, expected lines (0 = open-ended: copies, uploads), optional status file]
-            if not os.path.exists(log) or (total and time.time() - os.path.getmtime(log) >= 3600):
+        for name, log, total, *rest in self.batch_jobs():   # [name, log file, expected lines (0 = open-ended: copies, uploads), optional status file, optional count regex]
+            # 2026-11-05 (Dan: "can the blink pull stats and other background jobs better inform status and progress"): a fresh
+            # status file (written by the job, "n/total what" or free text) keeps the row up while the log is quiet, and its
+            # n/total overrides the line count. A 5th field counts only log lines matching that regex (one per finished item).
+            now = rest[0] if rest else ""
+            fresh = bool(now) and os.path.exists(now) and time.time() - os.path.getmtime(now) < 600
+            if not os.path.exists(log) or (total and not fresh and time.time() - os.path.getmtime(log) >= 3600):
                 continue
             lines = [x for x in open(log, errors="ignore").read().replace("\r", "\n").splitlines() if x.strip()]
-            done = any(re.search(r"DONE\b|\bdone\b \{|^done\b", x) for x in lines[-2:]) or (total and len(lines) >= total)   # 2026-10-12: "done 36 files" too   # 2026-10-11: X_DONE markers count (\bDONE missed TOWER_COPY_DONE)
-            if done or (not total and time.time() - os.path.getmtime(log) >= 6 * 3600):
+            done = any(re.search(r"DONE\b|\bdone\b \{|^done\b", x) for x in lines[-2:])   # 2026-10-12: "done 36 files" too   # 2026-10-11: X_DONE markers count (\bDONE missed TOWER_COPY_DONE)
+            cnt = [x for x in lines if re.search(rest[1], x)] if len(rest) > 1 and rest[1] else lines
+            nowtxt = open(now, errors="ignore").read().strip() if fresh else ""
+            frac = re.match(r"(\d+)\s*/\s*(\d+)\b", nowtxt)
+            if frac and int(frac.group(2)) > 0:
+                total, cnt = int(frac.group(2)), [None] * int(frac.group(1))
+            done = done or (total and len(cnt) >= total and not frac)
+            if done or (not total and not fresh and time.time() - os.path.getmtime(log) >= 6 * 3600):
                 continue
             el = int(time.time() - getattr(os.stat(log), "st_birthtime", os.path.getctime(log)))
-            n = len(lines)
-            stage = f"batch: {n} of {total} pieces" if total else "running"
+            n = len(cnt)
+            stage = f"batch: {n} of {total}" + ("" if frac else " pieces") if total else "running"
             pids = sh(["/usr/sbin/lsof", "-t", log]).split()
             if not total:   # 2026-10-12: open-ended jobs (copies) — check the processes holding the log
                 stats = sh(["ps", "-o", "stat=", "-p", ",".join(pids)]).split() if pids else []
@@ -665,18 +676,182 @@ class Board:
                     stage = f"no log updates for {idle // 60} min (paused or stopped)"
                 elif any(x.startswith("T") for x in stats):
                     stage = "PAUSED (process stopped)"
-            now = rest[0] if rest else ""
-            if now and os.path.exists(now) and time.time() - os.path.getmtime(now) < 600:   # the job's own "working on" line
-                stage += " · now: " + open(now, errors="ignore").read().strip()[:120]
+            if fresh:   # the job's own "working on" line
+                stage += " · now: " + (nowtxt[frac.end():].strip() if frac else nowtxt)[:120]
             elif lines:   # else the last finished piece (log line minus its time stamp)
                 stage += " · last: " + re.sub(r"^\S+ ", "", lines[-1])[:120]
             left = int(el / n * (total - n)) if total and n > 1 else None
-            jobs.append({"label": name, "stage": self.redact(stage) if self.redact else stage, "elapsed_s": el,
-                         "pct": int(100 * n / total) if total else None, "est": left is not None, "left_s": left, "pids": pids})
+            host = self.batch_host(name, rest)
+            jobs.append({"label": name, "stage": self.redact(stage) if self.redact else stage, "elapsed_s": el, "host": host,
+                         "pct": int(100 * n / total) if total else None, "est": left is not None, "left_s": left,
+                         "pids": pids if host == "mac" else []})
         for j in jobs:
-            j.update(self.usage_pids(j.pop("pids", []), "mj_" + j["label"])); j["host"] = "mac"; j["limit"] = self.limit_of(j) if "cpu" in j else ""
-            j["host"] = "mac"; j["queue"] = self.queue_of(j["label"], lm, by_hash) if j["label"] not in (b[0] for b in self.batch_jobs()) else "batch"
+            j.setdefault("host", "mac")
+            j.update(self.usage_pids(j.pop("pids", []), "mj_" + j["label"])); j["limit"] = self.limit_of(j) if "cpu" in j else ""
+            j["queue"] = self.queue_of(j["label"], lm, by_hash) if j["label"] not in (b[0] for b in self.batch_jobs()) else "batch"
         return jobs
+
+    # ---------- 2026-11-05 clarity redesign: host lanes, pipelines, 15-day archive ----------
+    def batch_host(self, name, rest):
+        """Where a batch job does its work: 6th config field (mac / linux / unraid), else the first
+        [batch_host_patterns] regex that matches the row name, else this computer."""
+        if len(rest) > 2 and rest[2] in self.hosts():
+            return rest[2]
+        for host, rx in self.c.get("batch_host_patterns", []):
+            if re.search(rx, name):
+                return host
+        return "mac"
+
+    def lanes(self):
+        """[[lane_streams]] probes: host, name, cmd (shell; prints lines, optional 'age=<seconds>'), states [[regex, state]],
+        stale_s. The last non-age line is shown as 'now'. Cached 20 s."""
+        t, v = getattr(self, "_lanes", (0, None))
+        if v is not None and time.time() - t < 20:
+            return v
+        out = []
+        for st in self.c.get("lane_streams", []):
+            txt = sh(["/bin/sh", "-c", st["cmd"]], timeout=12)
+            lines = [x.strip() for x in (txt or "").splitlines() if x.strip()]
+            age = next((int(x[4:]) for x in lines if re.fullmatch(r"age=\d+", x)), None)
+            lines = [x for x in lines if not re.fullmatch(r"age=\d+", x)]
+            now = lines[-1] if lines else ""
+            state = "unreachable" if not lines else "running"
+            for rx, name in st.get("states", []):
+                if lines and re.search(rx, now):
+                    state = name; break
+            if age is not None and age > st.get("stale_s", 900) and state not in ("paused", "unreachable"):
+                state = f"idle (no update for {age // 60} min)"
+            extra = [x for x in lines[:-1] if st.get("extra_rx") and re.search(st["extra_rx"], x)]
+            out.append({"host": st.get("host", "mac"), "name": st["name"], "state": state,
+                        "now": self.redact(now[:160]) if self.redact else now[:160], "extra": extra[-2:]})
+        self._lanes = (time.time(), out)
+        return out
+
+    @staticmethod
+    def _count(spec, hour_ago):
+        """'glob:<pattern>' (files; rate from mtimes), 'lines:<file>' (non-empty lines minus header),
+        'regex:<file>:<regex>' (matching lines; rate from a leading YYYY-mm-dd HH:MM:SS stamp). -> (count, per_hour or None)"""
+        kind, _, arg = spec.partition(":")
+        if kind == "glob":
+            d, pat = os.path.split(arg)
+            n = r = 0
+            try:
+                for e in os.scandir(d):
+                    if fnmatch.fnmatch(e.name, pat):
+                        n += 1
+                        if e.stat().st_mtime >= hour_ago:
+                            r += 1
+            except OSError:
+                return None, None
+            return n, r
+        path, rx = (arg.rsplit(":", 1) + [""])[:2] if kind == "regex" else (arg, "")
+        if not os.path.exists(path):
+            return None, None
+        n, r, rated = 0, 0, False
+        cut = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(hour_ago))
+        with open(path, errors="ignore") as f:
+            for i, ln in enumerate(f):
+                if not ln.strip() or (kind == "lines" and i == 0) or (rx and not re.search(rx, ln)):
+                    continue
+                n += 1
+                m = re.match(r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d", ln)
+                if m:
+                    rated = True
+                    r += m.group(0) >= cut
+        return n, (r if rated else None)
+
+    def pipelines(self):
+        """[[pipeline]] name, total (count spec), stages [[label, host, count spec, 'of_total' | 'info']]. Cached 30 s."""
+        t, v = getattr(self, "_pipes", (0, None))
+        if v is not None and time.time() - t < 30:
+            return v
+        out, ha = [], time.time() - 3600
+        for pl in self.c.get("pipeline", []):
+            total = self._count(pl["total"], ha)[0] if pl.get("total") else None
+            stages = []
+            for lab, host, spec, *kind in pl.get("stages", []):
+                n, rate = self._count(spec, ha)
+                of = (kind[0] if kind else "of_total") == "of_total" and total
+                left = (total - n) if of and n is not None else None
+                stages.append({"label": lab, "host": host, "count": n, "per_hour": rate, "of_total": bool(of),
+                               "pct": round(100 * n / total, 1) if of and n is not None else None,
+                               "eta_s": int(3600 * left / rate) if left and rate else None})
+            out.append({"name": pl["name"], "note": pl.get("note", ""), "total": total, "stages": stages})
+        self._pipes = (time.time(), out)
+        return out
+
+    ARCH_EPOCH = 1767225600   # 2026-01-01 00:00 UTC: 15-day archive windows are counted from here so their links stay put
+
+    def archive_days(self):
+        return int(self.c.get("archive_days", 15))
+
+    def _window(self, ts):
+        w = self.archive_days() * 86400
+        return self.ARCH_EPOCH + int((ts - self.ARCH_EPOCH) // w) * w
+
+    def archive_items(self, qs=None):
+        """Everything with no activity for archive_days: queues (last finished item or creation) and batch rows (log time)."""
+        cut = time.time() - self.archive_days() * 86400
+        busy = {r["queue"] for r in self.runners() if r.get("queue")}
+        items = []
+        for q in (qs if qs is not None else self.queues(self.results())):
+            last = max(q.get("last_done_ts") or 0, q.get("created_ts") or 0)
+            if last and last < cut and q["queue"] not in busy:
+                items.append({"kind": "queue", "name": q["queue"], "last": last, "done": q["done"], "total": q["total"],
+                              "created": q["created"], "last_done": q["last_done"], "purpose": q.get("purpose", ""),
+                              "gain": q.get("gain", ""), "host": "linux"})
+        for name, log, total, *rest in self.batch_jobs():
+            st = rest[0] if rest else ""
+            ts = max([os.path.getmtime(x) for x in (log, st) if x and os.path.exists(x)] or [0])
+            if ts and ts < cut:
+                tail = ""
+                try:
+                    with open(log, "rb") as f:
+                        f.seek(max(0, os.path.getsize(log) - 2048)); tail = f.read().decode(errors="ignore").strip().splitlines()[-1]
+                except (OSError, IndexError):
+                    pass
+                items.append({"kind": "batch", "name": name, "last": ts, "total": total, "last_line": tail[:200],
+                              "host": self.batch_host(name, rest)})
+        return items
+
+    def archive_windows(self, items):
+        w = {}
+        for it in items:
+            k = self._window(it["last"]); w[k] = w.get(k, 0) + 1
+        span = self.archive_days() * 86400
+        return [{"from": time.strftime("%Y-%m-%d", time.gmtime(k)), "to": time.strftime("%Y-%m-%d", time.gmtime(k + span - 86400)), "n": n}
+                for k, n in sorted(w.items(), reverse=True)]
+
+    def archive_page(self, frm):
+        items = self.archive_items()
+        wins = self.archive_windows(items)
+        span = self.archive_days() * 86400
+        sel = None
+        if frm and re.fullmatch(r"\d{4}-\d\d-\d\d", frm):
+            k = calendar.timegm(time.strptime(frm, "%Y-%m-%d"))
+            sel = [it for it in items if self._window(it["last"]) == k]
+        H = self.hosts()
+        e = lambda x: html.escape(str(x or ""))
+        hb = lambda k: f'<span class="pill small">{H.get(k, ["", k])[0]} {e(H.get(k, ["", k])[1].split(" · ")[0])}</span>'
+        nav = " · ".join(f'<a href="/archive?from={w["from"]}">{w["from"]} to {w["to"]}</a> <span class="muted">({w["n"]})</span>' for w in wins) or "nothing archived yet"
+        body = [f'<h1>Job Board archive</h1><div class="muted">Queues and jobs with no activity for {self.archive_days()} days, '
+                f'in {self.archive_days()}-day windows (by last activity). Read-only. <a href="/">Back to the board</a></div>',
+                f'<section><b>Windows</b><div style="margin-top:.4em">{nav}</div></section>']
+        if sel is not None:
+            sel.sort(key=lambda it: -it["last"])
+            qs = [it for it in sel if it["kind"] == "queue"]; bs = [it for it in sel if it["kind"] == "batch"]
+            body.append(f'<section><b>{e(frm)}</b> <span class="muted">· {len(qs)} queues · {len(bs)} jobs</span>')
+            if qs:
+                body.append("<table><tr><th>Queue</th><th>Done</th><th>Created</th><th>Last finished</th><th>Purpose</th></tr>" + "".join(
+                    f'<tr><td><b>{e(q["name"])}</b></td><td>{q["done"]} / {q["total"]}</td><td class="muted">{e(q["created"])}</td>'
+                    f'<td class="muted">{e(q["last_done"])}</td><td class="small">{e(q["purpose"])}</td></tr>' for q in qs) + "</table>")
+            if bs:
+                body.append("<table style='margin-top:1em'><tr><th>Job</th><th>Host</th><th>Last activity</th><th>Last log line</th></tr>" + "".join(
+                    f'<tr><td>{e(b["name"])}</td><td>{hb(b["host"])}</td><td class="muted" style="white-space:nowrap">'
+                    f'{time.strftime("%Y-%m-%d %H:%M", time.localtime(b["last"]))}</td><td class="small brk">{e(b["last_line"])}</td></tr>' for b in bs) + "</table>")
+            body.append("</section>")
+        page = PAGE_HEAD.replace("__TITLE__", "Job Board archive") + "".join(body) + "</body></html>"
+        return self.redact(page) if self.redact else page
 
     def storage(self):
         """Storage server link: the one 1 GbE link the GPU host and this computer share for file access. Cached like the GPU host."""
@@ -1196,6 +1371,10 @@ class Board:
             self.hidden_empty = [q["queue"] for q in qs if not q.get("total") and q["queue"] not in run_q]
             qs = [q for q in qs if q.get("total") or q["queue"] in run_q]
         busy = {r["queue"] for r in runners if r["queue"]}
+        arch = self.archive_items(qs)
+        aq = {a["name"] for a in arch if a["kind"] == "queue"}
+        qs = [q for q in qs if q["queue"] not in aq]
+        self._arch_windows = self.archive_windows(arch)
         for q in qs:
             q["in_chain"] = q["queue"] in chained
             q["todo"] = q["total"] - q["done"] - q["too_long"] - q.get("problem", 0) > 0
@@ -1250,7 +1429,8 @@ class Board:
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
                 "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "hidden_empty_queues": getattr(self, "hidden_empty", []), "runners": runners,
-                "recent": recent, "mac_jobs": mac_jobs, "logs": self.logs(), "priority": self.priority,
+                "recent": recent, "mac_jobs": mac_jobs, "lanes": self.lanes(), "pipelines": self.pipelines(),
+                "archive": {"days": self.archive_days(), "windows": self._arch_windows}, "logs": self.logs(), "priority": self.priority,
                 "reports": [r.get("name", "") for r in self.c.get("reports", [])], "report_fresh": [self.freshness(k) for k in range(len(self.c.get("reports", [])))], "coverage": cov, "flag_label": self.c.get("flag_label", "flagged")}
 
     # ---------- controls ----------
@@ -1485,8 +1665,32 @@ blockquote{background:var(--call);border-left:4px solid var(--callb);margin:10px
 
 PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Job Board</title><style>
-:root{--bg:#fcfcfb;--fg:#1f1f1d;--muted:#6b6b66;--line:#e4e4df;--bar:#2a78d6;--warn:#c98500;--bad:#e34948;--card:#fff}
-@media (prefers-color-scheme:dark){:root{--bg:#1a1a19;--fg:#ececea;--muted:#a3a39d;--line:#33332f;--bar:#3987e5;--card:#22221f}}
+:root{--bg:#fcfcfb;--fg:#1f1f1d;--muted:#6b6b66;--line:#e4e4df;--bar:#2a78d6;--warn:#c98500;--bad:#e34948;--card:#fff;--ok:#1e8e4e;--cell:#f4f4f1}
+@media (prefers-color-scheme:dark){:root{--bg:#1a1a19;--fg:#ececea;--muted:#a3a39d;--line:#33332f;--bar:#3987e5;--card:#22221f;--ok:#4cc27e;--cell:#2a2a27}}
+:root[data-theme="classic"]{--bg:#dddddd;--card:#eeeeee;--cell:#ffffff;--fg:#000;--muted:#333;--line:#000;--bar:#000080;--warn:#6b4e00;--bad:#aa0000;--ok:#006600}
+:root[data-theme="classic"] body{font-family:Geneva,Verdana,"DejaVu Sans",sans-serif}
+:root[data-theme="classic"] section,:root[data-theme="classic"] details.more,:root[data-theme="classic"] .lane{border:2px solid #000;border-radius:0;box-shadow:3px 3px 0 #000}
+:root[data-theme="classic"] .cell,:root[data-theme="classic"] button,:root[data-theme="classic"] .pill{border-radius:0;border-color:#000}
+:root[data-theme="terminal"]{--bg:#000;--card:#050f05;--cell:#0a1a0a;--fg:#33ff66;--muted:#22bb55;--line:#1f5f1f;--bar:#33ff66;--warn:#ffcc33;--bad:#ff5555;--ok:#33ff66}
+:root[data-theme="terminal"] body{font-family:ui-monospace,Menlo,monospace}:root[data-theme="terminal"] h1::before{content:"$ ";color:var(--muted)}
+:root[data-theme="terminal"] section,:root[data-theme="terminal"] .lane,:root[data-theme="terminal"] .cell,:root[data-theme="terminal"] button,:root[data-theme="terminal"] .pill,:root[data-theme="terminal"] details.more{border-radius:0}
+:root[data-theme="retro"]{--bg:#3e31a2;--card:#3e31a2;--cell:#352a8c;--fg:#a5a5ff;--muted:#c8c8ff;--line:#7c70da;--bar:#ffffff;--warn:#ffff8f;--bad:#ff9f9f;--ok:#9fff9f}
+:root[data-theme="retro"] body{font-family:ui-monospace,Menlo,monospace;border:16px solid #7c70da;min-height:100vh;box-sizing:border-box}
+:root[data-theme="retro"] h1{text-transform:uppercase;letter-spacing:.04em}
+:root[data-theme="retro"] section,:root[data-theme="retro"] .lane,:root[data-theme="retro"] .cell,:root[data-theme="retro"] button,:root[data-theme="retro"] .pill,:root[data-theme="retro"] details.more{border-radius:0}
+:root[data-theme="contrast"]{--bg:#000;--card:#000;--cell:#000;--fg:#fff;--muted:#e6e6e6;--line:#fff;--bar:#ffff00;--warn:#ffff00;--bad:#ff6666;--ok:#00ff00}
+:root[data-theme="contrast"] body{font-size:17px}:root[data-theme="contrast"] a{text-decoration:underline}
+:root[data-density="compact"] .usebars,:root[data-density="compact"] .detail{display:none}
+header.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}.theme-pick{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-top:8px}
+.lane{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--card);min-width:0}.lane h3{margin:0 0 8px;font-size:15px}
+.cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.cell{background:var(--cell);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0}.cell .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.cell .v{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cell .bar{margin-top:4px}
+.stream{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;min-width:0}.stream .now{overflow-wrap:anywhere}
+.s-working,.s-running{border-color:var(--ok);color:var(--ok)}.s-yielding,.s-paused,.s-low{border-color:var(--warn);color:var(--warn)}.s-idle,.s-unreachable{border-color:var(--bad);color:var(--bad)}
+details.more{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:12px 0}details.more>summary{padding:2px 0}
+.pipe td{white-space:nowrap}.pipe td.lbl{white-space:normal}
 body{background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif;margin:0;padding:16px;max-width:1200px}
 h1{font-size:20px;margin:0 0 4px}.muted{color:var(--muted)}section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:12px 0}
 table{width:100%;max-width:100%;border-collapse:collapse}td,th{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top;overflow-wrap:break-word;min-width:0}.ub{white-space:normal;min-width:0;max-width:100%}.ub>div>span:last-child{white-space:nowrap}.pill.clip{display:inline-block;white-space:normal;max-width:280px;vertical-align:top;border-radius:8px}.brk{word-break:break-all}
@@ -1495,13 +1699,23 @@ button{font:inherit;padding:4px 10px;border-radius:6px;border:1px solid var(--li
 button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;border-radius:10px;border:1px solid var(--line);white-space:nowrap}
 .paused{color:var(--warn)}.bad{color:var(--bad)}pre{white-space:pre-wrap;margin:4px 0 10px;font-size:12px}.stats{display:flex;gap:18px;flex-wrap:wrap}
 .stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
-</style></head><body>
-<h1>Job Board <span class="muted" id="t"></span></h1><div class="muted" id="rep"></div>
-<section id="oll" style="border-width:2px"><b>Ollama now</b> <span class="muted small">loading…</span></section><div id="pri"></div><section id="gpu"></section><section><b>Active jobs</b> <span class="muted small">(🐧 deep pass on the GPU host · 🍎 cutting, quick triage and uploads on this Mac)</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other recon jobs running (detected from processes)</div><table id="ext"></table></section><section id="comp"></section>
-<section><b>Queues</b> <span class="muted small">(to do first, then finished with the latest on top · click a row for purpose and expected gain)</span><table id="q"></table></section>
+</style><script>(function(){var t="default",d="detailed";try{t=localStorage.getItem("jb-theme")||t;d=localStorage.getItem("jb-density")||d}catch(e){}var m=location.hash.match(/theme=(\\w+)/);if(m)t=m[1];
+var r=document.documentElement;r.setAttribute("data-theme",t);r.setAttribute("data-density",d);
+window.setTheme=function(v){r.setAttribute("data-theme",v);try{localStorage.setItem("jb-theme",v)}catch(e){}};
+window.setDensity=function(v){r.setAttribute("data-density",v);try{localStorage.setItem("jb-density",v)}catch(e){}}})();</script></head><body>
+<header class="top"><h1>Job Board <span class="muted small" id="t"></span></h1>
+<div class="theme-pick small"><span class="muted">Look:</span> <button onclick="setTheme('default')">Default</button><button onclick="setTheme('classic')">Classic</button><button onclick="setTheme('contrast')">High contrast</button><button onclick="setTheme('retro')">Retro</button><button onclick="setTheme('terminal')">Terminal</button>
+<span class="muted">·</span> <button onclick="setDensity(document.documentElement.getAttribute('data-density')==='compact'?'detailed':'compact')">Compact / detailed</button></div></header>
+<div class="muted" id="rep"></div><div id="pri"></div>
+<section><b>Hosts</b> <span class="muted small">(what each machine is doing now)</span><div class="lanes" id="lanes"><div class="muted small">loading…</div></div></section>
+<section id="pipes" hidden></section>
+<section><b>Running</b> <span class="muted small">(each job under the host that does the work)</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Also detected from processes</div><table id="ext"></table></section>
+<section><b>Queues</b> <span class="muted small" id="qnote">(click a row for purpose and expected gain)</span><table id="q"></table><div id="arch" class="small" style="margin-top:.6em"></div></section>
+<details class="more" id="more"><summary><b>More detail</b> <span class="muted small">Ollama · GPU host gauges + pause · compute users · coverage · recently finished · runners · logs</span></summary>
+<section id="oll" style="border-width:2px"><b>Ollama now</b> <span class="muted small">loading…</span></section><section id="gpu"></section><section id="comp"></section>
 <section id="cov"></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
-<section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section>
+<section><b>Runners</b><table id="r"></table></section><section><b>Recent log lines</b><div id="l"></div></section></details>
 <script>
 const TOKEN="__TOKEN__",REDACT=__REDACT__;
 async function post(p,b){const r=await fetch(p,{method:"POST",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:JSON.stringify(b||{})});if(r.status===403){alert("The board restarted since this page loaded (new security token). Reloading now: press the button again.");location.reload();return}alert(JSON.stringify(await r.json()));load();}
@@ -1519,15 +1733,29 @@ const m=(lab,val,pct,tip)=>`<div title="${esc(tip)}" style="display:flex;gap:4px
 const cpuTxt=j.cpu==null?"?":`${j.cpu}%${j.cpu>100?` (~${(j.cpu/100).toFixed(1)} cores)`:""}`,cpuPct=j.cpu==null?(j.host_cpu||0):Math.min(100,j.cpu/nc);
 const mem=j.mem_mb!=null?`${(j.mem_mb/1024).toFixed(1)} GB`:(j.mem_mib!=null?`${(j.mem_mib/1024).toFixed(1)} GB VRAM`:"?");
 const net=(j.rx_mbs==null&&j.tx_mbs==null)?"…":`↓${f1(j.rx_mbs)} ↑${f1(j.tx_mbs)} MB/s`,netPct=100*Math.max(j.rx_mbs||0,j.tx_mbs||0)/110;
-return `<div class="small ub">${m("CPU",cpuTxt+(j.host_cpu!=null?` · host ${j.host_cpu}%`:""),cpuPct,"this job's processes incl. children · whole host after the dot")}${m("MEM",mem+(j.host_mem_free!=null?` · ${j.host_mem_free}% free`:""),j.host_mem_free!=null?100-j.host_mem_free:0,"job's memory · host free %")}${j.gpu!=null?m("GPU",j.gpu+"%"+(j.gpu_rx_mbs!=null?` · GPU host ↓${f1(j.gpu_rx_mbs)} MB/s`:""),j.gpu,"GPU host utilisation (no per-process GPU % without sudo)"):""}${m("NET",net+(j.net_scope==="host"?" (host)":""),netPct,"job's network (Mac: per process via nettop; GPU host: whole NIC) · bar = share of 1 GbE")}${j.limit?`<div style="margin-top:2px"><span class="pill" style="color:var(--warn)">⏳ likely limit: ${esc(j.limit)}</span></div>`:""}</div>`}
+return `<div class="small ub usebars">${m("CPU",cpuTxt+(j.host_cpu!=null?` · host ${j.host_cpu}%`:""),cpuPct,"this job's processes incl. children · whole host after the dot")}${m("MEM",mem+(j.host_mem_free!=null?` · ${j.host_mem_free}% free`:""),j.host_mem_free!=null?100-j.host_mem_free:0,"job's memory · host free %")}${j.gpu!=null?m("GPU",j.gpu+"%"+(j.gpu_rx_mbs!=null?` · GPU host ↓${f1(j.gpu_rx_mbs)} MB/s`:""),j.gpu,"GPU host utilisation (no per-process GPU % without sudo)"):""}${m("NET",net+(j.net_scope==="host"?" (host)":""),netPct,"job's network (Mac: per process via nettop; GPU host: whole NIC) · bar = share of 1 GbE")}${j.limit?`<div style="margin-top:2px"><span class="pill" style="color:var(--warn)">⏳ likely limit: ${esc(j.limit)}</span></div>`:""}</div>`}
 function drawCur(){const dt=(Date.now()-T0)/1000;document.getElementById("cur").innerHTML=CUR.length?"<tr><th>Item</th><th>Host</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>"+CUR.map(c=>{
  if(c.stale)return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td></td><td><span class="pill paused">stale leftover (not running)</span></td></tr>`;
  if(c.stage===0)return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">in line</span></td><td style="white-space:nowrap">${ubar(0)} <span class="small muted">waiting for the resident worker · staged ${secs(c.elapsed_s+dt)} ago</span></td></tr>`;
  const el=c.elapsed_s+dt,raw=c.est_total_s?100*el/c.est_total_s:null,p=raw==null?(c.lo+c.hi)/2:Math.min(c.hi,Math.max(c.lo,raw));
  const left=c.est_total_s?c.est_total_s-el:null,eta=left==null?"estimating…":raw>c.hi?`finishing ${esc(c.stage_name)}…`:`~${secs(left)} left`;
- return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span>${GH?useBars({host:"linux",cpu:null,host_cpu:GH.cpu_pct,host_mem_free:GH.mem_total_mib?Math.round(100*GH.mem_avail_mib/GH.mem_total_mib):null,gpu:GH.gpu_util,mem_mib:GH.gpu_used_mib,rx_mbs:GH.rx_mbs,tx_mbs:GH.tx_mbs,net_scope:"host",limit:(GH.gpu_util>=85?"GPU":"")}):""}</td></tr>`}).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
- document.getElementById("cur").innerHTML+=MAC.map(j=>{const el=j.elapsed_s+dt;return `<tr><td>${esc(j.label)}</td><td>${hb('mac')}</td><td>${esc(j.queue)}</td><td></td><td><span class="pill small clip" title="${esc(j.stage)}">${esc(j.stage)}</span></td><td style="white-space:nowrap">${j.pct==null?'<span class="small muted">in progress</span>':ubar(j.pct)+` <b>${j.pct}%</b>`} <span class="small muted">${secs(el)}${j.left_s!=null?` · ~${secs(j.left_s)} left`:(j.est?" · estimated":"")}</span>${j.cpu!=null?useBars(j,MACN):""}</td></tr>`}).join("");}
-async function load(){const s=await (await fetch("/api/status")).json();
+ return `<tr><td>${esc(c.label)}</td><td>${hb('linux')}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td><span class="pill small">${c.stage}/5 ${esc(c.stage_name)}</span></td><td style="white-space:nowrap">${ubar(p)} <b>${Math.round(p)}%</b> <span class="small muted">${secs(el)}${c.est_total_s?` / ~${secs(c.est_total_s)}`:""} · ${eta}</span>${GH?useBars({host:"linux",cpu:null,host_cpu:GH.cpu_pct,host_mem_free:GH.mem_total_mib?Math.round(100*GH.mem_avail_mib/GH.mem_total_mib):null,gpu:GH.gpu_util,mem_mib:GH.gpu_used_mib,rx_mbs:GH.rx_mbs,tx_mbs:GH.tx_mbs,net_scope:"host",limit:(GH.gpu_util>=85?"GPU":"")}):""}</td></tr>`}).join(""):(MAC.length?"<tr><th>Item</th><th>Host</th><th>Queue</th><th>Audio</th><th>Stage</th><th>Progress</th></tr>":"<tr><td class=muted>no tracked jobs running (GPU stream work shows under Hosts)</td></tr>");
+ document.getElementById("cur").innerHTML+=MAC.map(j=>{const el=j.elapsed_s+dt;return `<tr><td>${esc(j.label)}</td><td>${hb(j.host||'mac')}</td><td>${esc(j.queue)}</td><td></td><td><span class="pill small clip" title="${esc(j.stage)}">${esc(j.stage)}</span></td><td style="white-space:nowrap">${j.pct==null?'<span class="small muted">in progress</span>':ubar(j.pct)+` <b>${j.pct}%</b>`} <span class="small muted">${secs(el)}${j.left_s!=null?` · ~${secs(j.left_s)} left`:(j.est?" · estimated":"")}</span>${j.cpu!=null?useBars(j,MACN):""}</td></tr>`}).join("");}
+function cell(k,v,p,tip){return `<div class="cell" title="${esc(tip||"")}"><div class="k">${k}</div><div class="v">${v}</div>${p==null?"":bar(Math.max(0,Math.min(100,p)))}</div>`}
+function drawLanes(s){const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
+const C={mac:[cell("Apple GPU",`${f(L.gpu_pct)}%`,L.gpu_pct,"Metal: mlx-whisper lane, quick triage"),cell("CPU",`${f(L.cpu_pct)}%`,L.cpu_pct),cell("Load",`${f(L.load1)} / ${f(L.cpus)}`,L.cpus?100*L.load1/L.cpus:null),cell("Network",`↓${f(L.rx_mbs)} ↑${f(L.tx_mbs)}`,100*Math.max(L.rx_mbs||0,L.tx_mbs||0)/117,"MB/s")],
+ linux:g.reachable?[cell("GPU",`${g.gpu_util}%`,g.gpu_util),cell("VRAM",`${(g.gpu_used_mib/1024).toFixed(1)} / ${(g.gpu_total_mib/1024).toFixed(0)} GB`,100*g.gpu_used_mib/g.gpu_total_mib),cell("CPU",`${f(g.cpu_pct)}%`,g.cpu_pct),cell("RAM",`${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(0)} / ${(g.mem_total_mib/1024).toFixed(0)} GB`,100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib),cell("Temp",`${f(g.gpu_temp)}°C`,null),cell("Network",`↓${f(g.rx_mbs)} ↑${f(g.tx_mbs)}`,100*Math.max(g.rx_mbs||0,g.tx_mbs||0)/117,"MB/s")]:[cell("State","not reachable",null)],
+ unraid:T.reachable?[cell("Load",`${f(T.load1)} / ${f(T.cpus)}`,T.cpus?100*T.load1/T.cpus:null),cell(esc(T.nic||"Network"),`↓${f(T.rx_mbs)} ↑${f(T.tx_mbs)}`,100*Math.max(T.rx_mbs||0,T.tx_mbs||0)/117,"shared 1 GbE, MB/s")]:[cell("State","not reachable",null)]};
+const jobs=h=>(s.mac_jobs||[]).filter(j=>(j.host||"mac")===h).map(j=>j.label.split(/[:(]/)[0].trim()),cur=(g.current||[]).length;
+document.getElementById("lanes").innerHTML=["mac","linux","unraid"].map(h=>{const st=(s.lanes||[]).filter(x=>x.host===h),J=jobs(h);
+ return `<div class="lane"><h3>${hb(h)} <span class="muted small">${esc((HOST[h]||["",""])[1].split(" · ").slice(1).join(" · "))}</span></h3><div class="cells">${C[h].join("")}</div>
+ ${st.map(x=>`<div class="stream"><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span> <b class="small">${esc(x.name)}</b><div class="small muted now detail">${esc(x.now)}</div></div>`).join("")}
+ ${J.length||(h==="linux"&&cur)?`<div class="stream small"><b>${J.length+(h==="linux"?cur:0)} job${J.length+(h==="linux"?cur:0)==1?"":"s"}:</b> ${[...J,...(h==="linux"&&cur?[`${cur} speaker-pass item${cur==1?"":"s"}`]:[])].map(esc).join(" · ")}</div>`:""}</div>`}).join("");
+const P=s.pipelines||[],pe=document.getElementById("pipes");pe.hidden=!P.length;
+pe.innerHTML=P.map(p=>`<b>${esc(p.name)}</b> <span class="muted small">${p.total!=null?p.total+" in queue":""}${p.note?" · "+esc(p.note):""}</span><table class="pipe">${p.stages.map(x=>`<tr><td>${hb(x.host)}</td><td class="lbl">${esc(x.label)}</td><td><b>${x.count??"?"}</b>${x.of_total?` / ${p.total}`:""}</td><td>${x.pct!=null?ubar(x.pct,20)+` ${x.pct}%`:""}</td><td class="small">${x.per_hour!=null?`${x.per_hour} in the last hour`:""}</td><td class="small muted">${x.eta_s?`~${secs(x.eta_s)} left at this rate`:x.of_total&&x.per_hour===0?'<span class="paused">none in the last hour</span>':""}</td></tr>`).join("")}</table>`).join("<div style='height:8px'></div>");
+const A=s.archive||{windows:[]};document.getElementById("qnote").textContent=`(active in the last ${A.days||15} days · click a row for purpose and expected gain)`;
+document.getElementById("arch").innerHTML=A.windows.length?`<span class="muted">Archive (no activity for ${A.days} days, ${A.days}-day windows):</span> `+A.windows.map(w=>`<a href="/archive?from=${w.from}">${w.from} to ${w.to}</a> <span class="muted">(${w.n})</span>`).join(" · "):"";}
+async function load(){const s=await (await fetch("/api/status")).json();try{drawLanes(s)}catch(e){console.log("lanes",e)}
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
 document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>{const f=(s.report_fresh||[])[i]||{led:"grey",note:""},c={green:"#1fb35a",yellow:"#e6b000",red:"#e03b3b",grey:"#9aa0a8"}[f.led];return `<a href="/report/${i}" target="_blank" title="${esc(f.led+': '+(f.note||'')+(f.newer&&f.newer.length?' · '+f.newer.map(x=>x.source+' '+x.at).join(', '):''))}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};box-shadow:0 0 5px ${c};margin-right:4px"></span>${esc(n)}</a>`}).join(" · "):"";
@@ -1569,6 +1797,7 @@ ${C.not_in_catalog?` <button onclick="if(confirm('Add ${C.not_in_catalog} rows t
 document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Host</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${hb('mac')} → ${hb('linux')}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
+try{const M=document.getElementById("more");M.open=localStorage.getItem("jb-more")==="1";M.addEventListener("toggle",()=>{try{localStorage.setItem("jb-more",M.open?"1":"0")}catch(e){}})}catch(e){}
 load();setInterval(load,15000);setInterval(drawCur,1000);
 async function comp(){try{const c=await (await fetch("/api/compute")).json();
 const k={"recon":"🟢 recon","other-heavy":"🟠 other (heavy)","other":"⚪ other"};
@@ -1601,6 +1830,7 @@ ext();setInterval(ext,20000);
 comp();setInterval(comp,20000);
 
 </script></body></html>"""
+PAGE_HEAD = PAGE[:PAGE.index("<header")].replace("<title>Job Board</title>", "<title>__TITLE__</title>")
 
 
 def make_handler(board):
@@ -1624,6 +1854,9 @@ def make_handler(board):
                 return self._send(403, {"error": "forbidden"})
             if self.path == "/":
                 return self._send(200, PAGE.replace("__TOKEN__", TOKEN).replace("__REDACT__", "true" if board.redact else "false").replace("__HOSTS__", json.dumps(board.hosts())), "text/html; charset=utf-8")
+            if self.path.startswith("/archive"):
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                return self._send(200, board.archive_page((q.get("from") or [""])[0]), "text/html; charset=utf-8")
             if self.path == "/api/status":
                 return self._send(200, board.status())
             if self.path == "/api/compute":
