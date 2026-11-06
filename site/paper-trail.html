@@ -85,6 +85,7 @@
   @media (max-width: 600px) { body { font-size: 17px; } td:first-child { width: auto; } }
 </style>
 
+</head>
 <body>
 <main>
   <div class="promo" id="promo" aria-live="polite"></div>
@@ -99,6 +100,48 @@
 
   <h2>🆕 What's new in this edition</h2>
   <div class="wrap"><table id="news"></table></div>
+
+  <h2>🌱 How it came about</h2>
+  <p class="sub">From the coding-agent session records (AgentsView session IDs only; no message text from the care record). Times are Central.</p>
+  <div class="wrap"><table>
+    <tr><td>Oct 26</td><td>A used Fujitsu ScanSnap S1500M bought on ShopGoodwill, Buy Now, <b>$14.99</b> (session <code>18860528</code>).</td></tr>
+    <tr><td>Oct 29, 3:31 PM</td><td>Shipped by FedEx.</td></tr>
+    <tr><td>Nov 1, 10:40:57 AM</td><td>📦 Arrived. First words to the agent: <i>"ALL YOUR PAPES ARE BELONG TO US … there is no paper? paper trail? paper parade? THE PAPE"</i> (session <code>6d0b256a</code>).</td></tr>
+    <tr><td>10:41:26</td><td>The free scanner driver (SANE) starts installing; the release is earmarked.</td></tr>
+    <tr><td>10:42:43</td><td>🔌 <i>"chute open, plugged direct to mac."</i></td></tr>
+    <tr><td>10:42:55</td><td>The Mac sees the scanner on USB.</td></tr>
+    <tr><td>10:43:03</td><td>Driver test answers "feeder out of documents": the driver works, no Fujitsu software needed.</td></tr>
+    <tr><td>10:43:34</td><td>Tools check: OCRmyPDF, Tesseract with 163 languages, feeder in duplex mode.</td></tr>
+    <tr><td>10:43:58</td><td><code>pape_scan.sh</code> committed.</td></tr>
+    <tr><td>10:44:12</td><td>📄 <i>"paper in, ready for test."</i></td></tr>
+    <tr><td><b>10:45:16</b></td><td><b>First automated scan: 6 pages, about 1,400 words, 53 seconds, with checksums and a custody log.</b></td></tr>
+    <tr><td>10:50:36</td><td>Blank backs set aside before text recognition.</td></tr>
+    <tr><td>11:56 AM – 2:17 PM</td><td>OCR bake-off, Mac installer, website audit, the per-page router (P.A.P.E.R.).</td></tr>
+    <tr><td>3:52 PM</td><td>Resource ledger: broken links kept with the date they broke and where the content moved.</td></tr>
+    <tr><td>9:09 PM</td><td>Link checker, and markdown to PDF/UA-1 letters.</td></tr>
+    <tr><td>Nov 5, 11:47:34 PM</td><td>🚀 Public as v0.9.0 PAPER TRAIL.</td></tr>
+  </table></div>
+  <blockquote>⏱️ <b>Arrival to first automated scan: 4 min 19 s.</b> Plugged in to a searchable PDF: 2 min 33 s. A $14.99 scanner and free tools. The name was in the first message: "paper trail?"</blockquote>
+
+  <h2>🧰 Tools it stands on</h2>
+  <p class="sub">All free and open source, all running on the family's own computer.</p>
+  <div class="wrap"><table>
+    <tr><td>Scanner driver</td><td><a href="http://www.sane-project.org/">SANE</a> (<code>scanimage</code>, Fujitsu backend)</td></tr>
+    <tr><td>Searchable PDF</td><td><a href="https://github.com/ocrmypdf/OCRmyPDF">OCRmyPDF</a> · <a href="https://github.com/tesseract-ocr/tesseract">Tesseract</a> + <a href="https://github.com/tesseract-ocr/tessdata">tessdata</a> (160+ languages)</td></tr>
+    <tr><td>Second-opinion OCR</td><td><a href="https://github.com/RapidAI/RapidOCR">RapidOCR</a> on <a href="https://onnxruntime.ai/">ONNX Runtime</a></td></tr>
+    <tr><td>Tables, hard pages</td><td><a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR-VL</a> (GGUF) via <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a></td></tr>
+    <tr><td>Page cleanup</td><td><a href="https://github.com/unpaper/unpaper">unpaper</a> · <a href="https://gitlab.mister-muffin.de/josch/img2pdf">img2pdf</a> · <a href="https://github.com/agl/jbig2enc">jbig2enc</a> · <a href="https://pngquant.org/">pngquant</a></td></tr>
+    <tr><td>PDF structure</td><td><a href="https://github.com/pikepdf/pikepdf">pikepdf</a> · <a href="https://github.com/py-pdf/pypdf">pypdf</a> · <a href="https://github.com/qpdf/qpdf">qpdf</a> · <a href="https://poppler.freedesktop.org/">Poppler</a> · <a href="https://github.com/jsvine/pdfplumber">pdfplumber</a> · <a href="https://www.ghostscript.com/">Ghostscript</a></td></tr>
+    <tr><td>PDF/UA-1 check</td><td><a href="https://verapdf.org/">veraPDF</a> against <a href="https://pdfa.org/resource/iso-14289-pdfua/">ISO 14289-1</a></td></tr>
+    <tr><td>Tagged PDF print</td><td><a href="https://www.chromium.org/">Chromium</a> <code>--export-tagged-pdf</code> (<a href="https://brave.com/">Brave</a> on the Mac)</td></tr>
+    <tr><td>Websites (WCAG 2.1 AA)</td><td><a href="https://pa11y.org/">pa11y</a> · <a href="https://github.com/dequelabs/axe-core-npm">axe-core CLI</a> · <a href="https://www.w3.org/TR/WCAG21/">WCAG 2.1</a></td></tr>
+    <tr><td>Word, PowerPoint</td><td><a href="https://github.com/python-openxml/python-docx">python-docx</a> · <a href="https://github.com/scanny/python-pptx">python-pptx</a></td></tr>
+    <tr><td>Images</td><td><a href="https://python-pillow.org/">Pillow</a></td></tr>
+    <tr><td>Change notes</td><td>a local model through <a href="https://ollama.com/">Ollama</a></td></tr>
+    <tr><td>Letters</td><td><a href="https://pandoc.org/">pandoc</a></td></tr>
+    <tr><td>Optional briefs</td><td><a href="https://github.com/the1truedan/ada-doc-check">ada-doc-check</a> · <a href="https://github.com/the1truedan/aida-complex-doc-lab">A.I.D.A. lab</a></td></tr>
+    <tr><td>Screen reader</td><td><a href="https://www.apple.com/accessibility/vision/">VoiceOver</a> (built into macOS)</td></tr>
+  </table></div>
 
   <h2>🏷️ The name</h2>
   <p><b>PAPER TRAIL</b>, nickname <b>the P.A.P.E.-r trail</b>: a family's word is strongest when it has a paper trail. P.A.P.E. (Paper Accessibility, Parsing &amp; Evidence) brings the paper; phone+net+I.C.K.S. brings the phones. One record, dated and fingerprinted, built on the family's own computer.</p>
@@ -142,6 +185,8 @@
   ];
   var PAPER_NEWS = ["📄 P.A.P.E. (Paper Accessibility, Parsing & Evidence)", "Scanner to searchable, tagged PDF that passes PDF/UA-1; audits agency sites, PDFs and links; keeps a dated ledger of broken official links. <span class=\"tag live\">new in this edition</span>"];
 
+  var MOTION = true;
+  try { MOTION = !window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
 
@@ -153,7 +198,8 @@
       '<rect x="0" y="0" width="66" height="116" rx="11" style="fill:' + frame + ';stroke:var(--fg);stroke-width:3"/>' +
       '<rect x="7" y="10" width="52" height="94" rx="5" class="s-screen"/>' +
       '<circle cx="33" cy="42" r="' + r + '" style="fill:none;stroke:var(--metal-dark);stroke-width:5"/>' +
-      '<circle cx="33" cy="42" r="' + r + '" transform="rotate(-90 33 42)" style="fill:none;stroke:var(--screen-fg);stroke-width:5;stroke-linecap:round" stroke-dasharray="' + on.toFixed(1) + ' ' + c.toFixed(1) + '"/>' +
+      '<circle cx="33" cy="42" r="' + r + '" transform="rotate(-90 33 42)" style="fill:none;stroke:var(--screen-fg);stroke-width:5;stroke-linecap:round" stroke-dasharray="' + on.toFixed(1) + ' ' + c.toFixed(1) + '">' +
+        (MOTION ? '<animate attributeName="stroke-dasharray" values="0 ' + c.toFixed(1) + ';' + on.toFixed(1) + ' ' + c.toFixed(1) + ';' + on.toFixed(1) + ' ' + c.toFixed(1) + '" keyTimes="0;.7;1" dur="4s" repeatCount="indefinite"/>' : '') + '</circle>' +
       '<text x="33" y="47" text-anchor="middle" style="fill:var(--screen-fg);font:700 12px var(--sans)">' + pct + '%</text>' +
       '<rect x="14" y="70" width="38" height="5" rx="2.5" class="s-screen-fg"/><rect x="14" y="80" width="' + Math.round(38 * pct / 100) + '" height="5" rx="2.5" class="s-screen-fg pulse"/>' +
       '<text x="33" y="98" text-anchor="middle" style="fill:var(--screen-fg);font:600 8px var(--sans);letter-spacing:.08em">' + label + '</text>' +
@@ -172,27 +218,35 @@
     // ADF scanner: input tray with a page stack on top, body, one page coming out the front
     var pages = "";
     for (var i = 0; i < 4; i++) {
-      pages += '<g transform="translate(' + (64 + i * 7) + ' ' + (14 + i * 6) + ') rotate(-12)"><rect x="0" y="0" width="74" height="48" rx="2" class="s-paper"/>' +
-        '<line x1="9" y1="14" x2="58" y2="14" class="s-line" style="stroke:var(--muted);stroke-width:2"/><line x1="9" y1="24" x2="62" y2="24" class="s-line" style="stroke:var(--muted);stroke-width:2"/><line x1="9" y1="34" x2="44" y2="34" class="s-line" style="stroke:var(--muted);stroke-width:2"/></g>';
+      pages += '<g class="' + (i === 3 ? 'feed' : '') + '"><g transform="translate(' + (64 + i * 7) + ' ' + (14 + i * 6) + ') rotate(-12)"><rect x="0" y="0" width="74" height="48" rx="2" class="s-paper"/>' +
+        '<line x1="9" y1="14" x2="58" y2="14" class="s-line" style="stroke:var(--muted);stroke-width:2"/><line x1="9" y1="24" x2="62" y2="24" class="s-line" style="stroke:var(--muted);stroke-width:2"/><line x1="9" y1="34" x2="44" y2="34" class="s-line" style="stroke:var(--muted);stroke-width:2"/></g></g>';
     }
     var scanner = pages +
       '<rect x="40" y="70" width="184" height="62" rx="10" class="s-metal"/>' +
       '<path d="M52 72 L212 72" class="s-line" style="stroke:var(--metal-dark);stroke-width:6"/>' +
-      '<rect x="58" y="96" width="110" height="7" rx="3.5" class="s-accent pulse"/>' +
+      '<rect x="58" y="96" width="110" height="7" rx="3.5" class="s-accent"/>' +
+      '<rect x="58" y="93" width="16" height="13" rx="3" class="sweep" style="fill:var(--paper);opacity:.85"/>' +
       '<circle cx="200" cy="112" r="6" class="s-accent pulse"/>' +
       '<text x="62" y="124" class="s-small" style="font-size:11px">ADF</text>' +
-      '<g transform="translate(150 130)"><rect x="0" y="0" width="62" height="22" rx="2" class="s-paper"/><line x1="8" y1="11" x2="50" y2="11" class="s-line" style="stroke:var(--muted);stroke-width:2"/></g>';
+      '<g class="out"><g transform="translate(150 130)"><rect x="0" y="0" width="62" height="22" rx="2" class="s-paper"/><line x1="8" y1="11" x2="50" y2="11" class="s-line" style="stroke:var(--muted);stroke-width:2"/></g></g>';
     var phones = phoneSvg(40, 180, "var(--warm)", 72, "SAVING") + phoneSvg(130, 180, "var(--accent)", 45, "SAVING");
     // µ cube (isometric)
-    var cube = '<g>' +
+    var cube = '<g class="float">' +
       '<polygon points="530,96 606,134 530,172 454,134" style="fill:var(--accent);stroke:var(--fg);stroke-width:3;stroke-linejoin:round"/>' +
       '<polygon points="454,134 530,172 530,258 454,220" style="fill:var(--metal);stroke:var(--fg);stroke-width:3;stroke-linejoin:round"/>' +
       '<polygon points="530,172 606,134 606,220 530,258" style="fill:var(--metal-dark);stroke:var(--fg);stroke-width:3;stroke-linejoin:round"/>' +
-      '<text transform="matrix(1,-0.5,0,1,568,236)" text-anchor="middle" style="fill:var(--bg);font:800 58px Georgia,\'Times New Roman\',serif">µ</text>' +
+      '<text class="glow" transform="matrix(1,-0.5,0,1,568,236)" text-anchor="middle" style="fill:var(--bg);font:800 58px Georgia,\'Times New Roman\',serif">µ</text>' +
       '<text transform="matrix(1,0.5,0,1,492,212)" text-anchor="middle" style="fill:var(--fg);font:700 11px var(--sans);letter-spacing:.1em">SHA-256</text>' +
       '</g>';
     return '<svg viewBox="0 0 640 380" role="img" aria-label="PAPER TRAIL promo: a stack of papers feeding into a document scanner, and two phones plugged in with progress rings at 72 and 45 percent; streams of data points from the scanner and both phones flow into a cube marked with the micro sign">' +
-      '<style>@media (prefers-reduced-motion: no-preference){.flow{animation:flow 1.2s linear infinite}@keyframes flow{to{stroke-dashoffset:-19}}}</style>' +
+      '<style>@media (prefers-reduced-motion: no-preference){' +
+        '.flow{animation:flow 1.2s linear infinite}@keyframes flow{to{stroke-dashoffset:-19}}' +
+        '.feed{animation:feed 3.2s ease-in infinite}@keyframes feed{0%,15%{transform:translate(0,0);opacity:1}70%{transform:translate(10px,40px);opacity:1}85%,100%{transform:translate(12px,48px);opacity:0}}' +
+        '.sweep{animation:sweep 1.6s ease-in-out infinite alternate}@keyframes sweep{from{transform:translateX(0)}to{transform:translateX(94px)}}' +
+        '.out{animation:out 3.2s ease-out infinite}@keyframes out{0%,40%{transform:translateY(-14px);opacity:0}60%,100%{transform:translateY(0);opacity:1}}' +
+        '.float{animation:float 5s ease-in-out infinite}@keyframes float{50%{transform:translateY(-6px)}}' +
+        '.glow{animation:glow 2.4s ease-in-out infinite}@keyframes glow{50%{opacity:.55}}' +
+      '}</style>' +
       streams + scanner + phones + cube +
       '<text x="320" y="350" text-anchor="middle" class="s-text">' + esc(n.name) + '</text>' +
       '<text x="320" y="372" text-anchor="middle" class="s-small" style="font-size:12px">' + esc(n.tagline) + '</text>' +

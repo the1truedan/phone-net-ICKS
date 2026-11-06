@@ -15,8 +15,8 @@ echo "== Python tools venv (~/models/pape_tools/.venv)"
 UV=$(command -v uv || echo ~/.local/bin/uv)
 mkdir -p ~/models/pape_tools && cd ~/models/pape_tools || exit 1
 [ -x .venv/bin/python ] || "$UV" venv -q -p 3.12 .venv
-VIRTUAL_ENV=$PWD/.venv "$UV" pip install -q rapidocr onnxruntime python-docx python-pptx pypdf pikepdf pillow \
-  && ok "rapidocr onnxruntime python-docx python-pptx pypdf pikepdf pillow" || echo "  ❌ python tools"
+VIRTUAL_ENV=$PWD/.venv "$UV" pip install -q rapidocr onnxruntime python-docx python-pptx pypdf pikepdf pillow pdfplumber \
+  && ok "rapidocr onnxruntime python-docx python-pptx pypdf pikepdf pillow pdfplumber" || echo "  ❌ python tools"
 echo "== Node CLIs (~/models/pape_tools/node)"
 mkdir -p node && cd node && [ -f package.json ] || npm init -y >/dev/null
 npm install --silent pa11y @axe-core/cli >/dev/null 2>&1 && ok "pa11y @axe-core/cli" || echo "  ❌ node CLIs"
