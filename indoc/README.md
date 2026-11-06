@@ -1,5 +1,7 @@
 # I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E. (alpha)
 
+*Intake & Normalization · Document OCR Capture · Thermal Receipt Item Normalizer · 8 passes · Provenance-Indexed Expense & Custody Engine.* The app file is named **in-doc-trin-8-piece**.
+
 **Receipts and paper → your own ledger, on your own Mac.** A small Mac app over the P.A.P.E. receipt engine
 (`scripts/pape/pape_receipt.py`). Scan a stack of paper receipts (or drop photos and PDFs on the window) and get
 spreadsheets of dates, times, stores, totals, items, categories and how each one was paid. Nothing is uploaded.
