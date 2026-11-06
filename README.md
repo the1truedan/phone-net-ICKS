@@ -37,7 +37,7 @@ Plug the phone in; the pull starts on its own. A patch on top of GREEK SQUAT:
   High contrast, Terminal, Retro) and a Compact view.
 - **Game mode (optional):** one toggle on the board pauses the GPU jobs and opens the game launcher; "done" closes it and resumes.
 
-Desktop app changes are in source now; the next installer build carries them (the v0.8.0 installers still work).
+The Mac installer is version 0.8.1 too: `phone-net-ICKS_0.8.1_aarch64.dmg` on the [v0.8.1 release page](https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.1).
 
 ## v0.8.0 · GREEK SQUAT edition (2026-11-02)
 
@@ -109,11 +109,11 @@ on the release page (`shasum -a 256 <file>` on Mac and Linux, `certutil -hashfil
 
 | Computer | File | First time you open it |
 | --- | --- | --- |
-| **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.0_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
+| **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.1_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
 | **Windows** 10 or 11 *(in the next few days)* | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
-| **Linux** (64-bit Intel/AMD) *(in the next few days)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.0_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
+| **Linux** (64-bit Intel/AMD) *(in the next few days)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.1_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
 
-Older Macs (Intel) are not supported in v0.8.0. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
+Older Macs (Intel) are not supported yet. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
 
 ## Job board (v0.5.0, updated v0.6.0)
 A local page (127.0.0.1 only) to watch and steer the GPU transcription queues: GPU host CPU/memory/GPU and temperature,

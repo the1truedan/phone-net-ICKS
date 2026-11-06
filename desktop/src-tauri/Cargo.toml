@@ -1,6 +1,6 @@
 [package]
 name = "phone-net-icks"
-version = "0.8.0"
+version = "0.8.1"
 description = "phone-net-ICKS desktop: THE LAST JUDGEMENT"
 authors = ["the1truedan"]
 license = "MIT"

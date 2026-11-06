@@ -19,7 +19,7 @@
 - **Job board clarity redesign:** host lanes, `[[pipeline]]` stages, per-job status file (`n/total` overrides line count),
   optional count regex, stale rows shown as idle, 15-day archive (`/archive`), five looks and Compact/Detailed.
 - **Job board game mode (optional):** `[game_mode] script` on the GPU host: play = pause jobs + open launcher, done = resume.
-- Desktop installers stay at 0.8.0 until the next build; these desktop changes are source-only for now.
+- **Mac installer 0.8.1** (`phone-net-ICKS_0.8.1_aarch64.dmg`, unsigned, public build) with `SHA256SUMS.txt` on the v0.8.1 release page.
 
 ## v0.8.0 — 2026-11-02 · GREEK SQUAT edition
 - **GREEK SQUAT** ("it's all Greek to me"; squat = the data left behind). When a loved one passes, their heart and mind are on
