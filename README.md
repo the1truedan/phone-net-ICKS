@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.8.1 PLUG AND PLAY edition (2026-11-05) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.0 PAPER TRAIL edition (2026-11-05) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,18 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Latest · v0.8.1 · PLUG AND PLAY edition (2026-11-05)
+## Latest · v0.9.0 · PAPER TRAIL edition (2026-11-05)
+
+*Nickname: the P.A.P.E.-r trail.* The paper side arrives. **P.A.P.E.** (Paper Accessibility, Parsing & Evidence) joins the phone pulls
+in [`scripts/pape/`](scripts/pape/README.md): a document feeder scanner turns notices, care plans and receipts into searchable PDFs
+that screen readers can use (PDF/UA-1, checked with veraPDF), with the same custody files as a phone pull. It also audits public
+websites, PDFs and links for accessibility (WCAG 2.1 AA), keeps broken links with the date they broke, and shows what changed
+between two versions of an official document. All local. One-pager: [PAPER TRAIL](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html).
+
+Released at 11:23 PM, 48 minutes after v0.8.1 below.
+P.A.P.E. runs from the command line, so the Mac app stays at **0.8.1** (`phone-net-ICKS_0.8.1_aarch64.dmg`, on the v0.8.1 release page).
+
+## v0.8.1 · PLUG AND PLAY edition (2026-11-05)
 
 Plug the phone in; the pull starts on its own. A patch on top of GREEK SQUAT:
 
@@ -27,7 +38,17 @@ Plug the phone in; the pull starts on its own. A patch on top of GREEK SQUAT:
   High contrast, Terminal, Retro) and a Compact view.
 - **Game mode (optional):** one toggle on the board pauses the GPU jobs and opens the game launcher; "done" closes it and resumes.
 
-Desktop app changes are in source now; the next installer build carries them (the v0.8.0 installers still work).
+The Mac installer is version 0.8.1 too: `phone-net-ICKS_0.8.1_aarch64.dmg` on the [v0.8.1 release page](https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.1).
+
+**The breakthrough: from "why isn't it automatic?" to auto-pull in 80 seconds.** From the session history ([AgentsView](https://github.com/kenn-io/agentsview); session IDs only, no care-record text). Central time.
+
+- **Nov 1, 3:38 AM:** *"can i plug in the play to use the app for the recon pull?"* 20 minutes later the app had a **Pull new files** button (`3e10d32`, session `6d0b256a`). It sat on a side branch.
+- **Nov 2, 11:21 AM:** first real pull from the app. Next ask: have the job board pick up every new pull by itself.
+- **4:25 PM:** auto-pull on plug-in written and saved, but not built.
+- **4:30:25 PM:** *"dude why the f is the mac app not auto pull on connect. was that not smoketested proper?"* The answer, 3 seconds later: no, it was never built or tested.
+- **4:30:53 PM:** built in 17 seconds. **4:31:45 PM:** the phone on the cable started its pull by itself about 5 seconds after the app opened. **Call-out to working: 1 min 20 s.** The miss became a rule: a feature isn't done until it has run on a real phone.
+- **4:35 PM:** the progress page opens in the phone's own browser. **7:46 PM:** game mode on the job board.
+- **Nov 5, 5:37 PM:** *"redesign job board time now"*, plus *"can the blink pull stats and other background jobs better inform status and progress"* (session `88460753`). Result: host lanes, honest idle rows, a 15-day archive and five looks, released 10:35 PM (session `955c38eb`).
 
 ## v0.8.0 · GREEK SQUAT edition (2026-11-02)
 
@@ -99,11 +120,11 @@ on the release page (`shasum -a 256 <file>` on Mac and Linux, `certutil -hashfil
 
 | Computer | File | First time you open it |
 | --- | --- | --- |
-| **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.0_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
+| **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.1_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
 | **Windows** 10 or 11 *(in the next few days)* | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
-| **Linux** (64-bit Intel/AMD) *(in the next few days)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.0_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
+| **Linux** (64-bit Intel/AMD) *(in the next few days)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.1_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
 
-Older Macs (Intel) are not supported in v0.8.0. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
+Older Macs (Intel) are not supported yet. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
 
 ## Job board (v0.5.0, updated v0.6.0)
 A local page (127.0.0.1 only) to watch and steer the GPU transcription queues: GPU host CPU/memory/GPU and temperature,
@@ -200,7 +221,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.1"><img src="https://img.shields.io/badge/release-v0.8.1_PLUG_AND_PLAY_edition-3dcaa0?style=for-the-badge" alt="v0.8.1 PLUG AND PLAY edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/release-v0.9.0_PAPER_TRAIL_edition-3dcaa0?style=for-the-badge" alt="v0.9.0 PAPER TRAIL edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>

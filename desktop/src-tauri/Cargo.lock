@@ -2272,7 +2272,7 @@ dependencies = [
 
 [[package]]
 name = "phone-net-icks"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "log",
  "serde",

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.9.0 — 2026-11-05 · PAPER TRAIL edition (nickname: the P.A.P.E.-r trail)
+- **P.A.P.E. (Paper Accessibility, Parsing & Evidence)** in `scripts/pape/`: feeder scan to searchable PDF with custody files
+  (`pape_scan.sh`), per-page reader routing (`pape_route.py`), tagged PDF for PDF/UA-1 (`pape_tag_pdf.py`), full treatment
+  (`pape_process.py`), folder, website and PDF-list accessibility audits (`pape_a11y_audit.py`, `pape_web_audit.py`,
+  `pape_pdf_url_audit.py`), link check with login walls and soft 404s (`pape_link_check.py`), official-document version diff
+  (`pape_version_diff.py`), markdown to PDF/UA-1 letters (`pape_md_to_pdf.py`), and a Mac installer (`pape_install_tools.sh`).
+- Owner-specific source names move to a local `~/.config/pape/agencies.json`; output goes to `$PAPE_OUT` (default `~/pape_scans`).
+- **`site/paper-trail.html`:** the PAPER TRAIL one-pager (pages in the feeder + two phones with status screens, into the µ cube).
+- Released at 11:23 PM, 48 minutes after v0.8.1.
+
 ## v0.8.1 — 2026-11-05 · PLUG AND PLAY edition
 - **Desktop: auto-pull on plug-in.** A watcher starts the owner's pull once per plug-in for phones listed in `pulls.json`
   (skips while one runs or within 30 min of the last; `auto_pull: false` off). Phone card shows Last pull age (amber 1 day, red 3).
@@ -9,7 +19,7 @@
 - **Job board clarity redesign:** host lanes, `[[pipeline]]` stages, per-job status file (`n/total` overrides line count),
   optional count regex, stale rows shown as idle, 15-day archive (`/archive`), five looks and Compact/Detailed.
 - **Job board game mode (optional):** `[game_mode] script` on the GPU host: play = pause jobs + open launcher, done = resume.
-- Desktop installers stay at 0.8.0 until the next build; these desktop changes are source-only for now.
+- **Mac installer 0.8.1** (`phone-net-ICKS_0.8.1_aarch64.dmg`, unsigned, public build) with `SHA256SUMS.txt` on the v0.8.1 release page.
 
 ## v0.8.0 — 2026-11-02 · GREEK SQUAT edition
 - **GREEK SQUAT** ("it's all Greek to me"; squat = the data left behind). When a loved one passes, their heart and mind are on
