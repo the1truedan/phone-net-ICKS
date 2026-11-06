@@ -4,8 +4,11 @@
 (`scripts/pape/pape_receipt.py`). Scan a stack of paper receipts (or drop photos and PDFs on the window) and get
 spreadsheets of dates, times, stores, totals, items, categories and how each one was paid. Nothing is uploaded.
 
+**Download (Mac, Apple silicon):** [in-doc-trin-8-piece_0.1.0-alpha_aarch64.dmg](https://github.com/the1truedan/phone-net-ICKS/releases/download/indoc-v0.1.0-alpha/in-doc-trin-8-piece_0.1.0-alpha_aarch64.dmg) · [release page](https://github.com/the1truedan/phone-net-ICKS/releases/tag/indoc-v0.1.0-alpha)
+
 > **Alpha.** It works on the owner's own receipts and on the made-up receipts in the screenshots. Expect rough
-> edges (listed below). Unsigned: the first time, right-click the app and choose **Open**.
+> edges (listed below). Unsigned: drag **in-doc-trin-8-piece** to Applications and open it; when macOS says it cannot check it, follow the
+> [first-time steps](../README.md#desktop-app-from-v080-install) (System Settings → Privacy & Security → Open Anyway).
 
 ![Receipts with the scan and items of one receipt](screenshots/1_receipts_detail.png)
 
@@ -47,7 +50,7 @@ Your own store list stays private in `~/pape_scans/receipts/local_rules.json` (s
 
 ## Rough edges (alpha)
 
-- Unsigned app: right-click → Open the first time.
+- Unsigned app: System Settings → Privacy & Security → **Open Anyway** the first time.
 - Tested with one sheet-fed scanner model only (a Fujitsu ScanSnap S1500 over SANE).
 - Tuned on a small number of store layouts; a new store's first receipt may need a look (it gets flagged).
 - Stores learned from receipts start in the category **other** until you add them to `local_rules.json`.
@@ -61,3 +64,7 @@ cd indoc/src-tauri && cargo tauri build --bundles app
 ```
 
 The engine is built into the app and written to `~/pape_scans/receipts/.engine/` on start.
+
+---
+
+**© 2026 M.A.N.A.G.E.R. LLC** · *prepare for the care when we cannot be there*

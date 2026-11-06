@@ -13,6 +13,15 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
+## Mac installers (Apple silicon)
+
+| App | What it does | Download |
+| --- | --- | --- |
+| **phone-net-ICKS** 0.8.1 | Pull a phone over USB; checksummed, searchable record | [phone-net-ICKS_0.8.1_aarch64.dmg](https://github.com/the1truedan/phone-net-ICKS/releases/download/v0.8.1/phone-net-ICKS_0.8.1_aarch64.dmg) |
+| **in-doc-trin-8-piece** 0.1.0 *alpha* (new) | Paper receipts → your own ledger (CSV), on this Mac. [About](indoc/README.md) | [in-doc-trin-8-piece_0.1.0-alpha_aarch64.dmg](https://github.com/the1truedan/phone-net-ICKS/releases/download/indoc-v0.1.0-alpha/in-doc-trin-8-piece_0.1.0-alpha_aarch64.dmg) |
+
+Both are unsigned: the first time, see [install](#desktop-app-from-v080-install). Check downloads against `SHA256SUMS.txt` on each release page.
+
 ## Latest · v0.9.0 · PAPER TRAIL edition (2026-11-05)
 
 *Nickname: the P.A.P.E.-r trail.* The paper side arrives. **P.A.P.E.** (Paper Accessibility, Parsing & Evidence) joins the phone pulls

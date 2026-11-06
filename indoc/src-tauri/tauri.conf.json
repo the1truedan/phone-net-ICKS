@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "INDOC-TRIN 8-PIECE",
+  "productName": "in-doc-trin-8-piece",
   "version": "0.1.0",
   "identifier": "io.github.the1truedan.indoc-trin",
   "build": { "frontendDist": "../ui" },
