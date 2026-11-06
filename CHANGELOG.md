@@ -8,7 +8,7 @@
   (`pape_version_diff.py`), markdown to PDF/UA-1 letters (`pape_md_to_pdf.py`), and a Mac installer (`pape_install_tools.sh`).
 - Owner-specific source names move to a local `~/.config/pape/agencies.json`; output goes to `$PAPE_OUT` (default `~/pape_scans`).
 - **`site/paper-trail.html`:** the PAPER TRAIL one-pager (pages in the feeder + two phones with status screens, into the µ cube).
-- Released 1 h 12 after v0.8.1, a nod to GREEK SQUAT's daylight-saving hour.
+- Released at 11:23 PM, 48 minutes after v0.8.1.
 
 ## v0.8.1 — 2026-11-05 · PLUG AND PLAY edition
 - **Desktop: auto-pull on plug-in.** A watcher starts the owner's pull once per plug-in for phones listed in `pulls.json`

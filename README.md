@@ -21,7 +21,7 @@ that screen readers can use (PDF/UA-1, checked with veraPDF), with the same cust
 websites, PDFs and links for accessibility (WCAG 2.1 AA), keeps broken links with the date they broke, and shows what changed
 between two versions of an official document. All local. One-pager: [PAPER TRAIL](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html).
 
-Released at 11:47 PM, 1 h 12 after v0.8.1 below: a nod to GREEK SQUAT's "12 minutes on the clock, 1 h 12 in fact."
+Released at 11:23 PM, 48 minutes after v0.8.1 below.
 P.A.P.E. runs from the command line, so the Mac app stays at **0.8.1** (`phone-net-ICKS_0.8.1_aarch64.dmg`, on the v0.8.1 release page).
 
 ## v0.8.1 · PLUG AND PLAY edition (2026-11-05)

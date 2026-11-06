@@ -73,7 +73,7 @@ From the coding-agent session records (AgentsView session IDs only; no message t
 | 11:56 AM – 2:17 PM | OCR bake-off, Mac installer, website audit, per-page router (P.A.P.E.R.). |
 | 3:52 PM | Resource ledger: broken links kept with the date they broke and where the content moved. |
 | 9:09 PM | Link checker and markdown to PDF/UA-1. |
-| Nov 5, 11:47:34 PM | Public as v0.9.0 PAPER TRAIL. |
+| Nov 5, 11:23 PM | Public as v0.9.0 PAPER TRAIL. |
 
 **Arrival to first automated scan: 4 min 19 s. Plugged in to a searchable PDF: 2 min 33 s.** The name was there from the
 first message: "paper trail?"
