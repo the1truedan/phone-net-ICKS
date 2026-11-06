@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PAPER TRAIL</title>
+<meta name="description" content="PAPER TRAIL (v0.9.0): paper through the scanner and phones through the cable, into one dated, fingerprinted record on the family's own computer. Steps and counts only.">
+
+<style>
+  /* Layout: the site's one-pager column (same tokens as greek-squat.html), a name switcher on top, the promo graphic as the hero. */
+  :root {
+    --bg: #fbfaf7; --fg: #1d1c1a; --muted: #5d5a54; --card: #ffffff; --line: #d9d5cc;
+    --accent: #1f6f5c; --accent-fg: #ffffff; --code: #f1eee7; --warm: #b5532c; --metal: #c9ccd1; --metal-dark: #8e939b;
+    --screen: #10302a; --screen-fg: #7fe0c4; --paper: #fffdf6;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833;
+      --accent: #5cc3a6; --accent-fg: #0f1110; --code: #262521; --warm: #e58a62; --metal: #5b5f66; --metal-dark: #3d4046;
+      --screen: #0b1f1b; --screen-fg: #7fe0c4; --paper: #2b2a26; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833;
+    --accent: #5cc3a6; --accent-fg: #0f1110; --code: #262521; --warm: #e58a62; --metal: #5b5f66; --metal-dark: #3d4046;
+    --screen: #0b1f1b; --screen-fg: #7fe0c4; --paper: #2b2a26; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 19px/1.55 var(--sans); }
+  main { max-width: 980px; margin: 0 auto; padding-block: 24px 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 2em; line-height: 1.15; margin: .2em 0 .3em; text-wrap: balance; }
+  h2 { font-size: 1.3em; margin: 1.6em 0 .5em; border-bottom: 2px solid var(--line); padding-bottom: .2em; text-wrap: balance; }
+  p, li { max-width: 46em; }
+  .sub { color: var(--muted); font-size: .88em; margin: 0 0 1em; }
+  blockquote { margin: 1em 0; padding: .6em 1em; border-left: 6px solid var(--accent); background: var(--card); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: .95em; }
+  td { border-bottom: 1px solid var(--line); padding: .5em .4em; vertical-align: top; }
+  td:first-child { font-weight: 700; width: 12em; }
+  .wrap { overflow-x: auto; }
+  a { color: var(--accent); }
+  footer { margin-top: 3em; color: var(--muted); font-size: .8em; }
+
+  .mock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border: 1px dashed var(--line);
+    border-radius: 8px; font-size: .78em; color: var(--muted); margin-bottom: 18px; }
+  .mock b { color: var(--fg); }
+  .picker { display: flex; flex-wrap: wrap; gap: 8px; }
+  .picker button { font: inherit; font-weight: 600; padding: .4em .8em; border-radius: 8px; border: 2px solid var(--accent);
+    background: transparent; color: var(--fg); cursor: pointer; }
+  .picker button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+  .picker button:focus-visible { outline: 3px solid var(--warm); outline-offset: 2px; }
+  .tag { display: inline-block; font-size: .72em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: .15em .55em; border-radius: 4px; background: var(--code); color: var(--muted); vertical-align: middle; }
+  .tag.live { background: var(--accent); color: var(--accent-fg); }
+  .tag.next { background: var(--warm); color: var(--accent-fg); }
+
+  .promo { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .promo svg { display: block; width: 100%; height: auto; max-width: 100%; }
+  .s-line { stroke: var(--fg); fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .s-metal { fill: var(--metal); stroke: var(--fg); stroke-width: 3; }
+  .s-metal-d { fill: var(--metal-dark); }
+  .s-screen { fill: var(--screen); }
+  .s-screen-fg { fill: var(--screen-fg); }
+  .s-accent { fill: var(--accent); }
+  .s-warm { fill: var(--warm); }
+  .s-paper { fill: var(--paper); stroke: var(--fg); stroke-width: 3; }
+  .s-cable { stroke: var(--accent); fill: none; stroke-width: 6; stroke-linecap: round; }
+  .s-text { fill: var(--fg); font: 800 34px var(--sans); letter-spacing: .04em; }
+  .s-small { fill: var(--muted); font: 600 15px var(--sans); letter-spacing: .08em; }
+  .s-ink { fill: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) {
+    .pulse { animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+  }
+
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 0; list-style: none; }
+  .steps li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+  .steps b { display: block; font-size: 1.05em; }
+  .vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .vs > div { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; background: var(--card); }
+  .vs h3 { margin: 0 0 .3em; font-size: 1.05em; }
+  .vs ul { margin: .2em 0; padding-left: 1.1em; }
+  .rec { border-color: var(--accent) !important; border-width: 2px !important; }
+  @media (max-width: 600px) { body { font-size: 17px; } td:first-child { width: auto; } }
+</style>
+
+<body>
+<main>
+  <div class="promo" id="promo" aria-live="polite"></div>
+
+  <h1 id="h1">🔌🎮 PLUG AND PLAY: plug in the phone, then go live your life</h1>
+  <p class="sub" id="subline">phone+net+I.C.K.S. · v0.8.1 PLUG AND PLAY edition · Thu Nov 5, 2026 · steps and counts only: no names, no content, no medical detail</p>
+
+  <blockquote id="thesis">🫀 GREEK SQUAT taught the computer to save a phone. PLUG AND PLAY makes it start on its own: plug a family phone in and the copy begins, the board shows the progress in plain words, and the caregiver gets the hour back.</blockquote>
+
+  <h2>🧭 What the family does</h2>
+  <ol class="steps" id="steps"></ol>
+
+  <h2>🆕 What's new in this edition</h2>
+  <div class="wrap"><table id="news"></table></div>
+
+  <h2>🏷️ The name</h2>
+  <p><b>PAPER TRAIL</b>, nickname <b>the P.A.P.E.-r trail</b>: a family's word is strongest when it has a paper trail. P.A.P.E. (Paper Accessibility, Parsing &amp; Evidence) brings the paper; phone+net+I.C.K.S. brings the phones. One record, dated and fingerprinted, built on the family's own computer.</p>
+  <p class="sub">Released at 11:47 PM, one hour and twelve minutes after v0.8.1 PLUG AND PLAY: a nod to GREEK SQUAT's "12 minutes on the clock, 1 h 12 in fact."</p>
+
+  <footer><a href="index.html">← phone+net+I.C.K.S. home</a> · <a href="https://github.com/the1truedan/phone-net-ICKS/tree/main/scripts/pape">P.A.P.E. source</a><br>phone<b>+</b>net<b>+</b>tics · <span id="foot">v0.8.1 PLUG AND PLAY edition</span> · one door in a larger µlab · © 2026 M.A.N.A.G.E.R. LLC · prepare for the care when we cannot be there</footer>
+</main>
+
+<script>
+(function () {
+  var NAMES = {
+    play: {
+      name: "PLUG AND PLAY", ver: "v0.8.1", status: "live",
+      h1: "🔌🎮 PLUG AND PLAY: plug in the phone, then go live your life",
+      date: "Thu Nov 5, 2026",
+      thesis: "🫀 GREEK SQUAT taught the computer to save a phone. PLUG AND PLAY makes it start on its own: plug a family phone in and the copy begins, the board shows the progress in plain words, and the caregiver gets the hour back.",
+      tagline: "PLUG IT IN · WALK AWAY · COME BACK TO A RECORD"
+    },
+    trail: {
+      name: "PAPER TRAIL", ver: "v0.9.0", status: "live",
+      h1: "🧾📱 PAPER TRAIL: every page and every phone, on one dated trail",
+      date: "Thu Nov 5, 2026",
+      thesis: "🫀 A family's word is strongest when it has a paper trail. The P.A.P.E.-r trail feeds the paper through the scanner and the phones through the cable, and every page and every file lands in one record with a fingerprint and a date. Scans come out as PDFs that screen readers can use.",
+      tagline: "THE P.A.P.E.-R TRAIL · EVERY PAGE AND PHONE, DATED AND CHECKABLE"
+    }
+  };
+  var STEPS = [
+    ["1 · Plug in", "Connect the phone to the home computer with one USB-C cable. A phone that's on the list starts copying by itself."],
+    ["2 · Walk away", "The loved one's phone shows its own progress screen. The board on the computer shows each step in plain words."],
+    ["3 · Come back to a record", "Every file is copied with a fingerprint and a date. The phone card says when it was last pulled."]
+  ];
+  var PAPER_STEP = ["+ Feed the paper", "Put notices, care plans and receipts in the scanner. P.A.P.E. makes a searchable PDF that passes the accessibility check."];
+  var NEWS = [
+    ["🔌 Auto-pull on plug-in", "Once per plug-in, for phones listed in the owner's settings. Skips if a pull is running or ran in the last 30 minutes. One setting turns it off."],
+    ["🕰️ Last pull on each phone", "The phone card shows how long ago it was pulled: amber after a day, red after three, and “plug in to pull.”"],
+    ["📥 Pull from the app", "Picks up from the last custody log, names the next folder, reads the phone model from the phone, shows live progress."],
+    ["📟 Status page in the phone's own browser", "The progress screen on the phone now opens in that phone's default browser."],
+    ["🗂️ A clearer job board", "One lane per computer, pipelines with stages, rows that say “idle” instead of a false “running,” and a 15-day archive."],
+    ["🎨 Five looks", "Default, Classic, High contrast, Terminal and Retro, plus a Compact view."],
+    ["🎮 Game mode (optional)", "One toggle pauses the GPU work and opens the game launcher. “Done” closes it and resumes the jobs."]
+  ];
+  var PAPER_NEWS = ["📄 P.A.P.E. (Paper Accessibility, Parsing & Evidence)", "Scanner to searchable, tagged PDF that passes PDF/UA-1; audits agency sites, PDFs and links; keeps a dated ledger of broken official links. <span class=\"tag live\">new in this edition</span>"];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+
+  // Promo graphic: phone (plastic) on the left, cable, home computer on the right; the variant adds its own badge.
+  // PAPER TRAIL art: pages in the ADF scanner + two phones with status screens, data points flowing into the µ cube.
+  function phoneSvg(x, y, frame, pct, label) {
+    var r = 17, c = 2 * Math.PI * r, on = c * pct / 100;
+    return '<g transform="translate(' + x + ' ' + y + ')">' +
+      '<rect x="0" y="0" width="66" height="116" rx="11" style="fill:' + frame + ';stroke:var(--fg);stroke-width:3"/>' +
+      '<rect x="7" y="10" width="52" height="94" rx="5" class="s-screen"/>' +
+      '<circle cx="33" cy="42" r="' + r + '" style="fill:none;stroke:var(--metal-dark);stroke-width:5"/>' +
+      '<circle cx="33" cy="42" r="' + r + '" transform="rotate(-90 33 42)" style="fill:none;stroke:var(--screen-fg);stroke-width:5;stroke-linecap:round" stroke-dasharray="' + on.toFixed(1) + ' ' + c.toFixed(1) + '"/>' +
+      '<text x="33" y="47" text-anchor="middle" style="fill:var(--screen-fg);font:700 12px var(--sans)">' + pct + '%</text>' +
+      '<rect x="14" y="70" width="38" height="5" rx="2.5" class="s-screen-fg"/><rect x="14" y="80" width="' + Math.round(38 * pct / 100) + '" height="5" rx="2.5" class="s-screen-fg pulse"/>' +
+      '<text x="33" y="98" text-anchor="middle" style="fill:var(--screen-fg);font:600 8px var(--sans);letter-spacing:.08em">' + label + '</text>' +
+      '<rect x="27" y="116" width="12" height="6" rx="2" style="fill:var(--fg)"/></g>';
+  }
+  function promoTrail(n) {
+    var flows = [
+      'M224 92 C 320 92, 360 150, 452 170',   // scanner -> cube
+      'M73 302 C 73 330, 330 320, 452 206',    // phone 1 -> cube
+      'M163 302 C 163 318, 360 300, 458 222'   // phone 2 -> cube
+    ];
+    var streams = flows.map(function (d, i) {
+      return '<path d="' + d + '" style="fill:none;stroke:var(--line);stroke-width:9;stroke-linecap:round"/>' +
+        '<path d="' + d + '" class="flow" style="fill:none;stroke:' + (i === 0 ? 'var(--warm)' : 'var(--accent)') + ';stroke-width:7" stroke-dasharray="7 12"/>';
+    }).join("");
+    // ADF scanner: input tray with a page stack on top, body, one page coming out the front
+    var pages = "";
+    for (var i = 0; i < 4; i++) {
+      pages += '<g transform="translate(' + (64 + i * 7) + ' ' + (14 + i * 6) + ') rotate(-12)"><rect x="0" y="0" width="74" height="48" rx="2" class="s-paper"/>' +
+        '<line x1="9" y1="14" x2="58" y2="14" class="s-line" style="stroke:var(--muted);stroke-width:2"/><line x1="9" y1="24" x2="62" y2="24" class="s-line" style="stroke:var(--muted);stroke-width:2"/><line x1="9" y1="34" x2="44" y2="34" class="s-line" style="stroke:var(--muted);stroke-width:2"/></g>';
+    }
+    var scanner = pages +
+      '<rect x="40" y="70" width="184" height="62" rx="10" class="s-metal"/>' +
+      '<path d="M52 72 L212 72" class="s-line" style="stroke:var(--metal-dark);stroke-width:6"/>' +
+      '<rect x="58" y="96" width="110" height="7" rx="3.5" class="s-accent pulse"/>' +
+      '<circle cx="200" cy="112" r="6" class="s-accent pulse"/>' +
+      '<text x="62" y="124" class="s-small" style="font-size:11px">ADF</text>' +
+      '<g transform="translate(150 130)"><rect x="0" y="0" width="62" height="22" rx="2" class="s-paper"/><line x1="8" y1="11" x2="50" y2="11" class="s-line" style="stroke:var(--muted);stroke-width:2"/></g>';
+    var phones = phoneSvg(40, 180, "var(--warm)", 72, "SAVING") + phoneSvg(130, 180, "var(--accent)", 45, "SAVING");
+    // µ cube (isometric)
+    var cube = '<g>' +
+      '<polygon points="530,96 606,134 530,172 454,134" style="fill:var(--accent);stroke:var(--fg);stroke-width:3;stroke-linejoin:round"/>' +
+      '<polygon points="454,134 530,172 530,258 454,220" style="fill:var(--metal);stroke:var(--fg);stroke-width:3;stroke-linejoin:round"/>' +
+      '<polygon points="530,172 606,134 606,220 530,258" style="fill:var(--metal-dark);stroke:var(--fg);stroke-width:3;stroke-linejoin:round"/>' +
+      '<text transform="matrix(1,-0.5,0,1,568,236)" text-anchor="middle" style="fill:var(--bg);font:800 58px Georgia,\'Times New Roman\',serif">µ</text>' +
+      '<text transform="matrix(1,0.5,0,1,492,212)" text-anchor="middle" style="fill:var(--fg);font:700 11px var(--sans);letter-spacing:.1em">SHA-256</text>' +
+      '</g>';
+    return '<svg viewBox="0 0 640 380" role="img" aria-label="PAPER TRAIL promo: a stack of papers feeding into a document scanner, and two phones plugged in with progress rings at 72 and 45 percent; streams of data points from the scanner and both phones flow into a cube marked with the micro sign">' +
+      '<style>@media (prefers-reduced-motion: no-preference){.flow{animation:flow 1.2s linear infinite}@keyframes flow{to{stroke-dashoffset:-19}}}</style>' +
+      streams + scanner + phones + cube +
+      '<text x="320" y="350" text-anchor="middle" class="s-text">' + esc(n.name) + '</text>' +
+      '<text x="320" y="372" text-anchor="middle" class="s-small" style="font-size:12px">' + esc(n.tagline) + '</text>' +
+      '</svg>';
+  }
+
+  function promo(k, n) {
+    if (k === "trail") return promoTrail(n);
+    var badge = "";
+    if (k === "play") {
+      badge = '<g transform="translate(300 54)"><rect x="-58" y="-26" width="116" height="52" rx="26" class="s-metal"/>' +
+        '<rect x="-36" y="-5" width="22" height="10" rx="2" class="s-line" style="fill:var(--fg)"/><rect x="-30" y="-11" width="10" height="22" rx="2" style="fill:var(--fg)"/>' +
+        '<circle cx="22" cy="-6" r="6" class="s-accent"/><circle cx="36" cy="6" r="6" class="s-warm"/></g>';
+    } else if (k === "pray") {
+      badge = '<g transform="translate(300 40)"><rect x="-10" y="10" width="20" height="44" rx="3" class="s-paper"/>' +
+        '<path d="M0 -18 C 12 -2, 10 8, 0 10 C -10 8, -12 -2, 0 -18 Z" class="s-warm pulse"/>' +
+        '<line x1="0" y1="10" x2="0" y2="2" class="s-line" style="stroke-width:2"/></g>';
+    } else if (k === "paper") {
+      badge = '<g transform="translate(300 30)"><rect x="-70" y="40" width="140" height="34" rx="6" class="s-metal"/>' +
+        '<rect x="-56" y="44" width="112" height="6" rx="3" class="s-metal-d"/>' +
+        '<path d="M-40 44 L-40 -10 L28 -10 L40 2 L40 44" class="s-paper"/>' +
+        '<line x1="-28" y1="6" x2="24" y2="6" class="s-line" style="stroke-width:2"/><line x1="-28" y1="18" x2="24" y2="18" class="s-line" style="stroke-width:2"/><line x1="-28" y1="30" x2="10" y2="30" class="s-line" style="stroke-width:2"/>' +
+        '<path d="M70 57 C 110 57, 120 120, 160 150" class="s-cable"/></g>';
+    } else {
+      var dots = "";
+      for (var i = 0; i < 5; i++) {
+        dots += '<g transform="translate(' + (210 + i * 46) + ' ' + (60 - Math.sin(i / 4 * Math.PI) * 18) + ')"><rect x="-14" y="-17" width="28" height="34" rx="3" class="s-paper"/>' +
+          '<path d="M-7 1 L-2 7 L8 -6" class="s-line" style="stroke:var(--accent);stroke-width:3"/></g>';
+      }
+      badge = dots;
+    }
+    var phoneScreen = k === "play" ? '<path d="M118 175 L118 215 L150 195 Z" class="s-screen-fg"/>' :
+      k === "pray" ? '<text x="134" y="203" text-anchor="middle" class="s-small" style="fill:var(--screen-fg)">SAVING</text>' :
+      '<rect x="104" y="180" width="60" height="8" rx="4" class="s-screen-fg"/><rect x="104" y="196" width="40" height="8" rx="4" class="s-screen-fg pulse"/>';
+    return '<svg viewBox="0 0 640 330" role="img" aria-label="' + esc(n.name) + ' promo: a phone plugged by one cable into a small home computer' +
+      (k === "paper" ? ", with a paper scanner feeding the same computer" : k === "trail" ? ", with a trail of checked pages above the cable" : k === "pray" ? ", with a lit candle above the cable" : ", with a game controller above the cable") + '">' +
+      // phone (landscape)
+      '<rect x="60" y="150" width="150" height="90" rx="16" class="s-metal"/><rect x="74" y="162" width="122" height="66" rx="8" class="s-screen"/>' + phoneScreen +
+      // cable phone -> computer
+      '<path d="M210 195 C 300 195, 340 250, 440 230" class="s-cable"/>' +
+      '<circle cx="325" cy="222" r="9" class="s-accent pulse"/>' +
+      // computer
+      '<rect x="440" y="140" width="150" height="130" rx="10" class="s-metal"/><rect x="456" y="156" width="118" height="12" rx="6" class="s-metal-d"/>' +
+      '<rect x="456" y="224" width="16" height="10" rx="2" style="fill:var(--fg)"/><circle cx="560" cy="246" r="6" class="s-accent pulse"/>' +
+      '<line x1="456" y1="186" x2="574" y2="186" class="s-line" style="stroke:var(--metal-dark);stroke-width:2"/><line x1="456" y1="198" x2="574" y2="198" class="s-line" style="stroke:var(--metal-dark);stroke-width:2"/>' +
+      badge +
+      '<text x="320" y="300" text-anchor="middle" class="s-text">' + esc(n.name) + '</text>' +
+      '<text x="320" y="324" text-anchor="middle" class="s-small">' + esc(n.tagline) + '</text>' +
+      '</svg>';
+  }
+
+  function render(k) {
+    var n = NAMES[k] || NAMES.play;
+    el("promo").innerHTML = promo(k, n);
+    el("h1").textContent = n.h1;
+    var ver = n.status === "next" ? "next edition (adds P.A.P.E.)" : n.ver + " " + n.name + " edition";
+    el("subline").textContent = "phone+net+I.C.K.S. · " + ver + " · " + n.date + " · steps and counts only: no names, no content, no medical detail";
+    el("thesis").textContent = n.thesis;
+    el("foot").textContent = n.status === "next" ? n.name + " edition (next)" : n.ver + " " + n.name + " edition";
+    var paper = n.status === "next" || n === NAMES.trail;
+    var steps = paper ? STEPS.concat([PAPER_STEP]) : STEPS;
+    el("steps").innerHTML = steps.map(function (s) { return "<li><b>" + esc(s[0]) + "</b>" + esc(s[1]) + "</li>"; }).join("");
+    var news = paper ? [PAPER_NEWS].concat(NEWS) : NEWS;
+    el("news").innerHTML = news.map(function (r) { return "<tr><td>" + esc(r[0]) + "</td><td>" + (r === PAPER_NEWS ? r[1] : esc(r[1])) + "</td></tr>"; }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#picker button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-n") === k));
+    });
+  }
+
+  render("trail");
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.9.0 — 2026-11-05 · PAPER TRAIL edition (nickname: the P.A.P.E.-r trail)
+- **P.A.P.E. (Paper Accessibility, Parsing & Evidence)** in `scripts/pape/`: feeder scan to searchable PDF with custody files
+  (`pape_scan.sh`), per-page reader routing (`pape_route.py`), tagged PDF for PDF/UA-1 (`pape_tag_pdf.py`), full treatment
+  (`pape_process.py`), folder, website and PDF-list accessibility audits (`pape_a11y_audit.py`, `pape_web_audit.py`,
+  `pape_pdf_url_audit.py`), link check with login walls and soft 404s (`pape_link_check.py`), official-document version diff
+  (`pape_version_diff.py`), markdown to PDF/UA-1 letters (`pape_md_to_pdf.py`), and a Mac installer (`pape_install_tools.sh`).
+- Owner-specific source names move to a local `~/.config/pape/agencies.json`; output goes to `$PAPE_OUT` (default `~/pape_scans`).
+- **`site/paper-trail.html`:** the PAPER TRAIL one-pager (pages in the feeder + two phones with status screens, into the µ cube).
+- Released 1 h 12 after v0.8.1, a nod to GREEK SQUAT's daylight-saving hour.
+
 ## v0.8.1 — 2026-11-05 · PLUG AND PLAY edition
 - **Desktop: auto-pull on plug-in.** A watcher starts the owner's pull once per plug-in for phones listed in `pulls.json`
   (skips while one runs or within 30 min of the last; `auto_pull: false` off). Phone card shows Last pull age (amber 1 day, red 3).

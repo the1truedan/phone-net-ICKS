@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.8.1 PLUG AND PLAY edition (2026-11-05) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.0 PAPER TRAIL edition (2026-11-05) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -13,7 +13,17 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
 
-## Latest · v0.8.1 · PLUG AND PLAY edition (2026-11-05)
+## Latest · v0.9.0 · PAPER TRAIL edition (2026-11-05)
+
+*Nickname: the P.A.P.E.-r trail.* The paper side arrives. **P.A.P.E.** (Paper Accessibility, Parsing & Evidence) joins the phone pulls
+in [`scripts/pape/`](scripts/pape/README.md): a document feeder scanner turns notices, care plans and receipts into searchable PDFs
+that screen readers can use (PDF/UA-1, checked with veraPDF), with the same custody files as a phone pull. It also audits public
+websites, PDFs and links for accessibility (WCAG 2.1 AA), keeps broken links with the date they broke, and shows what changed
+between two versions of an official document. All local. One-pager: [PAPER TRAIL](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html).
+
+Released at 11:47 PM, 1 h 12 after v0.8.1 below: a nod to GREEK SQUAT's "12 minutes on the clock, 1 h 12 in fact."
+
+## v0.8.1 · PLUG AND PLAY edition (2026-11-05)
 
 Plug the phone in; the pull starts on its own. A patch on top of GREEK SQUAT:
 
@@ -200,7 +210,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.8.1"><img src="https://img.shields.io/badge/release-v0.8.1_PLUG_AND_PLAY_edition-3dcaa0?style=for-the-badge" alt="v0.8.1 PLUG AND PLAY edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/release-v0.9.0_PAPER_TRAIL_edition-3dcaa0?style=for-the-badge" alt="v0.9.0 PAPER TRAIL edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>
