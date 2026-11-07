@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.9.1 — 2026-11-06 · ALERT GAP edition
+- **`site/alert-gap.html` + `site/alert-gap.svg`: THE ALERT GAP**, a caregiver field guide with animated art. Paper-only
+  alert sign-ups, text alerts routed through carrier email-to-text gateways (AT&T's shut off June 17, 2025), secure mail
+  that opens blank, five questions to ask an agency in writing, what caregivers can do today, what agencies can fix, and a
+  PDF accessibility audit with `scripts/pape/pape_a11y_audit.py` (one fiscal agent's 16 portal PDFs: 0 pass PDF/UA-1).
+  Transcribing your own calls is not a lie detector: no honesty, stress or deception scoring.
+- **I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E.** full name and expansion in the README, `indoc/README.md` and the one-page site
+  (header chip + section with the download). App screenshots fixed (`.gitignore` exception for `indoc/screenshots/*.png`).
+- README section, Live-page link and a header chip on the one-page site for THE ALERT GAP. Version, badge and footers to v0.9.1.
+
 ## v0.9.0 — 2026-11-05 · PAPER TRAIL edition (nickname: the P.A.P.E.-r trail)
 - **P.A.P.E. (Paper Accessibility, Parsing & Evidence)** in `scripts/pape/`: feeder scan to searchable PDF with custody files
   (`pape_scan.sh`), per-page reader routing (`pape_route.py`), tagged PDF for PDF/UA-1 (`pape_tag_pdf.py`), full treatment

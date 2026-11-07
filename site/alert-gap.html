@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ALERT GAP</title>
+<meta name="description" content="Caregivers paid through a fiscal agent can't count on being told when a timesheet stalls. What to check, what to do today, and what agencies can fix.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1c1a; --muted: #5d5a54; --card: #ffffff; --line: #d9d5cc;
+    --alert: #c8231b; --ok: #11804a;
+    --sans: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", Verdana, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833; --alert: #ff5a4e; --ok: #3ad28a; }
+  }
+  :root[data-theme="dark"] { --bg: #161614; --fg: #ecebe6; --muted: #a9a59c; --card: #201f1c; --line: #3a3833; --alert: #ff5a4e; --ok: #3ad28a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 19px/1.55 var(--sans); }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 16px 64px; }
+  a { color: inherit; text-underline-offset: 3px; }
+  .eyebrow { font-family: var(--mono); font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  h1 { font-size: clamp(2.4rem, 8vw, 4rem); line-height: 1; margin: 0 0 14px; font-weight: 800; letter-spacing: .01em; }
+  .lede { font-size: 1.15rem; margin: 0 0 24px; }
+  .art { display: block; width: 100%; height: auto; border: 2px solid var(--fg); border-radius: 6px; margin: 8px 0 28px; }
+  .big { font-size: clamp(1.25rem, 3.6vw, 1.7rem); font-weight: 800; line-height: 1.25; text-transform: uppercase;
+         border-left: 8px solid var(--alert); padding: 6px 0 6px 16px; margin: 28px 0; }
+  h2 { font-size: 1.35rem; margin: 40px 0 10px; font-weight: 800; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; margin: 14px 0; }
+  .card { background: var(--card); border: 2px solid var(--fg); border-radius: 6px; padding: 14px 16px; }
+  .card b { display: block; font-size: 1.05rem; margin-bottom: 4px; }
+  .card.alert { border-color: var(--alert); } .card.ok { border-color: var(--ok); }
+  ol, ul { padding-left: 1.3em; } li { margin: 6px 0; }
+  .note { font-size: .95rem; color: var(--muted); }
+  code { font-family: var(--mono); font-size: .85em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-size: .82rem; }
+  footer { margin-top: 56px; border-top: 2px solid var(--fg); padding-top: 14px; font-size: .9rem; }
+  .theme { position: fixed; top: 10px; right: 12px; font: .75rem var(--mono); background: var(--card); color: var(--fg); border: 1px solid var(--fg); border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+<button class="theme" type="button" aria-label="Switch light or dark theme">◐ theme</button>
+<main>
+  <p class="eyebrow">phone-net-ICKS v0.9.1 ALERT GAP edition · caregiver field guide</p>
+  <h1>THE ALERT GAP</h1>
+  <p class="lede">Family caregivers paid through a fiscal agent can't count on being told when a timesheet stalls. The shift just sits at "ready", unpaid, and nobody calls.</p>
+
+  <img class="art" src="alert-gap.svg" alt="Animation: a timesheet leaves a caregiver's phone for the agency. A text alert dies at a carrier gateway marked shut off, and a secure email arrives blank, so the phone shows ready for time tracking. Then an in-app alert arrives and the phone shows a green check.">
+
+  <p class="big">If your agency's only alert sign-up is a paper form that asks for your phone company, its text alerts may never arrive. Carriers have shut off their email-to-text gateways. AT&amp;T's went dark June 17, 2025.</p>
+
+  <h2>How the gap happens</h2>
+  <div class="grid">
+    <div class="card alert"><b>Paper sign-up</b>Alerts start only after you mail or fax a signed form, with "two to four weeks for processing."</div>
+    <div class="card alert"><b>Dead text path</b>"Cell phone company" on the form means texts go to number@carrier addresses. AT&amp;T and Cricket ended that service June 17, 2025; Verizon and T-Mobile are reported to have ended theirs earlier.</div>
+    <div class="card alert"><b>Receipt only</b>Even a working alert says the timesheet was received, not that it will be paid or why it stalled.</div>
+    <div class="card alert"><b>Blank secure mail</b>Encrypted notices can open to an empty inbox (for example, when the login address differs). Nothing tells you what you missed.</div>
+  </div>
+
+  <h2>Check yours: five questions to ask your agency in writing</h2>
+  <ol>
+    <li>How do I turn on timesheet alerts without a paper form, and how long does it take?</li>
+    <li>Do text alerts still go through carrier email gateways? If so, which carriers still work?</li>
+    <li>Will I be told when a timesheet is <em>not</em> processed, with the reason and the fix?</li>
+    <li>If a secure message opens blank, how will you resend it as plain email or a letter?</li>
+    <li>Do you round clock-in and clock-out times? Show me the rule. (Rounding must even out over time: 29 CFR 785.48(b).)</li>
+  </ol>
+
+  <h2>What you can do today</h2>
+  <ul>
+    <li>Don't rely on the alert. Check your shift status in the portal after every pay period's due date, and save a copy.</li>
+    <li>Keep your own record of every clock-in and clock-out, every call (date, time, who, what was said), and every fax confirmation.</li>
+    <li>Ask for answers by plain email or letter. If you have a disability, you can ask for written answers as an accommodation.</li>
+    <li>Ask for an accessible copy (tagged PDF or plain text) of any form you can't read. Note the date you asked.</li>
+    <li>Wages late? In Wisconsin, final wages are due by the next regular payday (Wis. Stat. § 109.03), and you can file a wage claim with the Department of Workforce Development.</li>
+    <li>Job ended? Apply for unemployment in the first week. Only the state decides whether you qualify.</li>
+  </ul>
+
+  <h2>What agencies can fix</h2>
+  <div class="grid">
+    <div class="card ok"><b>Alerts in the app</b>Sign up in the portal or app, with no paper. Email or push, not carrier gateways.</div>
+    <div class="card ok"><b>Say why</b>Alert on a stalled timesheet with the reason and the fix, not just on receipt.</div>
+    <div class="card ok"><b>Ticket numbers</b>Give every call a ticket number, and let caregivers see their call notes.</div>
+    <div class="card ok"><b>Accessible forms</b>Tagged PDFs that pass PDF/UA-1, hosted on the portal itself, with fillable and e-sign versions.</div>
+  </div>
+
+  <h2>Audit your agency's PDFs yourself</h2>
+  <p>We downloaded 16 PDFs from one fiscal agent's caregiver portal and checked them with veraPDF, the standard accessibility checker. <strong>None passed.</strong> Some had no language or title set, some weren't tagged at all, and the forms had to be printed, signed and faxed. phone-net-ICKS ships the same checker:</p>
+<pre>bash scripts/pape/pape_install_tools.sh          # once
+python scripts/pape/pape_a11y_audit.py ~/Downloads/agency_pdfs/*.pdf --out ~/a11y_audit
+open ~/a11y_audit/REPORT.md</pre>
+  <p class="note">It runs on your Mac, and nothing is uploaded. The report lists which PDF/UA-1 rules fail, whether each file is tagged, its language and title, whether it needs OCR, and any fonts that aren't embedded.</p>
+
+  <h2>Recording and transcribing your own calls is not a lie detector</h2>
+  <p>phone-net-ICKS makes word-for-word transcripts with speaker labels, timestamps and checksums. It doesn't score honesty, stress or deception. In Wisconsin, "lie detector" rules (Wis. Stat. § 111.37) limit employers testing workers. Keep your exhibits to what was said and when, and let people listen for themselves.</p>
+  <p class="note">This is a field guide, not legal advice. Laws differ by state; check with a lawyer or your state's labor department.</p>
+
+  <footer>
+    phone-net-ICKS v0.9.1 ALERT GAP edition · <a href="./">home</a> · <a href="https://github.com/the1truedan/phone-net-ICKS">GitHub</a><br>
+    <strong>© 2026 M.A.N.A.G.E.R. LLC</strong> · <em>prepare for the care when we cannot be there</em>
+  </footer>
+</main>
+<script>
+  (function () {
+    var root = document.documentElement, key = "alertgap-theme";
+    try { var t = localStorage.getItem(key); if (t) root.setAttribute("data-theme", t); } catch (e) {}
+    document.querySelector(".theme").addEventListener("click", function () {
+      var dark = root.getAttribute("data-theme") === "dark" ||
+        (!root.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+      var next = dark ? "light" : "dark"; root.setAttribute("data-theme", next);
+      try { localStorage.setItem(key, next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.0 PAPER TRAIL edition (2026-11-05) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.1 ALERT GAP edition (2026-11-06) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -12,6 +12,14 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 
 > **What is in this repo:** code, config templates, pages and aggregate numbers only.
 > **What never is:** recordings, transcripts, names, addresses, case details, or anyone's health information. See `docs/PRIVACY.md`.
+
+## THE ALERT GAP · caregiver field guide (new)
+
+![THE ALERT GAP: a timesheet goes in; the text alert dies at a shut-off carrier gateway and a secure email arrives blank, so the shift sits at "ready", unpaid. Then an in-app alert arrives with a green check.](site/alert-gap.svg)
+
+**If your agency's only alert sign-up is a paper form that asks for your phone company, its text alerts may never arrive.** Carriers have shut off their email-to-text gateways; AT&T's went dark June 17, 2025. Shifts can sit at "ready", unpaid, with no notice.
+
+The [one-page field guide](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) covers five questions to ask your agency in writing, what you can do today, what agencies can fix, and how to audit your agency's PDFs with `scripts/pape/pape_a11y_audit.py`. One fiscal agent's 16 portal PDFs: 0 passed PDF/UA-1. It also explains why transcribing your own calls is not a lie detector.
 
 ## Mac installers (Apple silicon)
 
@@ -22,7 +30,12 @@ It was built by one caregiver, between shifts, with AI coding assistants writing
 
 Both are unsigned: the first time, see [install](#desktop-app-from-v080-install). Check downloads against `SHA256SUMS.txt` on each release page.
 
-## Latest · v0.9.0 · PAPER TRAIL edition (2026-11-05)
+## Latest · v0.9.1 · ALERT GAP edition (2026-11-06)
+
+- **[THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html)**: a caregiver field guide with animated art (`site/alert-gap.svg`). It covers paper-only alert sign-ups, text alerts routed through carrier email-to-text gateways that have been shut off, secure mail that opens blank, five questions to ask your agency in writing, what caregivers can do today, what agencies can fix, and how to audit an agency's PDFs with `pape_a11y_audit.py`.
+- **I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E.** full name and expansion in the README, the app page and the one-page site. App screenshots fixed (they were left out by the `*.png` ignore rule).
+
+## v0.9.0 · PAPER TRAIL edition (2026-11-05)
 
 *Nickname: the P.A.P.E.-r trail.* The paper side arrives. **P.A.P.E.** (Paper Accessibility, Parsing & Evidence) joins the phone pulls
 in [`scripts/pape/`](scripts/pape/README.md): a document feeder scanner turns notices, care plans and receipts into searchable PDFs
@@ -230,7 +243,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/release-v0.9.0_PAPER_TRAIL_edition-3dcaa0?style=for-the-badge" alt="v0.9.0 PAPER TRAIL edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.1"><img src="https://img.shields.io/badge/release-v0.9.1_ALERT_GAP_edition-3dcaa0?style=for-the-badge" alt="v0.9.1 ALERT GAP edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>
