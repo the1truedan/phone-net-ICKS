@@ -1735,7 +1735,7 @@ header.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify
 .stream{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;min-width:0}.stream .now{overflow-wrap:anywhere}
 .s-working,.s-running{border-color:var(--ok);color:var(--ok)}.s-yielding,.s-paused,.s-waiting,.s-low{border-color:var(--warn);color:var(--warn)}.s-idle,.s-unreachable{border-color:var(--bad);color:var(--bad)}
 details.more{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:12px 0}details.more>summary{padding:2px 0}
-.modemrow{margin:0 0 6px}.gpunow{margin:0 0 8px;padding:4px 8px;border-left:3px solid var(--ok);background:var(--cell);border-radius:4px}.modem{width:100%;max-width:300px;height:34px;display:block}
+.sum .big{font-size:18px;font-weight:600;margin:6px 0 4px}.sum ul{margin:4px 0 0;padding-left:18px}.sum li{margin:2px 0}.modemrow{margin:0 0 6px}.gpunow{margin:0 0 8px;padding:4px 8px;border-left:3px solid var(--ok);background:var(--cell);border-radius:4px}.modem{width:100%;max-width:300px;height:34px;display:block}
 .mcase{fill:#d9d2bf;stroke:#8f876f;stroke-width:1.2}.ml{font:7px ui-monospace,Menlo,monospace;fill:#3b3628;text-anchor:middle}
 .mn{font:bold 11px ui-monospace,Menlo,monospace;fill:#2b2618}.mn.dim{font-weight:normal;font-size:8px;fill:#6b6450}
 .led{fill:#4a1512;stroke:#2a0b09;stroke-width:.8}.led.on{fill:#ff3b2f;filter:drop-shadow(0 0 2.5px #ff3b2f)}
@@ -1750,19 +1750,21 @@ button{font:inherit;padding:4px 10px;border-radius:6px;border:1px solid var(--li
 button:hover{border-color:var(--bar)}.pill{display:inline-block;padding:1px 8px;border-radius:10px;border:1px solid var(--line);white-space:nowrap}
 .paused{color:var(--warn)}.bad{color:var(--bad)}pre{white-space:pre-wrap;margin:4px 0 10px;font-size:12px}.stats{display:flex;gap:18px;flex-wrap:wrap}
 .stats div{min-width:150px}.ub{font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px}.ubd{color:var(--bar)}.ubr{color:var(--line)}tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--warn)}.flagpill{border-color:var(--warn);color:var(--warn)}.big{font-size:18px}details summary{cursor:pointer}.small{font-size:12px}a{color:var(--bar)}
-</style><script>(function(){var t="default",d="detailed";try{t=localStorage.getItem("jb-theme")||t;d=localStorage.getItem("jb-density")||d}catch(e){}var m=location.hash.match(/theme=(\\w+)/);if(m)t=m[1];
+</style><script>(function(){var t="default",d="compact";try{t=localStorage.getItem("jb-theme")||t;d=localStorage.getItem("jb-density2")||d}catch(e){}var m=location.hash.match(/theme=(\\w+)/);if(m)t=m[1];
 var r=document.documentElement;r.setAttribute("data-theme",t);r.setAttribute("data-density",d);
 window.setTheme=function(v){r.setAttribute("data-theme",v);try{localStorage.setItem("jb-theme",v)}catch(e){}};
-window.setDensity=function(v){r.setAttribute("data-density",v);try{localStorage.setItem("jb-density",v)}catch(e){}}})();</script></head><body>
+window.setDensity=function(v){r.setAttribute("data-density",v);try{localStorage.setItem("jb-density2",v)}catch(e){}}})();</script></head><body>
 <header class="top"><h1>Job Board <span class="muted small" id="t"></span></h1>
 <div class="theme-pick small"><span class="muted">Look:</span> <button onclick="setTheme('default')">Default</button><button onclick="setTheme('classic')">Classic</button><button onclick="setTheme('contrast')">High contrast</button><button onclick="setTheme('retro')">Retro</button><button onclick="setTheme('terminal')">Terminal</button>
 <span class="muted">·</span> <button onclick="setDensity(document.documentElement.getAttribute('data-density')==='compact'?'detailed':'compact')">Compact / detailed</button></div></header>
-<div class="muted" id="rep"></div><div id="pri"></div>
-<section style="border-width:2px"><b>1. Running now</b> <span class="muted small">Jobs that run at this time. Each job shows the machine that does the work.</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other jobs found from running processes</div><table id="ext"></table></section>
-<section><b>2. Machines</b> <span class="muted small">What each machine does now.</span><div class="lanes" id="lanes"><div class="muted small">Loading.</div></div></section>
+<div id="pri"></div>
+<section id="sum" class="sum" style="border-width:2px"><b>1. Status</b> <span class="muted small">Loading.</span></section>
 <section id="pipes" hidden></section>
-<section><b>4. Queues</b> <span class="muted small" id="qnote">Click a row to see its purpose and expected gain.</span> <button class="small" onclick="QALL=!QALL;this.textContent=QALL?'Show last 5':'Show all';load()" id="qall">Show all</button><table id="q"></table><div id="arch" class="small" style="margin-top:.6em"></div></section>
-<details class="more" id="more"><summary><b>5. More detail</b> <span class="muted small">Ollama, GPU gauges and pause, compute use, coverage, recently finished, runners, logs.</span></summary>
+<section><b>3. Jobs running now</b> <span class="muted small">Each job shows the machine that does the work. Use "Compact / detailed" to see CPU, memory and network.</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other jobs found from running processes</div><table id="ext"></table></section>
+<section><b>4. Machines</b> <span class="muted small">What each machine does now.</span><div class="lanes" id="lanes"><div class="muted small">Loading.</div></div></section>
+<section><b>5. Queues</b> <span class="muted small" id="qnote">Click a row to see its purpose and expected gain.</span> <button class="small" onclick="QALL=!QALL;this.textContent=QALL?'Show last 5':'Show all';load()" id="qall">Show all</button><table id="q"></table><div id="arch" class="small" style="margin-top:.6em"></div></section>
+<details class="more" id="more"><summary><b>6. More detail</b> <span class="muted small">Reports, Ollama, GPU gauges and pause, compute use, coverage, recently finished, runners, logs.</span></summary>
+<section><div id="rep"></div></section>
 <section id="oll" style="border-width:2px"><b>Ollama now</b> <span class="muted small">loading…</span></section><section id="gpu"></section><section id="comp"></section>
 <section id="cov"></section>
 <section><b>Recently finished</b><table id="fin"></table></section>
@@ -1804,7 +1806,14 @@ return `<div class="modemrow" title="${esc(note||"MB/s")}"><svg viewBox="0 0 300
 <text x="96" y="16" class="mn">↓${n(rx)}  ↑${n(tx)} MB/s</text><text x="96" y="28" class="mn dim">5-min max ↓${n(mx(1))} ↑${n(mx(2))}</text></svg></div>`}
 function cell(k,v,p,tip){return `<div class="cell" title="${esc(tip||"")}"><div class="k">${k}</div><div class="v">${v}</div>${p==null?"":bar(Math.max(0,Math.min(100,p)))}</div>`}
 function gpuline(h){const G=(window.LAST_S&&LAST_S.gpu_now||{})[h]||[];return `<div class="gpunow small"><b>On GPU now:</b> ${G.length?G.map(x=>esc(x.label)+(x.mem_gb!=null?` <span class="muted">${x.mem_gb} GB</span>`:"")).join(" · "):'<span class="muted">nothing</span>'}</div>`}
-function drawLanes(s){window.LAST_S=s;const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
+function drawSum(s){const e=document.getElementById("sum");if(!e)return;
+const L=s.lanes||[],work=L.filter(x=>/^(working|running)/.test(x.state)),wait=L.filter(x=>/^(waiting|paused|yielding)/.test(x.state)),idle=L.filter(x=>/^idle/.test(x.state));
+const W=(s.saturation||[]);const head=W.length?`<span class="paused">Check this: ${esc(W[0])}</span>`:(work.length?`Working: ${work.length} job${work.length==1?"":"s"} running`:"Nothing is running now");
+const items=[];(s.pipelines||[]).forEach(p=>(p.stages||[]).filter(x=>x.of_total&&x.pct!=null&&x.pct<100).forEach(x=>items.push(`${esc(x.label.split(" (")[0])}: <b>${x.count} of ${p.total}</b> (${x.pct}%)${x.eta_s?` · about ${secs(x.eta_s)} left at this rate`:x.per_hour===0?' · <span class="paused">no progress in the last hour</span>':""}`)));
+if(wait.length)items.push(`Waiting: ${wait.map(x=>esc(x.name.split(":")[0])).join(" · ")}`);
+if(idle.length)items.push(`<span class="muted">Idle: ${idle.map(x=>esc(x.name.split(" (")[0])).join(" · ")}</span>`);
+e.innerHTML=`<b>1. Status</b><div class="big">${head}</div><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul>`}
+function drawLanes(s){window.LAST_S=s;try{drawSum(s)}catch(err){console.log("sum",err)}const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
 const C={mac:[cell("Apple GPU",`${f(L.gpu_pct)}%`,L.gpu_pct,"Metal: mlx-whisper lane, quick triage"),cell("CPU",`${f(L.cpu_pct)}%`,L.cpu_pct),cell("Load",`${f(L.load1)} / ${f(L.cpus)}`,L.cpus?100*L.load1/L.cpus:null)],
  linux:g.reachable?[cell("GPU",`${g.gpu_util}%`,g.gpu_util),cell("VRAM",`${(g.gpu_used_mib/1024).toFixed(1)} / ${(g.gpu_total_mib/1024).toFixed(0)} GB`,100*g.gpu_used_mib/g.gpu_total_mib),cell("CPU",`${f(g.cpu_pct)}%`,g.cpu_pct),cell("RAM",`${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(0)} / ${(g.mem_total_mib/1024).toFixed(0)} GB`,100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib),cell("Temp",`${f(g.gpu_temp)}°C`,null)]:[cell("State","not reachable",null)],
  unraid:T.reachable?[cell("Load",`${f(T.load1)} / ${f(T.cpus)}`,T.cpus?100*T.load1/T.cpus:null)]:[cell("State","not reachable",null)]};
@@ -1815,7 +1824,7 @@ document.getElementById("lanes").innerHTML=["mac","linux","unraid"].map(h=>{cons
  ${st.map(x=>`<div class="stream"><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span> <b class="small">${esc(x.name)}</b><div class="small muted now detail">${esc(x.now)}</div></div>`).join("")}
  ${J.length||(h==="linux"&&cur)?`<div class="stream small"><b>${J.length+(h==="linux"?cur:0)} job${J.length+(h==="linux"?cur:0)==1?"":"s"}:</b> ${[...J,...(h==="linux"&&cur?[`${cur} speaker-pass item${cur==1?"":"s"}`]:[])].map(esc).join(" · ")}</div>`:""}</div>`}).join("");
 const P=s.pipelines||[],pe=document.getElementById("pipes");pe.hidden=!P.length;
-pe.innerHTML=P.map(p=>`<b>3. Progress: ${esc(p.name)}</b> <span class="muted small">${p.total!=null?p.total+" in queue":""}${p.note?" · "+esc(p.note):""}</span><table class="pipe">${p.stages.map(x=>`<tr><td>${hb(x.host)}</td><td class="lbl">${esc(x.label)}</td><td><b>${x.count??"?"}</b>${x.of_total?` / ${p.total}`:""}</td><td>${x.pct!=null?ubar(x.pct,20)+` ${x.pct}%`:""}</td><td class="small">${x.per_hour!=null?`${x.per_hour} in the last hour`:""}</td><td class="small muted">${x.eta_s?`~${secs(x.eta_s)} left at this rate`:x.of_total&&x.per_hour===0?'<span class="paused">none in the last hour</span>':""}</td></tr>`).join("")}</table>`).join("<div style='height:8px'></div>");
+pe.innerHTML=P.map(p=>`<b>2. Progress: ${esc(p.name)}</b> <span class="muted small">${p.total!=null?p.total+" in queue":""}${p.note?" · "+esc(p.note):""}</span><table class="pipe">${p.stages.map(x=>`<tr><td>${hb(x.host)}</td><td class="lbl">${esc(x.label)}</td><td><b>${x.count??"?"}</b>${x.of_total?` / ${p.total}`:""}</td><td>${x.pct!=null?ubar(x.pct,20)+` ${x.pct}%`:""}</td><td class="small">${x.per_hour!=null?`${x.per_hour} in the last hour`:""}</td><td class="small muted">${x.eta_s?`~${secs(x.eta_s)} left at this rate`:x.of_total&&x.per_hour===0?'<span class="paused">none in the last hour</span>':""}</td></tr>`).join("")}</table>`).join("<div style='height:8px'></div>");
 const A=s.archive||{windows:[]};document.getElementById("qnote").textContent=`Click a row to see its purpose and expected gain. ${QALL?"All queues":"Latest 5"} of ${s.queues.length}.`;
 document.getElementById("arch").innerHTML=A.windows.length?`<span class="muted">Older queues (archive):</span> `+A.windows.slice(-3).map(w=>`<a href="/archive?from=${w.from}">${w.from} to ${w.to}</a> <span class="muted">(${w.n})</span>`).join(" · "):"";}
 async function load(){const s=await (await fetch("/api/status")).json();try{drawLanes(s)}catch(e){console.log("lanes",e)}
