@@ -513,6 +513,37 @@ class Board:
     # and names each client from [ollama_now].labels or [recon_jobs].jobs in the (git-ignored) config. Read-only.
     OLLAMA_PORTS = (11434, 11435)
 
+    def gpu_now(self):
+        """2026-11-07 (Dan): which processes use each machine's GPU right now (MRGPU and Tower: nvidia-smi compute apps;
+        Mac: known Metal users, since macOS has no per-process GPU list). Cached 15 s; read-only."""
+        t, v = getattr(self, "_gpunow", (0, None))
+        if v is not None and time.time() - t < 15:
+            return v
+        q = ("nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits 2>/dev/null | "
+             "while IFS=, read p m; do echo \"$m|$(ps -o args= -p $p | cut -c1-200)\"; done")
+        def parse(txt):
+            out = []
+            for l in (txt or "").splitlines():
+                if "|" in l:
+                    mm, a = l.split("|", 1)
+                    nice = [(r"deep_stream", "transcription (large-v3 + turbo)"), (r"speaker_pass", "speaker names (pyannote)"),
+                            (r"deep_all_embed|bge-m3|embed", "embeddings"), (r"ollama", "Ollama model"), (r"llama-server", "llama-server model")]
+                    lab = next((n for pat, n in nice if re.search(pat, a)), None)
+                    out.append({"label": lab or (self._client_label(a.strip()) if a.strip() else "(container process)"),
+                                "mem_gb": round(int(mm.strip() or 0) / 1024, 1)})
+            return out
+        v = {"linux": parse(sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", self.c["remote_host"], q], timeout=15)) if self.c.get("remote_host") else [],
+             "unraid": parse(sh(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", self.c["storage_host"], q], timeout=15)) if self.c.get("storage_host") else []}
+        mac = []
+        for l in (sh(["ps", "-axo", "pcpu=,args="]) or "").splitlines():
+            if re.search(r"ollama runner|ollama_llama_server|mlx_whisper|mlx\.|ComfyUI|comfyui|llama-server|whisper", l) and "grep" not in l:
+                f = l.split(None, 1)
+                if len(f) == 2:
+                    mac.append({"label": self._client_label(f[1]), "cpu": float(f[0])})
+        v["mac"] = mac[:4]
+        self._gpunow = (time.time(), v)
+        return v
+
     def _client_label(self, args):
         for pat, lab in self.c.get("ollama_now", {}).get("labels", []):
             if re.search(pat, args): return lab
@@ -1167,6 +1198,9 @@ class Board:
                 lab = re.search(r"--label (\S+)", a["cmd"]); ext.append({"host": "linux", "job": "Deep pass (diarized) on GPU", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"), "mem_mib": a["mem_mib"], "pct": None, "gain": GAIN.get("deep_gpu", ""), "detail": lab.group(1) if lab else ""})
             elif "fine_comb_resident" in a["cmd"]:
                 ext.append({"host": "linux", "job": "Resident fine-comb worker (board queues)", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"), "mem_mib": a["mem_mib"], "pct": None, "gain": GAIN.get("resident", ""), "detail": f"{a['mem_mib']} MiB"})
+            elif any(g in a["cmd"] and any(m in r_ for _, _, r_ in rows) for g, m in
+                     (("deep_stream", "deep_all_transcribe"), ("speaker_pass", "speaker_batch"))):
+                continue   # 2026-11-07 (Dan: less clutter): already listed as the Mac job that drives it; GPU use shows under Machines
             else:   # 2026-11-07: any other GPU program on the GPU host shows by its script name
                 sm = re.search(r"([\w.-]+\.py)\b", a["cmd"]); nm = sm.group(1) if sm else a["cmd"].split()[0].rsplit("/", 1)[-1]
                 ext.append({"host": "linux", "job": f"GPU job on MRGPU: {nm}", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"),
@@ -1437,7 +1471,7 @@ class Board:
                 self.auto_ingest()
             except Exception as e:   # never let an ingest problem take the board down
                 print("auto_ingest:", e, file=sys.stderr)
-        return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "remote": rem, "cleared": self.cleared_note,
+        return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "gpu_now": self.gpu_now(), "remote": rem, "cleared": self.cleared_note,
                 "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "hidden_empty_queues": getattr(self, "hidden_empty", []), "runners": runners,
                 "recent": recent, "mac_jobs": mac_jobs, "lanes": self.lanes(), "pipelines": self.pipelines(),
@@ -1701,7 +1735,7 @@ header.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify
 .stream{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;min-width:0}.stream .now{overflow-wrap:anywhere}
 .s-working,.s-running{border-color:var(--ok);color:var(--ok)}.s-yielding,.s-paused,.s-waiting,.s-low{border-color:var(--warn);color:var(--warn)}.s-idle,.s-unreachable{border-color:var(--bad);color:var(--bad)}
 details.more{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:12px 0}details.more>summary{padding:2px 0}
-.modemrow{margin:0 0 8px}.modem{width:100%;max-width:300px;height:34px;display:block}
+.modemrow{margin:0 0 6px}.gpunow{margin:0 0 8px;padding:4px 8px;border-left:3px solid var(--ok);background:var(--cell);border-radius:4px}.modem{width:100%;max-width:300px;height:34px;display:block}
 .mcase{fill:#d9d2bf;stroke:#8f876f;stroke-width:1.2}.ml{font:7px ui-monospace,Menlo,monospace;fill:#3b3628;text-anchor:middle}
 .mn{font:bold 11px ui-monospace,Menlo,monospace;fill:#2b2618}.mn.dim{font-weight:normal;font-size:8px;fill:#6b6450}
 .led{fill:#4a1512;stroke:#2a0b09;stroke-width:.8}.led.on{fill:#ff3b2f;filter:drop-shadow(0 0 2.5px #ff3b2f)}
@@ -1727,7 +1761,7 @@ window.setDensity=function(v){r.setAttribute("data-density",v);try{localStorage.
 <section style="border-width:2px"><b>1. Running now</b> <span class="muted small">Jobs that run at this time. Each job shows the machine that does the work.</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other jobs found from running processes</div><table id="ext"></table></section>
 <section><b>2. Machines</b> <span class="muted small">What each machine does now.</span><div class="lanes" id="lanes"><div class="muted small">Loading.</div></div></section>
 <section id="pipes" hidden></section>
-<section><b>4. Queues</b> <span class="muted small" id="qnote">Click a row to see its purpose and expected gain.</span> <button class="small" onclick="QALL=!QALL;this.textContent=QALL?'Show last 15':'Show all';load()" id="qall">Show all</button><table id="q"></table><div id="arch" class="small" style="margin-top:.6em"></div></section>
+<section><b>4. Queues</b> <span class="muted small" id="qnote">Click a row to see its purpose and expected gain.</span> <button class="small" onclick="QALL=!QALL;this.textContent=QALL?'Show last 5':'Show all';load()" id="qall">Show all</button><table id="q"></table><div id="arch" class="small" style="margin-top:.6em"></div></section>
 <details class="more" id="more"><summary><b>5. More detail</b> <span class="muted small">Ollama, GPU gauges and pause, compute use, coverage, recently finished, runners, logs.</span></summary>
 <section id="oll" style="border-width:2px"><b>Ollama now</b> <span class="muted small">loading…</span></section><section id="gpu"></section><section id="comp"></section>
 <section id="cov"></section>
@@ -1769,24 +1803,25 @@ return `<div class="modemrow" title="${esc(note||"MB/s")}"><svg viewBox="0 0 300
 <rect x="1" y="1" width="298" height="32" rx="6" class="mcase"/>${leds}
 <text x="96" y="16" class="mn">↓${n(rx)}  ↑${n(tx)} MB/s</text><text x="96" y="28" class="mn dim">5-min max ↓${n(mx(1))} ↑${n(mx(2))}</text></svg></div>`}
 function cell(k,v,p,tip){return `<div class="cell" title="${esc(tip||"")}"><div class="k">${k}</div><div class="v">${v}</div>${p==null?"":bar(Math.max(0,Math.min(100,p)))}</div>`}
-function drawLanes(s){const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
+function gpuline(h){const G=(window.LAST_S&&LAST_S.gpu_now||{})[h]||[];return `<div class="gpunow small"><b>On GPU now:</b> ${G.length?G.map(x=>esc(x.label)+(x.mem_gb!=null?` <span class="muted">${x.mem_gb} GB</span>`:"")).join(" · "):'<span class="muted">nothing</span>'}</div>`}
+function drawLanes(s){window.LAST_S=s;const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
 const C={mac:[cell("Apple GPU",`${f(L.gpu_pct)}%`,L.gpu_pct,"Metal: mlx-whisper lane, quick triage"),cell("CPU",`${f(L.cpu_pct)}%`,L.cpu_pct),cell("Load",`${f(L.load1)} / ${f(L.cpus)}`,L.cpus?100*L.load1/L.cpus:null)],
  linux:g.reachable?[cell("GPU",`${g.gpu_util}%`,g.gpu_util),cell("VRAM",`${(g.gpu_used_mib/1024).toFixed(1)} / ${(g.gpu_total_mib/1024).toFixed(0)} GB`,100*g.gpu_used_mib/g.gpu_total_mib),cell("CPU",`${f(g.cpu_pct)}%`,g.cpu_pct),cell("RAM",`${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(0)} / ${(g.mem_total_mib/1024).toFixed(0)} GB`,100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib),cell("Temp",`${f(g.gpu_temp)}°C`,null)]:[cell("State","not reachable",null)],
  unraid:T.reachable?[cell("Load",`${f(T.load1)} / ${f(T.cpus)}`,T.cpus?100*T.load1/T.cpus:null)]:[cell("State","not reachable",null)]};
 const M={mac:modem("mac",L.rx_mbs,L.tx_mbs,"M4RV network, MB/s"),linux:g.reachable?modem("linux",g.rx_mbs,g.tx_mbs,"MRGPU network, MB/s"):"",unraid:T.reachable?modem("unraid",T.rx_mbs,T.tx_mbs,(T.nic||"Network")+": shared 1 GbE, MB/s"):""};
 const jobs=h=>(s.mac_jobs||[]).filter(j=>(j.host||"mac")===h).map(j=>j.label.split(/[:(]/)[0].trim()),cur=(g.current||[]).length;
 document.getElementById("lanes").innerHTML=["mac","linux","unraid"].map(h=>{const st=(s.lanes||[]).filter(x=>x.host===h),J=jobs(h);
- return `<div class="lane"><h3>${hb(h)} <span class="muted small">${esc((HOST[h]||["",""])[1].split(" · ").slice(1).join(" · "))}</span></h3>${M[h]}<div class="cells">${C[h].join("")}</div>
+ return `<div class="lane"><h3>${hb(h)} <span class="muted small">${esc((HOST[h]||["",""])[1].split(" · ").slice(1).join(" · "))}</span></h3>${M[h]}${gpuline(h)}<div class="cells">${C[h].join("")}</div>
  ${st.map(x=>`<div class="stream"><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span> <b class="small">${esc(x.name)}</b><div class="small muted now detail">${esc(x.now)}</div></div>`).join("")}
  ${J.length||(h==="linux"&&cur)?`<div class="stream small"><b>${J.length+(h==="linux"?cur:0)} job${J.length+(h==="linux"?cur:0)==1?"":"s"}:</b> ${[...J,...(h==="linux"&&cur?[`${cur} speaker-pass item${cur==1?"":"s"}`]:[])].map(esc).join(" · ")}</div>`:""}</div>`}).join("");
 const P=s.pipelines||[],pe=document.getElementById("pipes");pe.hidden=!P.length;
 pe.innerHTML=P.map(p=>`<b>3. Progress: ${esc(p.name)}</b> <span class="muted small">${p.total!=null?p.total+" in queue":""}${p.note?" · "+esc(p.note):""}</span><table class="pipe">${p.stages.map(x=>`<tr><td>${hb(x.host)}</td><td class="lbl">${esc(x.label)}</td><td><b>${x.count??"?"}</b>${x.of_total?` / ${p.total}`:""}</td><td>${x.pct!=null?ubar(x.pct,20)+` ${x.pct}%`:""}</td><td class="small">${x.per_hour!=null?`${x.per_hour} in the last hour`:""}</td><td class="small muted">${x.eta_s?`~${secs(x.eta_s)} left at this rate`:x.of_total&&x.per_hour===0?'<span class="paused">none in the last hour</span>':""}</td></tr>`).join("")}</table>`).join("<div style='height:8px'></div>");
-const A=s.archive||{windows:[]};document.getElementById("qnote").textContent=`Click a row to see its purpose and expected gain. ${QALL?"All queues":"Latest 15"} of ${s.queues.length}.`;
+const A=s.archive||{windows:[]};document.getElementById("qnote").textContent=`Click a row to see its purpose and expected gain. ${QALL?"All queues":"Latest 5"} of ${s.queues.length}.`;
 document.getElementById("arch").innerHTML=A.windows.length?`<span class="muted">Older queues (archive):</span> `+A.windows.slice(-3).map(w=>`<a href="/archive?from=${w.from}">${w.from} to ${w.to}</a> <span class="muted">(${w.n})</span>`).join(" · "):"";}
 async function load(){const s=await (await fetch("/api/status")).json();try{drawLanes(s)}catch(e){console.log("lanes",e)}
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
-document.getElementById("rep").innerHTML=s.reports.length?"Reports: "+s.reports.map((n,i)=>{const f=(s.report_fresh||[])[i]||{led:"grey",note:""},c={green:"#1fb35a",yellow:"#e6b000",red:"#e03b3b",grey:"#9aa0a8"}[f.led];return `<a href="/report/${i}" target="_blank" title="${esc(f.led+': '+(f.note||'')+(f.newer&&f.newer.length?' · '+f.newer.map(x=>x.source+' '+x.at).join(', '):''))}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};box-shadow:0 0 5px ${c};margin-right:4px"></span>${esc(n)}</a>`}).join(" · "):"";
+document.getElementById("rep").innerHTML=s.reports.length?`<details><summary>Reports (${s.reports.length})</summary>`+s.reports.map((n,i)=>{const f=(s.report_fresh||[])[i]||{led:"grey",note:""},c={green:"#1fb35a",yellow:"#e6b000",red:"#e03b3b",grey:"#9aa0a8"}[f.led];return `<a href="/report/${i}" target="_blank" title="${esc(f.led+': '+(f.note||'')+(f.newer&&f.newer.length?' · '+f.newer.map(x=>x.source+' '+x.at).join(', '):''))}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};box-shadow:0 0 5px ${c};margin-right:4px"></span>${esc(n)}</a>`}).join(" · ")+"</details>":"";
 const g=s.remote,L=s.local;
 document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <div><div class="muted small">${hb('linux')} GPU memory</div><div class="big">${g.gpu_used_mib} / ${g.gpu_total_mib} MiB</div>${bar(100*g.gpu_used_mib/g.gpu_total_mib)}</div>
@@ -1800,7 +1835,7 @@ document.getElementById("gpu").innerHTML=g.reachable?`<div class="stats">
 <button onclick="post('/api/pause')">Pause all</button> <button onclick="post('/api/resume')">Resume all</button></div></div>
 ${(s.saturation||[]).length?`<div class="bad small"><b>Saturation:</b> ${s.saturation.map(esc).join(" · ")}</div>`:`<div class="small muted">No host near a limit (GPU memory, RAM, CPU, 1 GbE links).</div>`}${s.cleared?`<div class="small">${esc(s.cleared)}</div>`:""}<div class="muted small">Speed: ${s.speed?`${(1/s.speed).toFixed(1)}× real time (median of recent items)`:"not enough history yet"}${s.est_model?(s.est_model.per_audio_min_s?` · estimate per item: ${s.est_model.fixed_s}s fixed + ${s.est_model.per_audio_min_s}s per audio minute (fit on ${s.est_model.n} recent items)`:` · estimate per item: average ${s.est_model.fixed_s}s (last ${s.est_model.n} items)`):""}</div>`:`<b class="bad">GPU host not reachable over ssh</b>`;
 CUR=(g.current||[]);MAC=(s.mac_jobs||[]);GH=g.reachable?g:null;MACN=(L||{}).cpus||10;T0=Date.now();drawCur();const cur=[];if(0)document.getElementById("cur").innerHTML=cur.length?"<tr><th>Item</th><th>Queue</th><th>Audio</th><th>Running</th><th>Est. progress</th></tr>"+cur.map(c=>`<tr><td>${esc(c.label)}</td><td>${esc(c.queue)}</td><td>${mins(c.audio_s)}</td><td>${mins(c.elapsed_s)}</td><td>${c.stale?'<span class="pill paused">stale leftover (not running)</span>':c.pct!=null?bar(c.pct)+`<span class="small muted">${c.pct}% of ~${mins(c.est_total_s)}</span>`:'<span class="muted small">estimating…</span>'}</td></tr>`).join(""):"<tr><td class=muted>nothing staged on the GPU right now</td></tr>";
-document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+(QALL?s.queues:s.queues.slice(0,15)).map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
+document.getElementById("q").innerHTML="<tr><th>Queue</th><th>Done</th><th></th><th>Created</th><th>Last finished</th><th></th></tr>"+(QALL?s.queues:s.queues.slice(0,5)).map(q=>{const p=q.total?Math.round(100*q.done/q.total):0;const run=s.runners.some(r=>r.queue==q.queue);
 const rs=s.runners.filter(r=>r.queue==q.queue),left=q.total-q.done-(q.too_long||0)-(q.problem||0),qn=esc(q.queue);
 const ctl=r=>`<button onclick="event.stopPropagation();post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="event.stopPropagation();if(confirm('Stop ${qn} runner ${r.pid}? The item already on the GPU finishes.'))post('/api/stop',{pid:${r.pid}})">Stop</button>`;
 const st=rs.map(r=>`<div style="margin:2px 0"><span class="pill ${r.paused?"paused":""}">${r.paused?"paused":"running"}${r.from_end?" · from end":""}</span> ${hb('mac')}→${hb('linux')} ${ctl(r)}</div>${r.cpu!=null?useBars(r,MACN):""}`).join("");
@@ -1822,7 +1857,7 @@ ${C.uncovered?` <button onclick="if(confirm('Write the ${C.uncovered} uncovered 
 ${C.not_in_catalog?` <button onclick="if(confirm('Add ${C.not_in_catalog} rows to the catalog? A backup is made first; existing rows are not changed.'))post('/api/catalog_append')">Add ${C.not_in_catalog} to catalog</button>`:""}</div>
 <table><tr><th>Pull</th><th>Audio</th><th>Done</th><th>Plain only</th><th>Queued</th><th>Not covered</th><th>Not in catalog</th><th>Ignored</th></tr>${(CALL?C.pulls:[...C.pulls].sort((a,b)=>a.pull<b.pull?1:-1).slice(0,15)).map(r=>`<tr><td>${esc(r.pull)}</td><td>${r.audio}</td><td>${r.done}</td><td class="muted">${r.plain}</td><td>${r.queued}</td><td class="${r.uncovered?"bad":""}">${r.uncovered}</td><td>${r.not_in_catalog}</td><td class="muted">${r.ignored}</td></tr>`).join("")}</table>
 <div class="small muted">Ignored: temp files, app/system sounds, and other copies of catalogued files. Done = a fine-comb result or all 15-min pieces processed. Plain only = an earlier plain transcript in the catalog, no fine-comb yet.</div>`:"";
-document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.slice(0,15).map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
+document.getElementById("fin").innerHTML="<tr><th>Item</th><th>Queue</th><th>Finished</th></tr>"+s.recent.slice(0,5).map(f=>`<tr><td>${esc(f.label)}</td><td>${esc(f.queue)}</td><td>${f.finished}</td></tr>`).join("");
 document.getElementById("r").innerHTML="<tr><th>PID</th><th>Host</th><th>Script</th><th>Queue</th><th>Running for</th><th></th></tr>"+(s.runners.map(r=>`<tr><td>${r.pid}</td><td>${hb('mac')} → ${hb('linux')}</td><td>${esc(r.script)}</td><td>${esc(r.queue||"(chain)")}${r.from_end?' <span class="small muted">from end</span>':""}</td><td>${esc(r.elapsed)}</td><td>${r.paused?'<span class="pill paused">paused</span> ':""}<button onclick="post('/api/${r.paused?"release":"hold"}',{pid:${r.pid}})">${r.paused?"Resume":"Pause"}</button> <button onclick="if(confirm('Stop runner ${r.pid}? The item already on the GPU finishes; no new items start.'))post('/api/stop',{pid:${r.pid}})">Stop</button></td></tr>`).join("")||"<tr><td class=muted>none</td></tr>");
 document.getElementById("l").innerHTML=Object.entries(s.logs).map(([f,L])=>`<div class="muted">${esc(f)}</div><pre>${esc(L.join("\\n"))||"(nothing yet)"}</pre>`).join("");}
 try{const M=document.getElementById("more");M.open=localStorage.getItem("jb-more")==="1";M.addEventListener("toggle",()=>{try{localStorage.setItem("jb-more",M.open?"1":"0")}catch(e){}})}catch(e){}
