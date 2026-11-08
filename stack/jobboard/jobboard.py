@@ -513,6 +513,33 @@ class Board:
     # and names each client from [ollama_now].labels or [recon_jobs].jobs in the (git-ignored) config. Read-only.
     OLLAMA_PORTS = (11434, 11435)
 
+    def progress_jobs(self):
+        """2026-11-07 (Dan): [[progress_jobs]] in the config: one bar per job. done = rows of `list` whose `done` file exists;
+        rows listed in `skipped` (long recordings run last) are left out of that job's total. Rate = done in the last hour."""
+        t, v = getattr(self, "_pj", (0, None))
+        if v is not None and time.time() - t < 60:
+            return v
+        def keys(path, key):
+            if not path or not os.path.exists(path): return []
+            with open(path, newline="") as fh:
+                if path.endswith(".csv"):
+                    return [r.get(key, "") for r in csv.DictReader(fh)]
+                return list(dict.fromkeys(l.split("\t")[0] for l in fh if l.strip()))
+        out = []
+        for j in self.c.get("progress_jobs", []):
+            ks = [k for k in keys(j["list"], j.get("key", "")) if k]
+            skip = set(keys(j.get("skipped"), "")) if j.get("skipped") else set()
+            ks = [k for k in ks if k not in skip]
+            done = [j["done"].replace("{key}", k) for k in ks]
+            have = [d for d in done if os.path.exists(d)]
+            hour = sum(1 for d in have if time.time() - os.path.getmtime(d) < 3600)
+            n, tot = len(have), len(ks)
+            out.append({"name": j["name"], "host": j.get("host", "mac"), "count": n, "total": tot,
+                        "pct": round(100 * n / tot, 1) if tot else None, "per_hour": hour,
+                        "eta_s": int((tot - n) / hour * 3600) if hour and tot > n else None, "skipped": len(skip & set(keys(j["list"], j.get("key", ""))))})
+        self._pj = (time.time(), out)
+        return out
+
     def gpu_now(self):
         """2026-11-07 (Dan): which processes use each machine's GPU right now (MRGPU and Tower: nvidia-smi compute apps;
         Mac: known Metal users, since macOS has no per-process GPU list). Cached 15 s; read-only."""
@@ -1471,7 +1498,7 @@ class Board:
                 self.auto_ingest()
             except Exception as e:   # never let an ingest problem take the board down
                 print("auto_ingest:", e, file=sys.stderr)
-        return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "gpu_now": self.gpu_now(), "remote": rem, "cleared": self.cleared_note,
+        return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "gpu_now": self.gpu_now(), "progress_jobs": self.progress_jobs(), "remote": rem, "cleared": self.cleared_note,
                 "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "hidden_empty_queues": getattr(self, "hidden_empty", []), "runners": runners,
                 "recent": recent, "mac_jobs": mac_jobs, "lanes": self.lanes(), "pipelines": self.pipelines(),
@@ -1735,7 +1762,7 @@ header.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify
 .stream{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;min-width:0}.stream .now{overflow-wrap:anywhere}
 .s-working,.s-running{border-color:var(--ok);color:var(--ok)}.s-yielding,.s-paused,.s-waiting,.s-low{border-color:var(--warn);color:var(--warn)}.s-idle,.s-unreachable{border-color:var(--bad);color:var(--bad)}
 details.more{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:12px 0}details.more>summary{padding:2px 0}
-.sum .big{font-size:18px;font-weight:600;margin:6px 0 4px}.sum ul{margin:4px 0 0;padding-left:18px}.sum li{margin:2px 0}.modemrow{margin:0 0 6px}.gpunow{margin:0 0 8px;padding:4px 8px;border-left:3px solid var(--ok);background:var(--cell);border-radius:4px}.modem{width:100%;max-width:300px;height:34px;display:block}
+.sum .big{font-size:18px;font-weight:600;margin:6px 0 8px}.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.gl-col{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card)}.gl-col h3{margin:0 0 4px;font-size:15px}.gl-row{margin:8px 0 0}.gl-name{font-weight:600;font-size:13px;margin-bottom:2px}.sum ul{margin:4px 0 0;padding-left:18px}.sum li{margin:2px 0}.modemrow{margin:0 0 6px}.gpunow{margin:0 0 8px;padding:4px 8px;border-left:3px solid var(--ok);background:var(--cell);border-radius:4px}.modem{width:100%;max-width:300px;height:34px;display:block}
 .mcase{fill:#d9d2bf;stroke:#8f876f;stroke-width:1.2}.ml{font:7px ui-monospace,Menlo,monospace;fill:#3b3628;text-anchor:middle}
 .mn{font:bold 11px ui-monospace,Menlo,monospace;fill:#2b2618}.mn.dim{font-weight:normal;font-size:8px;fill:#6b6450}
 .led{fill:#4a1512;stroke:#2a0b09;stroke-width:.8}.led.on{fill:#ff3b2f;filter:drop-shadow(0 0 2.5px #ff3b2f)}
@@ -1758,7 +1785,7 @@ window.setDensity=function(v){r.setAttribute("data-density",v);try{localStorage.
 <div class="theme-pick small"><span class="muted">Look:</span> <button onclick="setTheme('default')">Default</button><button onclick="setTheme('classic')">Classic</button><button onclick="setTheme('contrast')">High contrast</button><button onclick="setTheme('retro')">Retro</button><button onclick="setTheme('terminal')">Terminal</button>
 <span class="muted">·</span> <button onclick="setDensity(document.documentElement.getAttribute('data-density')==='compact'?'detailed':'compact')">Compact / detailed</button></div></header>
 <div id="pri"></div>
-<section id="sum" class="sum" style="border-width:2px"><b>1. Status</b> <span class="muted small">Loading.</span></section>
+<section id="sum" class="sum" style="border-width:2px"><b>1. At a glance</b> <span class="muted small">Loading.</span></section>
 <section id="pipes" hidden></section>
 <section><b>3. Jobs running now</b> <span class="muted small">Each job shows the machine that does the work. Use "Compact / detailed" to see CPU, memory and network.</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other jobs found from running processes</div><table id="ext"></table></section>
 <section><b>4. Machines</b> <span class="muted small">What each machine does now.</span><div class="lanes" id="lanes"><div class="muted small">Loading.</div></div></section>
@@ -1807,12 +1834,17 @@ return `<div class="modemrow" title="${esc(note||"MB/s")}"><svg viewBox="0 0 300
 function cell(k,v,p,tip){return `<div class="cell" title="${esc(tip||"")}"><div class="k">${k}</div><div class="v">${v}</div>${p==null?"":bar(Math.max(0,Math.min(100,p)))}</div>`}
 function gpuline(h){const G=(window.LAST_S&&LAST_S.gpu_now||{})[h]||[];return `<div class="gpunow small"><b>On GPU now:</b> ${G.length?G.map(x=>esc(x.label)+(x.mem_gb!=null?` <span class="muted">${x.mem_gb} GB</span>`:"")).join(" · "):'<span class="muted">nothing</span>'}</div>`}
 function drawSum(s){const e=document.getElementById("sum");if(!e)return;
-const L=s.lanes||[],work=L.filter(x=>/^(working|running)/.test(x.state)),wait=L.filter(x=>/^(waiting|paused|yielding)/.test(x.state)),idle=L.filter(x=>/^idle/.test(x.state));
-const W=(s.saturation||[]);const head=W.length?`<span class="paused">Check this: ${esc(W[0])}</span>`:(work.length?`Working: ${work.length} job${work.length==1?"":"s"} running`:"Nothing is running now");
-const items=[];(s.pipelines||[]).forEach(p=>(p.stages||[]).filter(x=>x.of_total&&x.pct!=null&&x.pct<100).forEach(x=>items.push(`${esc(x.label.split(" (")[0])}: <b>${x.count} of ${p.total}</b> (${x.pct}%)${x.eta_s?` · about ${secs(x.eta_s)} left at this rate`:x.per_hour===0?' · <span class="paused">no progress in the last hour</span>':""}`)));
-if(wait.length)items.push(`Waiting: ${wait.map(x=>esc(x.name.split(":")[0])).join(" · ")}`);
-if(idle.length)items.push(`<span class="muted">Idle: ${idle.map(x=>esc(x.name.split(" (")[0])).join(" · ")}</span>`);
-e.innerHTML=`<b>1. Status</b><div class="big">${head}</div><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul>`}
+const L=s.lanes||[],W=(s.saturation||[]),G=s.gpu_now||{};
+const work=L.filter(x=>/^(working|running)/.test(x.state));
+const head=W.length?`<span class="paused">Check this: ${esc(W[0])}</span>`:(work.length?`Working: ${work.length} job${work.length==1?"":"s"} running`:"Nothing is running now");
+const by={mac:[],linux:[],unraid:[]};
+(s.pipelines||[]).forEach(p=>(p.stages||[]).filter(x=>x.of_total&&x.host in by).forEach(x=>by[x.host].push({name:x.label.split(" (")[0],count:x.count,total:p.total,pct:x.pct,eta:x.eta_s,ph:x.per_hour})));
+(s.progress_jobs||[]).forEach(j=>(by[j.host]||(by[j.host]=[])).push({name:j.name,count:j.count,total:j.total,pct:j.pct,eta:j.eta_s,ph:j.per_hour,note:j.skipped?`${j.skipped} long ones run last`:""}));
+L.filter(x=>!/^(working|running)/.test(x.state)).forEach(x=>(by[x.host]||(by[x.host]=[])).push({name:x.name.split(" (")[0],state:x.state}));
+const row=x=>x.state?`<div class="gl-row"><div class="gl-name">${esc(x.name)}</div><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span></div>`:
+ `<div class="gl-row"><div class="gl-name">${esc(x.name)}</div>${bar(x.pct)}<div class="small"><b>${x.count} of ${x.total}</b>${x.pct!=null?` · ${x.pct}%`:""}${x.pct>=100?' · <span class="ok">done</span>':x.eta?` · about ${secs(x.eta)} left`:x.ph===0?' · <span class="paused">none in the last hour</span>':""}${x.note?` · <span class="muted">${esc(x.note)}</span>`:""}</div></div>`;
+const col=h=>`<div class="gl-col"><h3>${hb(h)}</h3><div class="small muted">GPU now: ${(G[h]||[]).map(x=>esc(x.label)).join(" · ")||"nothing"}</div>${(by[h]||[]).map(row).join("")||'<div class="muted small">No jobs.</div>'}</div>`;
+e.innerHTML=`<b>1. At a glance</b><div class="big">${head}</div><div class="glance">${["mac","linux","unraid"].map(col).join("")}</div>`}
 function drawLanes(s){window.LAST_S=s;try{drawSum(s)}catch(err){console.log("sum",err)}const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
 const C={mac:[cell("Apple GPU",`${f(L.gpu_pct)}%`,L.gpu_pct,"Metal: mlx-whisper lane, quick triage"),cell("CPU",`${f(L.cpu_pct)}%`,L.cpu_pct),cell("Load",`${f(L.load1)} / ${f(L.cpus)}`,L.cpus?100*L.load1/L.cpus:null)],
  linux:g.reachable?[cell("GPU",`${g.gpu_util}%`,g.gpu_util),cell("VRAM",`${(g.gpu_used_mib/1024).toFixed(1)} / ${(g.gpu_total_mib/1024).toFixed(0)} GB`,100*g.gpu_used_mib/g.gpu_total_mib),cell("CPU",`${f(g.cpu_pct)}%`,g.cpu_pct),cell("RAM",`${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(0)} / ${(g.mem_total_mib/1024).toFixed(0)} GB`,100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib),cell("Temp",`${f(g.gpu_temp)}°C`,null)]:[cell("State","not reachable",null)],
