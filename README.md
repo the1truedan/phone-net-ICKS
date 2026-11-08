@@ -72,15 +72,23 @@ The Mac installer is version 0.8.1 too: `phone-net-ICKS_0.8.1_aarch64.dmg` on th
 
 - **Nov 1, 3:38 AM:** *"can i plug in the play to use the app for the recon pull?"* 20 minutes later the app had a **Pull new files** button (`3e10d32`, session `6d0b256a`). It sat on a side branch.
 - **Nov 2, 11:21 AM:** first real pull from the app. Next ask: have the job board pick up every new pull by itself.
+- **Nov 2, 11:28 AM:** the cause of the GPU computer's out-of-memory crash was found. The fix: 15-minute parts and a 24 GB memory cap.
 - **4:25 PM:** auto-pull on plug-in written and saved, but not built.
 - **4:30:25 PM:** *"dude why the f is the mac app not auto pull on connect. was that not smoketested proper?"* The answer, 3 seconds later: no, it was never built or tested.
 - **4:30:53 PM:** built in 17 seconds. **4:31:45 PM:** the phone on the cable started its pull by itself about 5 seconds after the app opened. **Call-out to working: 1 min 20 s.** The miss became a rule: a feature isn't done until it has run on a real phone.
 - **4:35 PM:** the progress page opens in the phone's own browser. **7:46 PM:** game mode on the job board.
+- **Nov 2, 4:53 PM:** a Mac-only urgent lane: fast local transcription plus a local summary, for anything that cannot wait.
+- **Nov 2, 6:12 PM:** stream mode. Both speech models stay loaded on the GPU computer and work an inbox, instead of reloading every 5 files.
+- **Nov 3, 6:35 AM:** the payroll portal's full history (43 pay periods) pulled by itself: signed export links handed to a local receiver.
 - **Nov 5, 5:37 PM:** *"redesign job board time now"*, plus *"can the blink pull stats and other background jobs better inform status and progress"* (session `88460753`). Result: host lanes, honest idle rows, a 15-day archive and five looks, released 10:35 PM (session `955c38eb`).
 - **Nov 6, 12:03 AM:** the care program's own services report, read on the home computer, set side by side with what was confirmed in writing (`848e35d`).
+- **Nov 6, 8:25 AM:** a receipt-scanning Mac app on the P.A.P.E. engine (I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E., v0.1.0 alpha).
+- **Nov 6, 11:01 PM:** [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html): text alerts routed through a carrier email-to-text gateway that was shut off on June 17, 2025, secure mail that opens blank, and 0 of 16 portal PDFs that pass the accessibility standard.
 - **Nov 7, 7:51 AM:** a paper letter arrived. Scanned at 7:51, first draft reply at 7:54: **3 minutes from scanner to draft** (P.A.P.E., session `6c4fae0f`).
 - **Nov 7, morning:** one pass gathered 299 photos and videos and 120 recordings across 28 dates. A phone was cleared of 64.2 GB, and every delete was checked again first (session `6c4fae0f`).
+- **Nov 7, 8:50 AM:** every recording measured by its real length. The catalog was wrong (14.1 minutes listed, 21.3 real).
 - **Nov 7, 8:51 AM:** 94 payroll exports, pulled over two months, compared line by line. Every change made after the fact shows by date, and no entry was lost (session `6c4fae0f`).
+- **Nov 7, 12:53 PM:** a driver update had silently broken the older GPU. It was pinned back, with a guard that alerts if it happens again.
 - **Nov 7, afternoon:** a miss became a rule again. A 26-hour recording went whole to the GPU computer, the same file that had run it out of memory before. The fix: a 3-hour cap and 15-minute pieces. By evening, 186 of 189 priority recordings had speaker names (session `50346b21`).
 - **Nov 7, evening:** an authorization report turned into a timeline: 9 authorization numbers, what was said vs what was authorized. A phone's own message log answered "we can't get texts" in seconds: every text had a delivery report (read-only, over the cable).
 - **Nov 7, 7:28 PM:** the job board's "At a glance" view: one column per computer, one bar per job, and what is on each GPU now (`2b94252`).
