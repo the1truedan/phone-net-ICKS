@@ -49,6 +49,15 @@ The Mac installer is version 0.8.1 too: `phone-net-ICKS_0.8.1_aarch64.dmg` on th
 - **4:30:53 PM:** built in 17 seconds. **4:31:45 PM:** the phone on the cable started its pull by itself about 5 seconds after the app opened. **Call-out to working: 1 min 20 s.** The miss became a rule: a feature isn't done until it has run on a real phone.
 - **4:35 PM:** the progress page opens in the phone's own browser. **7:46 PM:** game mode on the job board.
 - **Nov 5, 5:37 PM:** *"redesign job board time now"*, plus *"can the blink pull stats and other background jobs better inform status and progress"* (session `88460753`). Result: host lanes, honest idle rows, a 15-day archive and five looks, released 10:35 PM (session `955c38eb`).
+- **Nov 6, 12:03 AM:** the care program's own services report, read on the home computer, set side by side with what was confirmed in writing (`848e35d`).
+- **Nov 7, 7:51 AM:** a paper letter arrived. Scanned at 7:51, first draft reply at 7:54: **3 minutes from scanner to draft** (P.A.P.E., session `6c4fae0f`).
+- **Nov 7, morning:** one pass gathered 299 photos and videos and 120 recordings across 28 dates. A phone was cleared of 64.2 GB, and every delete was checked again first (session `6c4fae0f`).
+- **Nov 7, 8:51 AM:** 94 payroll exports, pulled over two months, compared line by line. Every change made after the fact shows by date, and no entry was lost (session `6c4fae0f`).
+- **Nov 7, afternoon:** a miss became a rule again. A 26-hour recording went whole to the GPU computer, the same file that had run it out of memory before. The fix: a 3-hour cap and 15-minute pieces. By evening, 186 of 189 priority recordings had speaker names (session `50346b21`).
+- **Nov 7, evening:** an authorization report turned into a timeline: 9 authorization numbers, what was said vs what was authorized. A phone's own message log answered "we can't get texts" in seconds: every text had a delivery report (read-only, over the cable).
+- **Nov 7, 7:28 PM:** the job board's "At a glance" view: one column per computer, one bar per job, and what is on each GPU now (`2b94252`).
+- **Nov 7, 9:01 PM:** a gap found in the transcription pipeline: 1,237 recordings the GPU computer would never give its second model. The idle Mac took them that night.
+- **Nov 7, night:** a 4 min 27 s timelapse of every note, visit, call and email, with cited quotes, built in one evening from local data. A new export added 272 care notes the timeline was missing (session `50346b21`).
 
 ## v0.8.0 · GREEK SQUAT edition (2026-11-02)
 
