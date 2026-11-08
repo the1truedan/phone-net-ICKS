@@ -541,7 +541,7 @@ class Board:
         return out
 
     def gpu_now(self):
-        """2026-11-07 (Dan): which processes use each machine's GPU right now (MRGPU and Tower: nvidia-smi compute apps;
+        """2026-11-07 (Dan): which processes use each machine's GPU right now (GPU host and storage host: nvidia-smi compute apps;
         Mac: known Metal users, since macOS has no per-process GPU list). Cached 15 s; read-only."""
         t, v = getattr(self, "_gpunow", (0, None))
         if v is not None and time.time() - t < 15:
@@ -553,8 +553,7 @@ class Board:
             for l in (txt or "").splitlines():
                 if "|" in l:
                     mm, a = l.split("|", 1)
-                    nice = [(r"deep_stream", "transcription (large-v3 + turbo)"), (r"speaker_pass", "speaker names (pyannote)"),
-                            (r"deep_all_embed|bge-m3|embed", "embeddings"), (r"ollama", "Ollama model"), (r"llama-server", "llama-server model")]
+                    nice = [tuple(x) for x in self.c.get("gpu_labels", [])] + [(r"ollama", "Ollama model"), (r"llama-server", "llama-server model")]
                     lab = next((n for pat, n in nice if re.search(pat, a)), None)
                     out.append({"label": lab or (self._client_label(a.strip()) if a.strip() else "(container process)"),
                                 "mem_gb": round(int(mm.strip() or 0) / 1024, 1)})
@@ -1225,8 +1224,7 @@ class Board:
                 lab = re.search(r"--label (\S+)", a["cmd"]); ext.append({"host": "linux", "job": "Deep pass (diarized) on GPU", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"), "mem_mib": a["mem_mib"], "pct": None, "gain": GAIN.get("deep_gpu", ""), "detail": lab.group(1) if lab else ""})
             elif "fine_comb_resident" in a["cmd"]:
                 ext.append({"host": "linux", "job": "Resident fine-comb worker (board queues)", "cpu": None, "res": "GPU", "gpu": out["linux"].get("gpu_util"), "mem_mib": a["mem_mib"], "pct": None, "gain": GAIN.get("resident", ""), "detail": f"{a['mem_mib']} MiB"})
-            elif any(g in a["cmd"] and any(m in r_ for _, _, r_ in rows) for g, m in
-                     (("deep_stream", "deep_all_transcribe"), ("speaker_pass", "speaker_batch"))):
+            elif any(g in a["cmd"] and any(m in r_ for _, _, r_ in rows) for g, m in self.c.get("gpu_driven_by", [])):
                 continue   # 2026-11-07 (Dan: less clutter): already listed as the Mac job that drives it; GPU use shows under Machines
             else:   # 2026-11-07: any other GPU program on the GPU host shows by its script name
                 sm = re.search(r"([\w.-]+\.py)\b", a["cmd"]); nm = sm.group(1) if sm else a["cmd"].split()[0].rsplit("/", 1)[-1]
@@ -1849,7 +1847,7 @@ function drawLanes(s){window.LAST_S=s;try{drawSum(s)}catch(err){console.log("sum
 const C={mac:[cell("Apple GPU",`${f(L.gpu_pct)}%`,L.gpu_pct,"Metal: mlx-whisper lane, quick triage"),cell("CPU",`${f(L.cpu_pct)}%`,L.cpu_pct),cell("Load",`${f(L.load1)} / ${f(L.cpus)}`,L.cpus?100*L.load1/L.cpus:null)],
  linux:g.reachable?[cell("GPU",`${g.gpu_util}%`,g.gpu_util),cell("VRAM",`${(g.gpu_used_mib/1024).toFixed(1)} / ${(g.gpu_total_mib/1024).toFixed(0)} GB`,100*g.gpu_used_mib/g.gpu_total_mib),cell("CPU",`${f(g.cpu_pct)}%`,g.cpu_pct),cell("RAM",`${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(0)} / ${(g.mem_total_mib/1024).toFixed(0)} GB`,100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib),cell("Temp",`${f(g.gpu_temp)}°C`,null)]:[cell("State","not reachable",null)],
  unraid:T.reachable?[cell("Load",`${f(T.load1)} / ${f(T.cpus)}`,T.cpus?100*T.load1/T.cpus:null)]:[cell("State","not reachable",null)]};
-const M={mac:modem("mac",L.rx_mbs,L.tx_mbs,"M4RV network, MB/s"),linux:g.reachable?modem("linux",g.rx_mbs,g.tx_mbs,"MRGPU network, MB/s"):"",unraid:T.reachable?modem("unraid",T.rx_mbs,T.tx_mbs,(T.nic||"Network")+": shared 1 GbE, MB/s"):""};
+const M={mac:modem("mac",L.rx_mbs,L.tx_mbs,"This computer's network, MB/s"),linux:g.reachable?modem("linux",g.rx_mbs,g.tx_mbs,"GPU host network, MB/s"):"",unraid:T.reachable?modem("unraid",T.rx_mbs,T.tx_mbs,(T.nic||"Network")+": shared 1 GbE, MB/s"):""};
 const jobs=h=>(s.mac_jobs||[]).filter(j=>(j.host||"mac")===h).map(j=>j.label.split(/[:(]/)[0].trim()),cur=(g.current||[]).length;
 document.getElementById("lanes").innerHTML=["mac","linux","unraid"].map(h=>{const st=(s.lanes||[]).filter(x=>x.host===h),J=jobs(h);
  return `<div class="lane"><h3>${hb(h)} <span class="muted small">${esc((HOST[h]||["",""])[1].split(" · ").slice(1).join(" · "))}</span></h3>${M[h]}${gpuline(h)}<div class="cells">${C[h].join("")}</div>
