@@ -1,6 +1,7 @@
 # Changelog
 
 ## v0.9.2 — 2026-11-07 · A.U.D.I.T. I.T. M.Y.S.E.L.F. edition
+**A.U.D.I.T.** All Utterances Documented, Indexed, Transcribed · **I.T.** Itemized Timelines · **M.Y.S.E.L.F.** Making Your Story Easy to Locate, Fast.
 - **Job board, "1. At a glance":** one column per computer, one progress bar per job, and what each GPU runs now. Jobs
   from pipelines, from new `[[progress_jobs]]` entries in the config (rows of a list whose done-file exists; skipped rows
   run last), and waiting or idle lanes, all in one view.

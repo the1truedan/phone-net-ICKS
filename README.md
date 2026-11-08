@@ -32,6 +32,8 @@ Both are unsigned: the first time, see [install](#desktop-app-from-v080-install)
 
 ## Latest · v0.9.2 · A.U.D.I.T. I.T. M.Y.S.E.L.F. edition (2026-11-07)
 
+**A.U.D.I.T.** All Utterances Documented, Indexed, Transcribed · **I.T.** Itemized Timelines · **M.Y.S.E.L.F.** Making Your Story Easy to Locate, Fast.
+
 - **Job board, "1. At a glance":** one column per computer, one bar per job, and what each GPU runs now, so the first
   look answers "what is happening where". Ordered by importance: status first, details last. See `CHANGELOG.md`.
 - **Breakthroughs, Nov 6-7:** added to the timeline above (counts and methods only).
