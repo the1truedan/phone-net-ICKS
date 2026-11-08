@@ -31,3 +31,6 @@ config/redact.txt
 !docs/img/jobboard.png
 !site/greek_squat_status_top.png
 !site/greek_squat_status_bottom.png
+
+# in-doc-trin-8-piece README screenshots (made-up receipts, checked for PII/PHI 2026-11-06)
+!indoc/screenshots/*.png

@@ -1,0 +1,11 @@
+{
+ "_about": "Copy to ~/pape_scans/receipts/local_rules.json and fill in your own stores. It stays on your Mac; never commit it. stores: [text printed on the receipt, name to show, category]. words: extra item words per category.",
+ "stores": [
+  ["corner market", "Corner Market", "grocery"],
+  ["main street fuel", "Main Street Fuel & Go", "fuel & convenience"]
+ ],
+ "words": {
+  "drinks": ["house blend"],
+  "care & medical": ["nutrition shake"]
+ }
+}

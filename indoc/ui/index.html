@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E.</title>
+<style>
+:root {
+  --bg: #0b0f17; --panel: #131a26; --panel2: #192233; --line: #2a3550; --fg: #eef3fb; --dim: #9aa7bf;
+  --acc: #8fd3ff; --acc-ink: #04131d; --ok: #4fd18b; --warn: #ffc24a; --bad: #ff7a66;
+  --font: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root { --bg: #f5f7fb; --panel: #ffffff; --panel2: #eef2f8; --line: #d3dae6; --fg: #0f1520; --dim: #4d5a70;
+          --acc: #0b5f8a; --acc-ink: #ffffff; --ok: #137a43; --warn: #8a5a00; --bad: #b3261e; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 19px; line-height: 1.45; }
+main { max-width: 1240px; margin: 0 auto; padding: 22px 18px 60px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+h1 { font-size: 30px; margin: 0; letter-spacing: .01em; }
+h1 small { display: block; font-size: 15px; color: var(--dim); font-weight: 400; letter-spacing: .04em; }
+h2 { font-size: 22px; margin: 26px 0 10px; }
+.status { color: var(--dim); font-size: 16px; margin-top: 6px; }
+.status b { color: var(--fg); }
+.dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--dim); }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+.actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 20px 0 8px; }
+button { font: inherit; cursor: pointer; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 14px 16px; text-align: left; }
+button:hover { border-color: var(--acc); }
+button:disabled { opacity: .45; cursor: wait; }
+button.big { font-size: 21px; font-weight: 700; }
+button.big span { display: block; font-size: 14px; font-weight: 400; color: var(--dim); margin-top: 2px; }
+button.primary { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
+button.primary span { color: var(--acc-ink); opacity: .85; }
+.opts { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; color: var(--dim); font-size: 16px; }
+.opts select { font: inherit; font-size: 16px; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+#drop { margin-top: 14px; border: 2px dashed var(--line); border-radius: 14px; padding: 16px; text-align: center; color: var(--dim); }
+#drop.over { border-color: var(--acc); color: var(--fg); background: var(--panel2); }
+#busy { display: none; margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); font-size: 20px; }
+#busy.on { display: block; }
+#msg { margin-top: 14px; font-size: 19px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.msg-ok { border-left: 6px solid var(--ok); } .msg-warn { border-left: 6px solid var(--warn); } .msg-bad { border-left: 6px solid var(--bad); }
+.tabs { display: flex; gap: 8px; margin-top: 26px; border-bottom: 1px solid var(--line); }
+.tabs button { border-radius: 10px 10px 0 0; border-bottom: none; padding: 10px 18px; font-weight: 700; }
+.tabs button.on { background: var(--panel2); border-color: var(--acc); }
+.wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 17px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: 700; font-size: 14px; letter-spacing: .05em; text-transform: uppercase; position: sticky; top: 0; background: var(--bg); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tbody tr { cursor: pointer; } tbody tr:hover { background: var(--panel2); } tr.sel { background: var(--panel2); outline: 2px solid var(--acc); }
+tr.rescan td { opacity: .5; } tr.rescan td:last-child { opacity: 1; }
+.tag { display: inline-block; font-size: 13px; padding: 1px 8px; border-radius: 99px; background: var(--panel2); border: 1px solid var(--line); margin: 1px 3px 1px 0; white-space: nowrap; }
+.warn { color: var(--warn); } .bad { color: var(--bad); } .okc { color: var(--ok); }
+#detail { display: none; margin-top: 18px; }
+#detail.on { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 18px; }
+#detail img { width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 17px; }
+.kv div:nth-child(odd) { color: var(--dim); }
+.mono { font-family: var(--mono); font-size: 15px; }
+footer { margin-top: 40px; color: var(--dim); font-size: 14px; }
+@media (max-width: 760px) { #detail.on { grid-template-columns: 1fr; } h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E.<small>RECEIPTS AND PAPER → YOUR OWN LEDGER · ON THIS MAC ONLY</small></h1>
+  </header>
+  <div class="status" id="status">Checking the scanner…</div>
+
+  <div class="actions">
+    <button class="big primary" id="b-test">📄 Scan 1<span>Test one receipt first</span></button>
+    <button class="big" id="b-stack">📚 Scan the stack<span>Everything in the feeder</span></button>
+    <button class="big" id="b-inbox">📥 Read the inbox<span>Photos or PDFs in the inbox folder</span></button>
+    <button class="big" id="b-report">📊 Reports<span>By month, category, store, card</span></button>
+    <button class="big" id="b-recon">🔎 Look up stores<span>New stores' own websites only</span></button>
+    <button class="big" id="b-folder">📁 Open folder<span>CSV files and scans</span></button>
+  </div>
+  <div class="opts">
+    <label>Double-check with a local model:
+      <select id="model"><option value="">Off (fast)</option></select></label>
+    <label title="Sends only the store's name and address to OpenStreetMap, once per new store"><input type="checkbox" id="verify"> Check new stores on the public map (OpenStreetMap)</label>
+    <span>Load face down, top edge first. No weight on the stack.</span>
+  </div>
+  <div id="drop">Or drag receipt photos or PDFs onto this window.</div>
+  <div id="busy"></div>
+  <div id="msg"></div>
+
+  <div class="tabs">
+    <button class="on" data-tab="receipts">Receipts</button>
+    <button data-tab="items">Items</button>
+    <button data-tab="stores">Stores</button>
+    <button data-tab="reports">Reports</button>
+  </div>
+  <section id="t-receipts">
+    <div class="wrap"><table>
+      <thead><tr><th>Date</th><th>Time</th><th>Store</th><th>Where</th><th class="num">Total</th><th>Paid</th><th>Card</th><th>What</th><th>Check</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div id="detail" class="card"></div>
+  </section>
+  <section id="t-items" hidden>
+    <div class="wrap"><table>
+      <thead><tr><th>Date</th><th>Store</th><th>Item</th><th class="num">Qty</th><th class="num">Each</th><th class="num">Amount</th><th>Category</th><th>Card</th></tr></thead>
+      <tbody id="items"></tbody>
+    </table></div>
+  </section>
+  <section id="t-stores" hidden>
+    <div class="wrap"><table>
+      <thead><tr><th>Store</th><th>Where</th><th>Phone</th><th>Website</th><th class="num">Receipts</th><th>Visits</th><th class="num">Spent</th><th>Map</th><th>Shopify</th><th>Store locator</th></tr></thead>
+      <tbody id="stores"></tbody>
+    </table></div>
+    <div id="recon-note" class="status"></div>
+  </section>
+  <section id="t-reports" hidden><div id="reports"></div></section>
+
+  <footer>P.A.P.E. engine · OCR with RapidOCR or Tesseract on this Mac · files in <span class="mono" id="out"></span> ·
+    receipts.csv, items.csv, reports/*.csv, one folder per receipt with the original scan, text, layout table and SHA-256 checksums.</footer>
+</main>
+<script>
+const T = window.__TAURI__;
+const call = (cmd, args = {}) => T.core.invoke(cmd, args);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const money = v => (v === null || v === undefined || v === "") ? "—" : "$" + Number(v).toFixed(2);
+const time12 = t => { if (!t) return "—"; const [h, m] = t.split(":").map(Number); return `${(h % 12) || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
+const day = d => { if (!d) return "—"; const x = new Date(d + "T12:00"); return x.toLocaleDateString(undefined, {month: "short", day: "numeric", year: "numeric"}); };
+let ledgerRows = [];
+
+async function status() {
+  try {
+    const c = await call("check");
+    $("#out").textContent = c.out;
+    const sc = c.scanner ? `<span class="dot ok"></span><b>Scanner ready</b> (${esc(c.scanner.split(":")[1] || c.scanner)})`
+                         : `<span class="dot bad"></span><b>No scanner</b>: open the chute, USB straight to the Mac`;
+    $("#status").innerHTML = `${sc} · <b>${c.receipts}</b> receipts in the ledger · reading with <b>${esc(c.best_ocr || "Tesseract")}</b>`;
+    const sel = $("#model");
+    if (sel.options.length === 1) for (const m of c.models || []) sel.add(new Option(m, m));
+  } catch (e) { $("#status").innerHTML = `<span class="dot bad"></span>${esc(e)}`; }
+}
+
+function busy(text) {
+  const b = $("#busy"); const t0 = Date.now();
+  document.querySelectorAll(".actions button").forEach(x => x.disabled = !!text);
+  clearInterval(busy.timer);
+  if (!text) { b.className = ""; return; }
+  b.className = "on";
+  const draw = () => b.textContent = `⏳ ${text} ${Math.round((Date.now() - t0) / 1000)} s`;
+  draw(); busy.timer = setInterval(draw, 500);
+}
+
+function summary(res) {
+  const m = $("#msg");
+  if (!res.ok) { m.innerHTML = `<div class="card msg-bad">⚠️ ${esc(res.error)}</div>`; return; }
+  const r = res.results || [];
+  const good = r.filter(x => x.ok && !(x.flags || []).length && !x.duplicate).length;
+  const dup = r.filter(x => x.duplicate).length;
+  const look = r.filter(x => x.ok && (x.flags || []).length && !x.duplicate && !(x.status || "").startsWith("rescan"));
+  const bad = r.filter(x => !x.ok);
+  const total = r.filter(x => x.ok && !x.duplicate).reduce((a, x) => a + (Number(x.total) || 0), 0);
+  let h = `<b>Read ${r.length} receipt${r.length === 1 ? "" : "s"}</b>: ${good} OK`;
+  if (look.length) h += `, <span class="warn">${look.length} need a look</span>`;
+  if (dup) h += `, ${dup} already in the ledger`;
+  if (bad.length) h += `, <span class="bad">${bad.length} could not be read</span>`;
+  h += ` · new total ${money(total)}`;
+  for (const x of r.filter(x => x.rescan)) h += `<div>↺ ${esc(x.store)} ${esc(day(x.date))} ${esc(time12(x.time))}: ${esc(x.rescan)}</div>`;
+  for (const x of look) h += `<div class="warn">• ${esc(x.store)} ${esc(day(x.date))}: ${esc(x.flags.join("; "))}</div>`;
+  for (const x of bad) h += `<div class="bad">• ${esc(x.source_name || x.source)}: ${esc(x.error)}</div>`;
+  m.innerHTML = `<div class="card ${bad.length ? "msg-bad" : look.length ? "msg-warn" : "msg-ok"}">${h}</div>`;
+}
+
+async function run(label, cmd, args) {
+  busy(label); $("#msg").innerHTML = "";
+  try { summary(await call(cmd, args)); } catch (e) { summary({ok: false, error: String(e)}); }
+  busy(null); await refresh(); status();
+}
+
+async function refresh() {
+  const l = await call("ledger", {limit: 500});
+  ledgerRows = l.receipts || [];
+  $("#rows").innerHTML = ledgerRows.map((r, i) => {
+    const cats = (r.spend_by_category || "").split("; ").filter(Boolean).map(c => `<span class="tag">${esc(c.replace(/ (-?[\d.]+)$/, ""))}</span>`).join("");
+    const where = [r.city, r.state].filter(Boolean).join(", ") + (r.store_number ? ` · #${r.store_number}` : "");
+    const rescan = (r.status || "").startsWith("rescan");
+    const flag = rescan ? `<span class="tag" title="${esc(r.status)}: not counted in totals">↺ rescan</span>`
+      : r.flags ? `<span class="warn" title="${esc(r.flags)}">⚠️ look</span>` : `<span class="okc">✓</span>`;
+    return `<tr data-i="${i}" class="${rescan ? "rescan" : ""}"><td>${esc(day(r.date))}</td><td>${esc(time12(r.time))}</td><td>${esc(r.store)}</td><td>${esc(where)}</td>
+      <td class="num"><b>${money(r.total)}</b></td><td>${esc(r.payment || "—")}</td><td class="mono">${esc(r.card_last4 || "—")}</td><td>${cats}</td><td>${flag}</td></tr>`;
+  }).join("") || `<tr><td colspan="9" style="color:var(--dim)">No receipts yet. Put one in the scanner and press Scan 1.</td></tr>`;
+  document.querySelectorAll("#rows tr[data-i]").forEach(tr => tr.onclick = () => show(+tr.dataset.i, tr));
+  // items tab, from each receipt record
+  const items = [];
+  for (const r of ledgerRows.filter(r => !(r.status || "").startsWith("rescan")).slice(0, 200)) {
+    try { const rec = await call("receipt", {folder: r.folder}); for (const it of rec.items || []) items.push([rec, it]); } catch (e) {}
+  }
+  $("#items").innerHTML = items.map(([r, it]) => `<tr><td>${esc(day(r.date))}</td><td>${esc(r.store)}</td><td>${esc(it.name)}${it.name_as_read ? ` <span class="status" title="read as ${esc(it.name_as_read)}">✎</span>` : ""}</td>
+    <td class="num">${it.quantity}</td><td class="num">${it.each ? money(it.each) : ""}</td><td class="num">${money(it.price)}</td>
+    <td><span class="tag">${esc(it.category)}</span></td><td class="mono">${esc(r.card_last4 || "")}</td></tr>`).join("");
+}
+
+async function show(i, tr) {
+  document.querySelectorAll("#rows tr").forEach(x => x.classList.remove("sel")); tr.classList.add("sel");
+  const d = $("#detail"); d.className = "card on"; d.innerHTML = "Loading…";
+  const r = ledgerRows[i];
+  let rec = r, img = "";
+  try { rec = await call("receipt", {folder: r.folder}); } catch (e) {}
+  try { img = `<img alt="Scan of the ${esc(rec.store)} receipt" src="${await call("preview", {folder: r.folder})}">`; } catch (e) { img = "<div>No picture.</div>"; }
+  const tm = rec.template_match ? `${esc(rec.template_match.store)}, header ${rec.template_match.header_match}% · layout ${rec.template_fit ?? "—"}%` : "first of this store";
+  d.innerHTML = `<div>${img}</div><div>
+    <h2 style="margin-top:0">${esc(rec.store)} · ${esc(day(rec.date))} ${esc(time12(rec.time))}</h2>
+    <div class="kv">
+      <div>Where</div><div>${esc([rec.address, rec.city, rec.state, rec.zip].filter(Boolean).join(", ") || "—")}${rec.store_number ? " · store #" + esc(rec.store_number) : ""}</div>
+      <div>Paid</div><div>${esc(rec.payment || "—")}${rec.card_last4 ? " · card " + esc(rec.card_last4) : ""}</div>
+      <div>Subtotal · tax · total</div><div>${money(rec.subtotal)} · ${money(rec.tax)} · <b>${money(rec.total)}</b></div>
+      <div>Template</div><div>${tm}</div>
+      ${rec.store_check ? `<div>Map check</div><div>${esc(rec.store_check.status)}${rec.store_check.note ? " · " + esc(rec.store_check.note) : ""}</div>` : ""}
+      <div>Read</div><div>${esc(rec.engine)} · ${esc(rec.orientation || "")} · ${esc(rec.doc_type || "")}</div>
+    </div>
+    ${(rec.status || "").startsWith("rescan") ? `<div style="margin-top:8px">↺ ${esc(rec.status)}: a clearer scan of this same receipt is counted instead.</div>` : ""}
+    ${(rec.flags || []).length ? `<div class="warn" style="margin-top:8px">⚠️ ${esc(rec.flags.join("; "))}</div>` : ""}
+    <table style="margin-top:12px"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Amount</th><th>Category</th></tr></thead><tbody>
+      ${(rec.items || []).map(it => `<tr><td>${esc(it.name)}</td><td class="num">${it.quantity}</td><td class="num">${money(it.price)}</td><td><span class="tag">${esc(it.category)}</span></td></tr>`).join("")}
+    </tbody></table>
+    <div style="margin-top:12px"><button id="b-redo">🔁 Read again</button> <button id="b-show">📁 Show files</button></div>
+  </div>`;
+  $("#b-show").onclick = () => call("reveal", {path: rec.folder});
+  $("#b-redo").onclick = () => run("Reading it again…", "read", {paths: [rec.source], redo: true, model: $("#model").value || null, verify: $("#verify").checked});
+}
+
+async function reports() {
+  busy("Adding it all up…");
+  try {
+    const r = await call("report");
+    const tbl = (title, rows, label) => `<h2>${title}</h2><div class="wrap"><table><thead><tr><th>Month</th><th>${label}</th><th class="num">Receipts</th><th class="num">Amount</th></tr></thead><tbody>
+      ${rows.map(x => `<tr><td>${esc(x.month)}</td><td>${esc(x.group)}</td><td class="num">${x.receipts}</td><td class="num">${money(x.amount)}</td></tr>`).join("")}</tbody></table></div>`;
+    $("#reports").innerHTML = `<div class="card" style="margin-top:14px"><b>${r.receipts}</b> receipts (${r.rescans_left_out || 0} rescans left out) · <b>${r.items}</b> items · grand total <b>${money(r.grand_total)}</b>
+      · CSV files in <span class="mono">${esc(r.folder)}</span> <button id="b-rf">📁 Open</button></div>`
+      + tbl("By month and category", r.by_month_category, "Category") + tbl("By month and store", r.by_month_store, "Store")
+      + tbl("By month and card", r.by_month_card, "Card (last 4)");
+    $("#b-rf").onclick = () => call("reveal", {path: r.folder});
+  } catch (e) { $("#reports").innerHTML = `<div class="card msg-bad">${esc(e)}</div>`; }
+  busy(null);
+}
+
+function tab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+  for (const t of ["receipts", "items", "stores", "reports"]) $("#t-" + t).hidden = t !== name;
+  if (name === "reports") reports();
+  if (name === "stores") storesTab();
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tab(b.dataset.tab));
+
+$("#b-test").onclick = () => run("Scanning 1 receipt…", "scan", {count: 1, model: $("#model").value || null, verify: $("#verify").checked});
+$("#b-stack").onclick = () => run("Scanning the stack…", "scan", {count: 0, model: $("#model").value || null, verify: $("#verify").checked});
+$("#b-inbox").onclick = () => run("Reading the inbox…", "inbox", {});
+$("#b-report").onclick = () => tab("reports");
+async function storesTab() {
+  try {
+    const r = await call("stores");
+    $("#stores").innerHTML = (r.stores || []).map(st => `<tr><td><b>${esc(st.store)}</b><br><span class="tag">${esc(st.category || "")}</span></td>
+      <td>${esc([st.address, st.city, st.state, st.zip].filter(Boolean).join(", "))}${(st.store_numbers || []).length ? "<br>#" + esc(st.store_numbers.join(", #")) : ""}</td>
+      <td>${esc(st.phone || "")}</td><td class="mono">${esc(st.website || "—")}</td><td class="num">${st.receipts}</td>
+      <td>${esc(day(st.first_visit))} – ${esc(day(st.last_visit))}</td><td class="num">${money(st.total_spent)}</td>
+      <td>${esc((st.map_check || {}).status || "—")}</td><td>${esc(st.shopify || "—")}</td>
+      <td class="mono">${esc(st.locator_url || "")}${st.recon_note ? `<div class="status">${esc(st.recon_note)}</div>` : ""}</td></tr>`).join("")
+      || `<tr><td colspan="10" style="color:var(--dim)">No stores yet.</td></tr>`;
+    $("#recon-note").textContent = `Catalog file: ${r.csv}`;
+  } catch (e) { $("#stores").innerHTML = `<tr><td colspan="10">${esc(e)}</td></tr>`; }
+}
+$("#b-recon").onclick = async () => {
+  busy("Looking up new stores on their own websites…");
+  try { const r = await call("recon"); $("#msg").innerHTML = `<div class="card msg-ok">Looked up ${r.ran.length} store${r.ran.length === 1 ? "" : "s"}${r.ran.map(x => `<div>• ${esc(x.store)}: ${esc(x.recon_note || "")}</div>`).join("")}${r.pending ? `<div>${r.pending} still waiting</div>` : ""}</div>`; }
+  catch (e) { $("#msg").innerHTML = `<div class="card msg-bad">${esc(e)}</div>`; }
+  busy(null); tab("stores");
+};
+$("#b-folder").onclick = () => call("reveal", {path: null});
+
+// drag and drop photos / PDFs onto the window
+const drop = $("#drop");
+const onDrop = paths => { drop.classList.remove("over"); if (paths && paths.length) run(`Reading ${paths.length} file${paths.length === 1 ? "" : "s"}…`, "read", {paths, redo: false, model: $("#model").value || null, verify: $("#verify").checked}); };
+try {
+  T.event.listen("tauri://drag-enter", () => drop.classList.add("over"));
+  T.event.listen("tauri://drag-leave", () => drop.classList.remove("over"));
+  T.event.listen("tauri://drag-drop", e => onDrop((e.payload && e.payload.paths) || []));
+} catch (e) { drop.textContent = "Drag and drop is not available here: use the inbox folder instead."; }
+
+status(); refresh();
+</script>
+</body>
+</html>

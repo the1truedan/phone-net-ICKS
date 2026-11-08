@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "in-doc-trin-8-piece",
+  "version": "0.1.0",
+  "identifier": "io.github.the1truedan.indoc-trin",
+  "build": { "frontendDist": "../ui" },
+  "app": {
+    "windows": [
+      { "label": "main", "title": "I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E.", "width": 1180, "height": 860,
+        "minWidth": 480, "minHeight": 520, "resizable": true, "dragDropEnabled": true }
+    ],
+    "security": { "csp": null },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "publisher": "M.A.N.A.G.E.R. LLC",
+    "copyright": "© 2026 M.A.N.A.G.E.R. LLC",
+    "category": "Productivity",
+    "shortDescription": "Receipts and paper to a private ledger, on your own Mac"
+  }
+}
