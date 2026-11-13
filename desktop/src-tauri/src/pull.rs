@@ -85,13 +85,16 @@ fn load() -> Result<Vec<CfgPull>, String> {
   Ok(load_cfg()?.pulls)
 }
 
-/// Progress page on the phone itself: start phone_status.py for this folder, then (once the phone is unlocked)
-/// route its port over the USB cable, keep the screen awake while plugged in, and open the page in the phone's default browser.
-fn phone_screen(status_page: &Path, folder: &str, title: &str, serial: &str) {
-  const SH: &str = r#"pkill -f phone_status.py; sleep 1
-nohup python3 "$1" --root "$2" --title "$3" --next "🎙️ New recordings go to the quick pass next. Nothing else to do." >/dev/null 2>&1 &
+/// Progress page on the phone itself: start phone_status.py for this folder on the phone's own Mac port, wake the
+/// phone and keep its screen on while plugged in, then (once it is unlocked) route the port over the USB cable and open
+/// the page in the phone's default browser. Each phone gets its own Mac port, so two phones never take over each
+/// other's page; on the phone the page is always http://localhost:8799/.
+fn phone_screen(status_page: &Path, folder: &str, title: &str, serial: &str, port: u16) {
+  const SH: &str = r#"pkill -f "phone_status.py.*--port $5( |$)"; sleep 1
+nohup python3 "$1" --root "$2" --title "$3" --port "$5" --next "🎙️ New recordings go to the quick pass next. Nothing else to do." >/dev/null 2>&1 &
+adb -s "$4" shell svc power stayon true; adb -s "$4" shell input keyevent KEYCODE_WAKEUP
 until adb -s "$4" shell dumpsys trust 2>/dev/null | grep -q deviceLocked=0; do sleep 5; done
-adb -s "$4" reverse tcp:8799 tcp:8799; adb -s "$4" shell svc power stayon usb
+adb -s "$4" reverse tcp:8799 tcp:"$5"
 U=http://localhost:8799/
 # Open in the phone's default browser. If none is set (Android would show a chooser), use Brave if installed, then Chrome.
 P=$(adb -s "$4" shell cmd package resolve-activity --brief -a android.intent.action.VIEW -d $U 2>/dev/null | tail -1 | tr -d '\r' | cut -d/ -f1)
@@ -101,10 +104,25 @@ adb -s "$4" shell am start -a android.intent.action.VIEW -d $U ${P:+-p $P}"#;
   let _ = Command::new("/bin/bash")
     .args(["-c", SH, "_"])
     .arg(status_page)
-    .args([folder, title, serial])
+    .args([folder, title, serial, &port.to_string()])
     .env("PATH", format!("/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:{}", std::env::var("PATH").unwrap_or_default()))
     .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
     .spawn();
+}
+
+/// The Mac port for a phone's status page: 8800 + its place in pulls.json.
+fn mac_port(serial: &str) -> u16 {
+  load().ok().and_then(|l| l.iter().position(|c| c.serial == serial)).map(|i| 8800 + i as u16).unwrap_or(8799)
+}
+
+/// Put a phone's status page on its screen without starting a pull: the running pull's folder, else the last one.
+fn show_screen(c: &CfgPull) {
+  let Some(sp) = load_cfg().ok().and_then(|g| g.status_page).map(|p| expand(&p)).filter(|p| p.exists()) else { return };
+  let fs_ = folders(&c.dest_prefix);
+  let Some(f) = fs_.last().filter(|f| running(f)).or_else(|| fs_.iter().rev().find(|f| f.join("custody_log.txt").exists())) else { return };
+  let who = model(&c.serial).unwrap_or_else(|| c.name.clone());
+  let title = match since_of(f) { Some(s) if !running(f) => format!("{who} · last pull {s}"), _ => format!("{who} · pulling") };
+  phone_screen(&sp, &f.display().to_string(), &title, &c.serial, mac_port(&c.serial));
 }
 
 /// Folders that start with the prefix, sorted by name (dates and letters sort in time order).
@@ -182,12 +200,14 @@ pub fn auto_on() -> bool {
   load_cfg().map(|c| c.auto_pull.unwrap_or(true)).unwrap_or(false)
 }
 
-/// Background watcher: when a listed phone shows up (plugged in, USB debugging allowed), start its pull,
-/// unless one is running or the last pull finished under 30 minutes ago. Each plug-in starts at most one pull.
+/// Background watcher (starts with the app): when a listed phone shows up (plugged in, USB debugging allowed), keep it
+/// awake and put its status page on its screen. With auto pull on, start its pull too, unless one is running or the
+/// last pull finished under 30 minutes ago. Each plug-in starts at most one pull.
 pub fn watch() {
   let mut seen: std::collections::HashSet<String> = Default::default();
   loop {
-    if auto_on() {
+    {
+      let auto = auto_on();
       if let Ok(list) = load() {
         for c in list {
           let now = connected(&c.serial);
@@ -197,8 +217,8 @@ pub fn watch() {
             let busy = fs_.last().map(|f| running(f)).unwrap_or(false);
             let recent = fs_.iter().rev().find(|f| f.join("custody_log.txt").exists())
               .and_then(|f| age_hours(f)).map(|h| h < 0.5).unwrap_or(false);
-            if !busy && !recent {
-              let _ = start(&c.id);
+            if !(auto && !busy && !recent && start(&c.id).is_ok()) {
+              show_screen(&c);
             }
           } else if !now {
             seen.remove(&c.serial);
@@ -267,7 +287,7 @@ pub fn start(id: &str) -> Result<String, String> {
   let folder = format!("{}{day}{letter}", expand(&c.dest_prefix).display());
   if let Some(sp) = load_cfg()?.status_page.map(|p| expand(&p)).filter(|p| p.exists()) {
     let who = model(&c.serial).unwrap_or_else(|| c.name.clone());
-    phone_screen(&sp, &folder, &format!("{who} · new since {since}"), &c.serial);
+    phone_screen(&sp, &folder, &format!("{who} · new since {since}"), &c.serial, mac_port(&c.serial));
   }
   Ok(folder)
 }
@@ -287,6 +307,9 @@ pub fn progress(folder: &str) -> Result<Progress, String> {
     let t: u64 = t.trim().parse().unwrap_or(0);
     let k: u64 = if finished { t } else { k.trim().parse().unwrap_or(0) };
     steps.push(Step { label: "🗂️ Files changed on the phone".into(), done: k, total: t });
+  } else if !finished {
+    // Texts and calls finish in one quick step; show the file copy as still waiting so the pull does not look done.
+    steps.push(Step { label: "🗂️ Files changed on the phone (listing…)".into(), done: 0, total: 0 });
   }
   let summary = log.lines().filter(|l| l.contains("SAFE TO UNPLUG")).last().map(|l| l.split_once("SAFE TO UNPLUG: ").map(|(_, r)| r).unwrap_or(l).to_string()).unwrap_or_default();
   Ok(Progress { folder: folder.to_string(), steps, finished, summary })

@@ -32,6 +32,34 @@ def du(path):
         return 0
 
 
+_HIST = {"t": 0, "v": None}
+
+
+def history():
+    """All pulls for this phone: every sibling folder with the same _delta_ prefix (cached 10 min)."""
+    if time.time() - _HIST["t"] < 600:
+        return _HIST["v"]
+    v = None
+    m = re.match(r"(.*_delta_)\d{4}-\d{2}-\d{2}\w*$", os.path.abspath(ARGS.root))
+    if m:
+        dirs = sorted(d for d in glob.glob(m.group(1) + "*") if os.path.exists(os.path.join(d, "custody_log.txt")))
+        files = texts = calls = 0
+        for d in dirs:
+            try:
+                files += sum(1 for _ in open(os.path.join(d, "SHA256SUMS.txt"), errors="replace"))
+            except OSError:
+                pass
+            lg = os.path.join(d, "PULL_LOG.txt")
+            t = open(lg, errors="replace").read() if os.path.exists(lg) else ""
+            texts += sum(int(x) for x in re.findall(r"content://sms rows=(\d+)", t)[-1:])
+            calls += sum(int(x) for x in re.findall(r"content://call_log/calls rows=(\d+)", t)[-1:])
+        if dirs:
+            first = re.search(r"\d{4}-\d{2}-\d{2}", os.path.basename(dirs[0]))
+            v = {"pulls": len(dirs), "files": files, "texts": texts, "calls": calls, "since": first.group(0) if first else ""}
+    _HIST.update(t=time.time(), v=v)
+    return v
+
+
 def status():
     R = ARGS.root
     log = open(os.path.join(R, "PULL_LOG.txt"), encoding="utf-8", errors="replace").read() if os.path.exists(os.path.join(R, "PULL_LOG.txt")) else ""
@@ -98,13 +126,22 @@ def status():
         add("📲", "iPad backup", 0, None, f"{du(ios) / 1e9:.1f} GB so far")
     elif "phase2 waiting" in log:
         add("📲", "iPad backup", 0, None, "waiting for the iPad")
+    # Texts, calls and contacts are saved in one quick step and count as finished at once. Until the file list exists,
+    # show a waiting "New files" step so the page does not open at 100% (or show SECURED) before any file is copied.
+    files_seen = bool(nf) or os.path.exists(pl) or bool(m)
+    if not files_seen and "phase1 done" not in log:
+        add("🗂️", "New files", 0, None, "listing the phone…")
     phone_steps = [st for st in steps if st["name"] != "iPad backup"]
-    complete = bool(phone_steps) and all(st["total"] and st["done"] >= st["total"] for st in phone_steps)
-    summary = {st["name"]: st["done"] for st in phone_steps}
+    complete = "phase1 done" in log or (files_seen and bool(phone_steps) and all(st["total"] and st["done"] >= st["total"] for st in phone_steps))
+    summary = {st["name"]: st["done"] for st in phone_steps if st["total"] is not None}
     if m:
         summary["Storage"] = m.group(1)
-    total = sum(s["total"] or 0 for s in steps) or 1
-    done = sum(min(s["done"], s["total"] or 0) for s in steps)
+    # Weigh by step, not by count (thousands of text rows must not swamp 19 files). Quick database steps weigh 1, file
+    # copies weigh 3; a step with no total yet counts as 0.
+    quick = {"Texts", "Picture messages", "Calls", "Contacts", "Calendar", "Voicemails"}
+    w = lambda s: 1 if s["name"] in quick else 3
+    total = sum(w(s) for s in steps) or 1
+    done = sum(w(s) * min(s["done"] / s["total"], 1) for s in steps if s["total"])
     last = log.strip().splitlines()[-1][:19] if log.strip() else ""
     if ARGS.redact:
         rnd = lambda n: n if n is None or n < 20 else (round(n, -1) if n < 1000 else round(n, -2))
@@ -113,8 +150,9 @@ def status():
             st["note"] = re.sub(r"\d+(\.\d+)?\s?(M|GB)", "", st["note"]).strip(" ·")
     if ARGS.redact:
         summary = {k: (rnd(v) if isinstance(v, int) else "") for k, v in summary.items()}
-    return {"next": ARGS.next, "complete": complete, "summary": summary,
-            "title": "Saving a loved one's phone" if ARGS.redact else ARGS.title, "steps": steps, "pct": 100.0 if complete else round(100 * done / total, 1), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
+    h = None if ARGS.redact else history()
+    return {"history": h, "last_done": last, "next": ARGS.next, "complete": complete, "summary": summary,
+            "title": "Saving a loved one's phone" if ARGS.redact else ARGS.title, "steps": steps, "pct": 100.0 if complete else min(99.0, round(100 * done / total, 1)), "updated": time.strftime("%-I:%M:%S %p"), "last_log": last}
 
 
 PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -148,8 +186,13 @@ background:radial-gradient(1200px 700px at 50% -10%,#10223a 0%,transparent 60%),
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 8px}
 .stat b{display:block;font-family:var(--mono);font-size:clamp(20px,6vw,28px);color:var(--accent)}
 .stat span{color:var(--dim);font-size:clamp(13px,3.6vw,15px)}
+.fine{color:var(--dim);font-family:var(--mono);font-size:clamp(12px,3.2vw,14px);line-height:1.6;margin-top:12px}
 .next{background:#3ddc9718;border:1px solid #3ddc97;border-radius:14px;padding:12px;font-size:clamp(17px,4.6vw,20px);margin-top:8px}
-body.finished .bar,body.finished #pct{display:none}body.finished .done{display:block}
+body.finished .bar,body.finished #pct,body.finished .steps,body.finished .foot,body.finished .logo{display:none}body.finished .done{display:block}
+.done h2.secured{font-size:clamp(40px,13vw,84px);line-height:1.05;margin:.3em 0}
+.unplug{font-family:var(--mono);font-weight:800;font-size:clamp(44px,14vw,92px);line-height:1.05;letter-spacing:.04em;color:#0a0d14;background:#3ddc97;border-radius:18px;padding:.25em .2em;margin:.2em 0 .4em}
+/* slow pulse, about once a second: well under the 3-per-second flash limit */
+.secured,.unplug{animation:beacon 1.1s ease-in-out infinite alternate}@keyframes beacon{from{opacity:1}to{opacity:.25}}
 .foot{color:var(--dimmer);font-family:var(--mono);font-size:12px;margin-top:2vh;text-align:center}
 .tap{color:var(--dimmer);font-size:12px;margin-top:6px}
 .brand{color:var(--dimmer);font-family:var(--mono);font-size:12px;margin-top:10px;text-align:center;line-height:1.6}.brand i{color:var(--dim)}.brand b{color:var(--mu);font-weight:400}
@@ -183,10 +226,12 @@ body.finished .bar,body.finished #pct{display:none}body.finished .done{display:b
 <div class="sub" id="title">Recon in progress</div>
 <div class="big" id="pct">–</div>
 <div class="bar"><div id="bar"></div></div>
-<div class="done" id="done"><h2>WORK COMPLETED</h2>
+<div class="done" id="done"><h2 class="secured">DATA POINTS<br>SECURED</h2>
+<div class="unplug">SAFE TO<br>DISCONNECT</div>
 <p>Everything on this phone is safe now: the words, the voices, the pictures.<br>Nothing left the house. Take a breath. You did this.</p>
 <div class="stats" id="stats"></div>
-<div class="next">✅ <b>Safe to unplug this phone.</b><br><span id="next"></span></div></div>
+<div class="next"><span id="next"></span></div>
+<div class="fine" id="fine"></div></div>
 <div class="steps" id="steps"></div>
 <div class="foot">please leave plugged in · <span id="upd"></span></div>
 <div class="tap" id="tap">tap for full screen</div>
@@ -203,6 +248,9 @@ async function tick(){try{const r=await fetch('status.json',{cache:'no-store'});
  document.body.classList.toggle('finished',!!j.complete);document.getElementById('next').innerHTML=j.next||'';
  if(j.complete){const ic={"Texts":"💬","Picture messages":"🖼️","Calls":"📞","Contacts":"👥","Calendar":"📅","Message attachments":"📎","Phone storage":"📁","Voicemails":"🎙️","Storage":"💾"};
   const lab={"Message attachments":"attachments","Picture messages":"picture msgs","Phone storage":"files","Storage":"storage"};
+  const h=j.history,sm=j.summary;
+  document.getElementById('fine').innerHTML=`This pull${j.last_done?' · finished '+j.last_done:''}: ${fmt(sm['New files']??0)} new files · ${fmt(sm['Texts']??0)} texts · ${fmt(sm['Calls']??0)} calls`+
+   (h?`<br>All pulls of this phone since ${h.since}: ${fmt(h.pulls)} pulls · ${fmt(h.files)} files saved · ${fmt(h.texts)} texts · ${fmt(h.calls)} calls`:'');
   document.getElementById('stats').innerHTML=Object.entries(j.summary).filter(([k,v])=>v!=='').map(([k,v])=>`<div class="stat"><b>${typeof v==='number'?fmt(v):v}</b><span>${ic[k]||''} ${(lab[k]||k).toLowerCase()}</span></div>`).join('');}
  document.getElementById('steps').innerHTML=j.steps.map(s=>`<div class="step">${ring(s)}<div><div class="name">${s.icon} ${s.name}</div><div class="meta">${s.total?fmt(s.done)+' / '+fmt(s.total):''}${s.note?(s.total?' · ':'')+s.note:''}</div></div></div>`).join('');
 }catch(e){document.getElementById('upd').textContent='waiting for the Mac…'}}
