@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.9.3 — 2026-11-13 · D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition
+**D.A.T.A.** Dated, Audited, Traced, Archived · **F.I.N.G.E.R.** Forensic Index of Notes, Gaps, Evidence and Records · **P.O.I.N.T.** Proof Of Integrity, Never Tampered.
+- **`scripts/wifi/pnet_wifi_pull.sh`:** pull any paired phone over adb wireless debugging (texts, MMS index, calls, new media on
+  internal and SD, device snapshot with 24 h app usage, photo GPS tags). Skips files already saved for that phone (name + size),
+  checks each file against the phone's SHA-256, optional custody hook (`CUSTODY=`), progress page on the phone. Finds the
+  phone by mDNS and falls back to a connected device with the same serial. Logs INCOMPLETE (never "done") if any file is
+  missing or different. Tested on three phones (2026-11-13).
+- **`scripts/wifi/re_fraction_popup.swift`:** R.E.:⁄ first test, a borderless always-on-top µ box alert on the main display.
+- **Job board:** `[[progress_jobs]]` bars hide once every row is done; phone status page gets its own Mac port per phone
+  (`desktop/src-tauri/src/pull.rs`) and pull-history counts (`stack/jobboard/phone_status.py`).
+- **Site:** `site/data-finger-point.html` (animated hero: devices send dot swarms over Wi-Fi into a µ cube; a laser pops a
+  cloud into bubble packets, a nod to future free-space optical links). New totals, hours-a-day history 3.5 → 10.5, a
+  dot-cluster cube cell, and Nov 3-13 breakthroughs with session citations.
+- README: Windows and Linux desktop builds now TBD. Version, badge and footers to v0.9.3.
+
 ## v0.9.2 — 2026-11-07 · A.U.D.I.T. I.T. M.Y.S.E.L.F. edition
 **A.U.D.I.T.** All Utterances Documented, Indexed, Transcribed · **I.T.** Itemized Timelines · **M.Y.S.E.L.F.** Making Your Story Easy to Locate, Fast.
 - **Job board, "1. At a glance":** one column per computer, one progress bar per job, and what each GPU runs now. Jobs

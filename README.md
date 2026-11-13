@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.2 A.U.D.I.T. I.T. M.Y.S.E.L.F. edition (2026-11-07) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition (2026-11-13) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -30,7 +30,25 @@ The [one-page field guide](https://the1truedan.github.io/phone-net-ICKS/alert-ga
 
 Both are unsigned: the first time, see [install](#desktop-app-from-v080-install). Check downloads against `SHA256SUMS.txt` on each release page.
 
-## Latest · v0.9.2 · A.U.D.I.T. I.T. M.Y.S.E.L.F. edition (2026-11-07)
+## Latest · v0.9.3 · D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition (2026-11-13)
+
+**D.A.T.A.** Dated, Audited, Traced, Archived · **F.I.N.G.E.R.** Forensic Index of Notes, Gaps, Evidence and Records · **P.O.I.N.T.** Proof Of Integrity, Never Tampered.
+A *data fingerprint* is a file's SHA-256 hash, so any change shows. A *finger point* is the record's plain job: point at the exact minute, file and line where what was said, written, authorized and paid stop matching.
+
+- **Three phones over Wi-Fi, no cables (tested and filmed 2026-11-13):** `scripts/wifi/pnet_wifi_pull.sh` pulls texts, the picture-message
+  index, calls, new media (internal and SD), a device snapshot and photo GPS tags over adb wireless debugging. Each file is
+  checked against the phone's own SHA-256; a run is "done" only when every file copied and matched, else it says INCOMPLETE and
+  a rerun picks up where it stopped. The phone's address comes from mDNS, because it changes when the cable comes out.
+  About 18 MB/s, half the cable speed.
+- **R.E.:⁄ (re-fraction), first test:** `scripts/wifi/re_fraction_popup.swift` writes a branded µ box alert over the computer's own
+  screen (a TV used as the monitor), so the TV never changes input. Doorbell and alert-email sources come next.
+- **Job board:** finished progress bars leave "At a glance"; per-phone Mac ports for the phone status page; pull history counts.
+- **Site:** new totals (6,373 recordings, ~1,350 h, 140 checksummed pulls, 4 phones in daily use), the full 3.5 → 10.5 h-a-day
+  history, and a dot-cluster cube of calls, written asks, scanned letters and gaps found. Counts only.
+- **Breakthroughs, Nov 3-13:** added to the timeline on the live page, each cited to its agent session.
+- **Windows and Linux desktop builds:** TBD.
+
+## v0.9.2 · A.U.D.I.T. I.T. M.Y.S.E.L.F. edition (2026-11-07)
 
 **A.U.D.I.T.** All Utterances Documented, Indexed, Transcribed · **I.T.** Itemized Timelines · **M.Y.S.E.L.F.** Making Your Story Easy to Locate, Fast.
 
@@ -112,7 +130,7 @@ step away while the computer secures everything, with a status screen on the lov
   button and lists who and when.
 - **Status on their phone:** a full-screen progress page served through the same USB cable (counts only, no names).
 - **The person / machine line:** consent steps stay with the person (Trust, Google and Facebook exports, passwords).
-- **Desktop app:** the first installable build, for Mac (Apple silicon), unsigned, checksum on the release page. **Windows and Linux follow in the next few days** after testing. See below.
+- **Desktop app:** the first installable build, for Mac (Apple silicon), unsigned, checksum on the release page. **Windows and Linux: TBD.** See below.
 - **Earmarked next:** an Android app (a pocket recon kit: one phone saves another over USB-C) and an iOS app (status and capture).
 - **Rest first:** after a final night of care, one nap; then 1 h 54 min from the first word to this release. [The one-pager](https://the1truedan.github.io/phone-net-ICKS/greek-squat.html).
 - For the executor or next of kin, with the device passcode. Archive **before** reporting the death to Google, Yahoo or Facebook.
@@ -168,8 +186,8 @@ on the release page (`shasum -a 256 <file>` on Mac and Linux, `certutil -hashfil
 | Computer | File | First time you open it |
 | --- | --- | --- |
 | **Mac** (Apple silicon: M1 or newer) | `phone-net-ICKS_0.8.1_aarch64.dmg` | Drag the app to Applications and open it. macOS says it cannot check it. Click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, and enter your password. Once is enough. |
-| **Windows** 10 or 11 *(in the next few days)* | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
-| **Linux** (64-bit Intel/AMD) *(in the next few days)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.1_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
+| **Windows** 10 or 11 *(TBD)* | `.msi` or `.exe` | Windows SmartScreen says it protected your PC. Click **More info**, then **Run anyway**. |
+| **Linux** (64-bit Intel/AMD) *(TBD)* | `.deb` or `.AppImage` | `.deb`: `sudo apt install ./phone-net-ICKS_0.8.1_amd64.deb`. `.AppImage`: `chmod +x` the file, then run it. No warning. |
 
 Older Macs (Intel) are not supported yet. On macOS 14 and earlier you can also Control-click the app and choose **Open**.
 
@@ -268,7 +286,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.2"><img src="https://img.shields.io/badge/release-v0.9.2_A.U.D.I.T._I.T._M.Y.S.E.L.F._edition-3dcaa0?style=for-the-badge" alt="v0.9.2 A.U.D.I.T. I.T. M.Y.S.E.L.F. edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.3"><img src="https://img.shields.io/badge/release-v0.9.3_D.A.T.A._F.I.N.G.E.R._P.O.I.N.T._edition-3dcaa0?style=for-the-badge" alt="v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>

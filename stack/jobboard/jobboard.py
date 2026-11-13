@@ -10,7 +10,7 @@ any local report pages come from files that config points at, so nothing case-sp
 import argparse
 import threading, csv, glob, html, json, os, re, secrets, shlex, shutil, statistics, subprocess, sys, time, tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import calendar, fnmatch, urllib.parse, urllib.request
+import calendar, fnmatch, hashlib, urllib.parse, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOKEN = secrets.token_urlsafe(18)
@@ -513,6 +513,22 @@ class Board:
     # and names each client from [ollama_now].labels or [recon_jobs].jobs in the (git-ignored) config. Read-only.
     OLLAMA_PORTS = (11434, 11435)
 
+    @staticmethod
+    def _failed_keys(specs):
+        """2026-11-09 (Dan: finished jobs read as idle/red): ids of items that failed for good (unreadable audio).
+        specs: ["<log file>:<regex with one group = item id>", ...]. Failed items are shown apart, not as work left."""
+        out = set()
+        for spec in ([specs] if isinstance(specs, str) else (specs or [])):
+            path, _, rx = spec.partition(":")
+            if not os.path.exists(path):
+                continue
+            with open(path, errors="ignore") as f:
+                for ln in f:
+                    m = re.search(rx, ln)
+                    if m:
+                        out.add(m.group(1))
+        return out
+
     def progress_jobs(self):
         """2026-11-07 (Dan): [[progress_jobs]] in the config: one bar per job. done = rows of `list` whose `done` file exists;
         rows listed in `skipped` (long recordings run last) are left out of that job's total. Rate = done in the last hour."""
@@ -530,13 +546,17 @@ class Board:
             ks = [k for k in keys(j["list"], j.get("key", "")) if k]
             skip = set(keys(j.get("skipped"), "")) if j.get("skipped") else set()
             ks = [k for k in ks if k not in skip]
+            bad = {k for k in self._failed_keys(j.get("failed")) if k in ks and not os.path.exists(j["done"].replace("{key}", k))}
+            ks = [k for k in ks if k not in bad]
             done = [j["done"].replace("{key}", k) for k in ks]
             have = [d for d in done if os.path.exists(d)]
             hour = sum(1 for d in have if time.time() - os.path.getmtime(d) < 3600)
             n, tot = len(have), len(ks)
             out.append({"name": j["name"], "host": j.get("host", "mac"), "count": n, "total": tot,
                         "pct": round(100 * n / tot, 1) if tot else None, "per_hour": hour,
-                        "eta_s": int((tot - n) / hour * 3600) if hour and tot > n else None, "skipped": len(skip & set(keys(j["list"], j.get("key", ""))))})
+                        "eta_s": int((tot - n) / hour * 3600) if hour and tot > n else None, "skipped": len(skip & set(keys(j["list"], j.get("key", "")))), "failed": len(bad)})
+        # 2026-11-13 (Dan): a finished job (every row done) leaves the "GPU now" bars, so old 100% rows do not sit at the top.
+        out = [o for o in out if not (o["total"] and o["count"] >= o["total"])]
         self._pj = (time.time(), out)
         return out
 
@@ -759,6 +779,170 @@ class Board:
                 return host
         return "mac"
 
+    PH_KIND = {"pictures": r"\.(jpe?g|png|heic|webp|gif|dng)$", "videos": r"\.(mp4|mov|3gp|mkv|webm)$",
+               "recordings": r"\.(m4a|mp3|wav|amr|aac|ogg|opus|3ga|flac)$", "tasks": r"tasks?[^/]*\.(json|csv|txt|db|ics)$"}
+
+    def phones(self):
+        """2026-11-09 (Dan): totals saved from each phone across all its pulls (texts, picture messages, calls from
+        PULL_LOG 'content://X rows=N'; pictures / videos / recordings / tasks by file type in SHA256SUMS*.txt).
+        Counts only. Grouped by serial in the folder name. Recomputed in the background when a pull folder changes."""
+        pc = self.c.get("phones", {})
+        root = pc.get("root", "/Volumes/2TB/backups")
+        dirs = [d for d in glob.glob(os.path.join(root, "_phone_*")) if os.path.isdir(d)]
+        sig = (len(dirs), max([os.path.getmtime(d) for d in dirs] or [0]))
+        cur = getattr(self, "_phones", (None, []))
+        if cur[0] == sig or getattr(self, "_phones_busy", False):
+            return cur[1]
+        def work():
+            groups = {}
+            for d in sorted(dirs):
+                b = os.path.basename(d)
+                m = re.search(r"(LMV[A-Za-z0-9]+|[A-Z0-9]{10,})", b)
+                if not m:
+                    continue
+                sums = glob.glob(os.path.join(d, "SHA256SUMS*.txt")) + glob.glob(os.path.join(d, "*", "SHA256SUMS*.txt"))
+                lg = os.path.join(d, "PULL_LOG.txt")
+                if not sums and not os.path.exists(lg):
+                    continue
+                key = m.group(1)
+                name = re.sub(r"^_phone_|_?" + re.escape(key) + r".*$", "", b).replace("_", " ").strip() or key
+                g = groups.setdefault(key, {"serial": key, "name": pc.get("labels", {}).get(key, name), "pulls": 0, "files": 0,
+                                            "texts": 0, "mms": 0, "calls": 0, "pictures": 0, "videos": 0, "recordings": 0, "tasks": 0, "last": ""})
+                g["pulls"] += 1
+                dt_ = re.search(r"\d{4}-\d\d-\d\d\w*", b)
+                if dt_ and dt_.group(0) > g["last"]:
+                    g["last"] = dt_.group(0)
+                for f in sums:
+                    try:
+                        for ln in open(f, errors="replace"):
+                            nm = ln.rstrip("\n").split("  ", 1)[-1].lower()
+                            g["files"] += 1
+                            for k, rx in self.PH_KIND.items():
+                                if re.search(rx, nm):
+                                    g[k] += 1; break
+                    except OSError:
+                        pass
+                if os.path.exists(lg):
+                    t = open(lg, errors="replace").read()
+                    for k, prov in (("texts", "sms"), ("mms", "mms"), ("calls", "call_log/calls")):
+                        g[k] += sum(int(x) for x in re.findall(r"content://" + re.escape(prov) + r" rows=(\d+)", t)[-1:])
+            self._phones = (sig, sorted(groups.values(), key=lambda g: -g["files"]))
+            self._phones_busy = False
+        self._phones_busy = True
+        threading.Thread(target=work, daemon=True).start()
+        return cur[1]
+
+    def staged(self, cov):
+        """2026-11-09 (Dan: "staged jobs remaining ... on job board so I can see them"): [[staged]] in the config:
+        name, why (the recon reason), who (agent / Dan), and how it counts as done: done_if (a file exists),
+        coverage_rx (pull folders whose recordings still need transcripts), or cmd (prints 'left=<n>' and a line)."""
+        t, v = getattr(self, "_staged", (0, None))
+        if v is not None and time.time() - t < 60:
+            return v
+        out = []
+        for it in self.c.get("staged", []):
+            left, now = None, it.get("now", "")
+            if it.get("done_if") and glob.glob(it["done_if"]):
+                left = 0
+            elif it.get("coverage_rx"):
+                ps_ = [x for x in (cov or {}).get("pulls", []) if re.search(it["coverage_rx"], x.get("pull", ""))]
+                left = sum(x.get("uncovered", 0) + x.get("queued", 0) for x in ps_)
+                now = f"{left} recording(s) without a transcript in {len(ps_)} pull(s)" if ps_ else "no matching pull yet"
+            elif it.get("cmd"):
+                lines = [x.strip() for x in (sh(["/bin/sh", "-c", it["cmd"]], timeout=10) or "").splitlines() if x.strip()]
+                left = next((int(x[5:]) for x in lines if re.fullmatch(r"left=\d+", x)), None)
+                lines = [x for x in lines if not re.fullmatch(r"left=\d+", x)]
+                now = lines[-1] if lines else now
+            state = "done" if left == 0 else "open"
+            out.append({"name": it["name"], "why": it.get("why", ""), "who": it.get("who", "agent"), "state": state,
+                        "left": left, "now": self.redact(now[:160]) if self.redact else now[:160]})
+        out.sort(key=lambda x: x["state"] == "done")
+        self._staged = (time.time(), out)
+        return out
+
+    def pape(self):
+        """2026-11-09 (Dan): P.A.P.E. paper scans. Batches under [pape].root, what each scan holds (pages, OCR words),
+        whether it was processed (searchable + PDF/UA + briefs), and what is running now."""
+        pc = self.c.get("pape", {})
+        root = pc.get("root", "/Volumes/2TB/backups/_paper_scans")
+        proc = os.path.join(root, "pape_processing")
+        done = {}
+        for d in glob.glob(os.path.join(proc, "*", "*_*")):
+            if os.path.isdir(d) and os.path.exists(os.path.join(d, "original.pdf")):
+                done[os.path.basename(d).split("_", 1)[0]] = d
+        batches = []
+        for d in sorted(glob.glob(os.path.join(root, "20??-??-??*")), reverse=True)[:30]:
+            pdfs = [f for f in sorted(glob.glob(os.path.join(d, "*.pdf"))) if not re.search(r"\.(tagged|unrotated|raw)\.pdf$|_raw\.pdf$", f)]
+            cl = os.path.join(d, "custody_log.txt")
+            pages = words = 0
+            if os.path.exists(cl):
+                for ln in open(cl, errors="ignore"):
+                    m = re.search(r"(\d+) page images, OCR (\d+) words", ln)
+                    if m:
+                        pages += int(m.group(1)); words += int(m.group(2))
+            nproc = 0
+            for f in pdfs:
+                try:
+                    h = hashlib.sha256(open(f, "rb").read()).hexdigest()[:12]
+                except OSError:
+                    continue
+                nproc += h in done
+            lg = os.path.join(d, "PULL_LOG.txt")
+            last = open(lg, errors="ignore").read().strip().splitlines()[-1:] if os.path.exists(lg) else []
+            batches.append({"folder": os.path.basename(d), "scans": len(pdfs), "processed": nproc, "pages": pages,
+                            "words": words, "last": (last[0] if last else "")[:140]})
+        running = [x for x in sh(["ps", "-Ao", "args="]).splitlines() if re.search(r"pape_(scan|process|batch)", x) and "grep" not in x]
+        blog = os.path.join(root, "pape_batches.log")
+        tail = open(blog, errors="ignore").read().splitlines()[-8:] if os.path.exists(blog) else []
+        return {"batches": batches, "running": [re.sub(r"^.*?(scripts/pape_\w+\.\w+.*)$", r"\1", x)[:140] for x in running],
+                "log": tail, "buttons": [{"k": k, "label": b.get("label", k), "confirm": b.get("confirm", "")} for k, b in pc.get("buttons", {}).items()],
+                "scanner": pc.get("scanner_hint", "")}
+
+    def pape_action(self, k):
+        b = self.c.get("pape", {}).get("buttons", {}).get(k)
+        if not b or not b.get("cmd"):
+            return {"error": "no such P.A.P.E. button"}
+        if self.pape()["running"]:
+            return {"error": "a P.A.P.E. scan or process is already running; wait for it to finish"}
+        subprocess.Popen(["/bin/sh", "-c", b["cmd"]], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+        return {"ok": True, "started": b.get("label", k)}
+
+    def pape_page(self):
+        P = self.pape()
+        e = lambda x: html.escape(str(x or ""))
+        btn = "".join(f'<button onclick="go({json.dumps(b["k"])},{e(json.dumps(b["confirm"]))})">{e(b["label"])}</button> ' for b in P["buttons"])
+        rows = "".join(f'<tr><td><b>{e(b["folder"])}</b></td><td>{b["scans"]}</td><td>{b["processed"]} of {b["scans"]}</td>'
+                       f'<td>{b["pages"]}</td><td>{b["words"]}</td><td class="small muted">{e(b["last"])}</td></tr>' for b in P["batches"])
+        body = (f'<h1>P.A.P.E. paper scans</h1><div class="muted">Paper Accessibility, Parsing &amp; Evidence: scan, OCR, PDF/UA copy, '
+                f'briefs, custody files. All local. <a href="/">Back to the board</a></div>'
+                f'<section><b>Run</b><div style="margin:.5em 0">{btn}</div><div class="small muted">{e(P["scanner"])}</div>'
+                f'<div class="small" style="margin-top:.4em"><b>Running now:</b> {" · ".join(map(e, P["running"])) or "nothing"}</div></section>'
+                f'<section><b>Batches</b> <span class="muted small">(folders under the scan root, newest first; refresh to update)</span>'
+                f'<table><tr><th>Folder</th><th>Scans</th><th>Processed</th><th>Pages</th><th>OCR words</th><th>Last step</th></tr>{rows}</table></section>'
+                f'<section><b>Batch log</b><pre class="small">{e(chr(10).join(P["log"])) or "empty"}</pre></section>'
+                '<script>const TOKEN="__TOKEN__";async function go(k,msg){if(msg&&!confirm(msg))return;'
+                'const r=await fetch("/api/pape",{method:"POST",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:JSON.stringify({k})});'
+                'if(r.status===403){location.reload();return}const j=await r.json();alert(j.error?"Not started: "+j.error:"Started: "+j.started);location.reload()}'
+                'setTimeout(()=>location.reload(),20000)</script>')
+        page = PAGE_HEAD.replace("__TITLE__", "P.A.P.E. scans") + body + "</body></html>"
+        return self.redact(page) if self.redact else page
+
+    def lane_action(self, i, k=0):
+        """2026-11-09 (Dan: "button press to run to approve the plan"): run [[lane_streams]][i].action.cmd once, detached.
+        Only when the lane currently offers the button (its 'when' regex matches), so a double click cannot start it twice."""
+        ls = self.c.get("lane_streams", [])
+        acts = (ls[i].get("actions") or ([ls[i]["action"]] if ls[i].get("action") else [])) if 0 <= i < len(ls) else []
+        if not 0 <= k < len(acts) or not acts[k].get("cmd"):
+            return {"error": "no such button for that lane"}
+        self._lanes = (0, None)
+        if not any(a["i"] == i and a["k"] == k for x in self.lanes() for a in x["actions"]):
+            return {"error": "not offered right now (already started or finished)"}
+        subprocess.Popen(["/bin/sh", "-c", acts[k]["cmd"]], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+        self._lanes = (0, None)
+        return {"ok": True, "started": f'{ls[i]["name"]}: {acts[k].get("label", "")}'}
+
     def lanes(self):
         """[[lane_streams]] probes: host, name, cmd (shell; prints lines, optional 'age=<seconds>'), states [[regex, state]],
         stale_s. The last non-age line is shown as 'now'. Cached 20 s."""
@@ -766,21 +950,47 @@ class Board:
         if v is not None and time.time() - t < 20:
             return v
         out = []
-        for st in self.c.get("lane_streams", []):
+        pipes = {p["name"]: p for p in self.pipelines()}
+        pjobs = self.progress_jobs()
+        for i, st in enumerate(self.c.get("lane_streams", [])):
             txt = sh(["/bin/sh", "-c", st["cmd"]], timeout=12)
             lines = [x.strip() for x in (txt or "").splitlines() if x.strip()]
             age = next((int(x[4:]) for x in lines if re.fullmatch(r"age=\d+", x)), None)
-            lines = [x for x in lines if not re.fullmatch(r"age=\d+", x)]
+            # 2026-11-09 (Dan: "idle (no update) in red ... some jobs are finished"): work left = 'left=<n>' from the probe,
+            # or [pipeline name, stage numbers] (pipeline_left), or progress job name prefixes (progress_left).
+            left = next((int(x[5:]) for x in lines if re.fullmatch(r"left=\d+", x)), None)
+            lines = [x for x in lines if not re.fullmatch(r"(age|left)=\d+", x)]
+            if left is None and st.get("pipeline_left"):
+                pn, idx = st["pipeline_left"][0], st["pipeline_left"][1:]
+                pl = next((p for n_, p in pipes.items() if n_.startswith(pn)), None)
+                if pl and pl["total"]:
+                    left = max(0, max(pl["total"] - pl["failed"] - (pl["stages"][k]["count"] or 0) for k in idx))
+            if left is None and st.get("progress_left"):
+                js = [j for j in pjobs if any(j["name"].startswith(x) for x in st["progress_left"])]
+                if js:
+                    left = sum(max(0, j["total"] - j["count"]) for j in js)
             now = lines[-1] if lines else ""
             state = "unreachable" if not lines else "running"
             for rx, name in st.get("states", []):
                 if lines and re.search(rx, now):
                     state = name; break
-            if age is not None and age > st.get("stale_s", 900) and state not in ("paused", "unreachable"):
-                state = f"idle (no update for {age // 60} min)"
+            stale = age is not None and age > st.get("stale_s", 900)
+            if state in ("paused", "unreachable"):
+                pass
+            elif left == 0:
+                state = "done"
+                if st.get("done_text"):
+                    now = st["done_text"]
+            elif stale and left:
+                state = f"stalled ({left} left, no update for {age // 60} min)"
+            elif stale:
+                state = f"quiet (no update for {age // 60} min)"
             extra = [x for x in lines[:-1] if st.get("extra_rx") and re.search(st["extra_rx"], x)]
-            out.append({"host": st.get("host", "mac"), "name": st["name"], "state": state,
-                        "now": self.redact(now[:160]) if self.redact else now[:160], "extra": extra[-2:]})
+            acts = st.get("actions") or ([st["action"]] if st.get("action") else [])
+            shown = [{"i": i, "k": k, "label": a.get("label", "Run"), "confirm": a.get("confirm", "")}
+                     for k, a in enumerate(acts) if re.search(a.get("when", "."), now)]
+            out.append({"host": st.get("host", "mac"), "name": st["name"], "state": state, "left": left,
+                        "now": self.redact(now[:160]) if self.redact else now[:160], "extra": extra[-2:], "actions": shown})
         self._lanes = (time.time(), out)
         return out
 
@@ -825,6 +1035,10 @@ class Board:
         out, ha = [], time.time() - 3600
         for pl in self.c.get("pipeline", []):
             total = self._count(pl["total"], ha)[0] if pl.get("total") else None
+            fk = self._failed_keys(pl.get("failed"))
+            if pl.get("failed_done"):   # a later retry that produced output is not a failure
+                fk = {k for k in fk if not os.path.exists(pl["failed_done"].replace("{key}", k))}
+            failed = len(fk)
             stages = []
             for lab, host, spec, *kind in pl.get("stages", []):
                 n, rate = self._count(spec, ha)
@@ -833,7 +1047,11 @@ class Board:
                 stages.append({"label": lab, "host": host, "count": n, "per_hour": rate, "of_total": bool(of),
                                "pct": round(100 * n / total, 1) if of and n is not None else None,
                                "eta_s": int(3600 * left / rate) if left and rate else None})
-            out.append({"name": pl["name"], "note": pl.get("note", ""), "total": total, "stages": stages})
+            main = [x for x in stages if x["of_total"]]
+            complete = bool(total and main and all(x["count"] is not None and x["count"] + failed >= total for x in main))
+            out.append({"name": pl["name"], "short": pl.get("short", pl["name"].split(":")[0]), "note": pl.get("note", ""),
+                        "total": total, "failed": failed, "failed_note": pl.get("failed_note", "unreadable file(s), skipped"),
+                        "complete": complete, "stages": stages})
         self._pipes = (time.time(), out)
         return out
 
@@ -909,6 +1127,33 @@ class Board:
             body.append("</section>")
         page = PAGE_HEAD.replace("__TITLE__", "Job Board archive") + "".join(body) + "</body></html>"
         return self.redact(page) if self.redact else page
+
+    def disks(self):
+        """2026-11-09 (Dan): free space per disk from [disks] in the config, one df per host, cached 5 min."""
+        t, v = getattr(self, "_disks", (0, []))
+        if time.time() - t < 300:
+            return v
+        by = {}
+        for host, label, path in self.c.get("disks", []):
+            by.setdefault(host, []).append((label, path))
+        out = []
+        for host, rows in by.items():
+            cmd = ["df", "-k", "-P"] + [p for _, p in rows]
+            if host != "mac":
+                h = self.c.get("remote_host") if host == "linux" else self.c.get("storage_host")
+                if not h:
+                    continue
+                cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", h, " ".join(cmd) + " 2>/dev/null"]
+            lines = (sh(cmd, timeout=15) or "").splitlines()[1:]
+            for (label, path), ln in zip(rows, lines):
+                f = ln.split()
+                try:
+                    size, used, avail = int(f[1]) * 1024, int(f[2]) * 1024, int(f[3]) * 1024
+                except (IndexError, ValueError):
+                    continue
+                out.append({"host": host, "label": label, "path": path, "size": size, "avail": avail, "pct": round(100 * (size - avail) / max(1, size))})
+        self._disks = (time.time(), out)
+        return out
 
     def storage(self):
         """Storage server link: the one 1 GbE link the GPU host and this computer share for file access. Cached like the GPU host."""
@@ -1497,11 +1742,12 @@ class Board:
             except Exception as e:   # never let an ingest problem take the board down
                 print("auto_ingest:", e, file=sys.stderr)
         return {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "dry_run": self.c["dry_run"], "gpu_now": self.gpu_now(), "progress_jobs": self.progress_jobs(), "remote": rem, "cleared": self.cleared_note,
-                "local": (loc := self.local_host()), "storage": (tw := self.storage()), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
+                "local": (loc := self.local_host()), "storage": (tw := self.storage()), "disks": self.disks(), "saturation": self.saturation(rem, loc, tw), "speed": round(sp, 3) if sp else None,
                 "est_model": {"fixed_s": round(model[0]), "per_audio_min_s": round(model[1] * 60, 1), "n": model[2]} if model else None, "queues": qs, "hidden_empty_queues": getattr(self, "hidden_empty", []), "runners": runners,
                 "recent": recent, "mac_jobs": mac_jobs, "lanes": self.lanes(), "pipelines": self.pipelines(),
                 "archive": {"days": self.archive_days(), "windows": self._arch_windows}, "logs": self.logs(), "priority": self.priority,
-                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "report_fresh": [self.freshness(k) for k in range(len(self.c.get("reports", [])))], "coverage": cov, "flag_label": self.c.get("flag_label", "flagged")}
+                "reports": [r.get("name", "") for r in self.c.get("reports", [])], "report_fresh": [self.freshness(k) for k in range(len(self.c.get("reports", [])))], "coverage": cov, "flag_label": self.c.get("flag_label", "flagged"),
+                "staged": self.staged(cov), "phones": self.phones()}
 
     # ---------- controls ----------
     def _run(self, argv, detach=False):
@@ -1758,7 +2004,7 @@ header.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify
 .cell{background:var(--cell);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0}.cell .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .cell .v{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cell .bar{margin-top:4px}
 .stream{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;min-width:0}.stream .now{overflow-wrap:anywhere}
-.s-working,.s-running{border-color:var(--ok);color:var(--ok)}.s-yielding,.s-paused,.s-waiting,.s-low{border-color:var(--warn);color:var(--warn)}.s-idle,.s-unreachable{border-color:var(--bad);color:var(--bad)}
+.s-working,.s-running{border-color:var(--ok);color:var(--ok)}.s-yielding,.s-paused,.s-waiting,.s-low{border-color:var(--warn);color:var(--warn)}.s-idle,.s-unreachable,.s-stalled,.s-error{border-color:var(--bad);color:var(--bad)}.s-done{border-color:var(--line);color:var(--ok)}.s-quiet{border-color:var(--line);color:var(--muted)}
 details.more{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:12px 0}details.more>summary{padding:2px 0}
 .sum .big{font-size:18px;font-weight:600;margin:6px 0 8px}.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.gl-col{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card)}.gl-col h3{margin:0 0 4px;font-size:15px}.gl-row{margin:8px 0 0}.gl-name{font-weight:600;font-size:13px;margin-bottom:2px}.sum ul{margin:4px 0 0;padding-left:18px}.sum li{margin:2px 0}.modemrow{margin:0 0 6px}.gpunow{margin:0 0 8px;padding:4px 8px;border-left:3px solid var(--ok);background:var(--cell);border-radius:4px}.modem{width:100%;max-width:300px;height:34px;display:block}
 .mcase{fill:#d9d2bf;stroke:#8f876f;stroke-width:1.2}.ml{font:7px ui-monospace,Menlo,monospace;fill:#3b3628;text-anchor:middle}
@@ -1784,6 +2030,8 @@ window.setDensity=function(v){r.setAttribute("data-density",v);try{localStorage.
 <span class="muted">·</span> <button onclick="setDensity(document.documentElement.getAttribute('data-density')==='compact'?'detailed':'compact')">Compact / detailed</button></div></header>
 <div id="pri"></div>
 <section id="sum" class="sum" style="border-width:2px"><b>1. At a glance</b> <span class="muted small">Loading.</span></section>
+<div id="phones" class="muted" style="font-size:11.5px;line-height:1.45;margin:-6px 4px 10px"></div>
+<section id="staged"><b>2a. Still to do</b> <span class="muted small">Loading.</span></section>
 <section id="pipes" hidden></section>
 <section><b>3. Jobs running now</b> <span class="muted small">Each job shows the machine that does the work. Use "Compact / detailed" to see CPU, memory and network.</span><table id="cur"></table><div class="muted small" style="margin-top:.5em">Other jobs found from running processes</div><table id="ext"></table></section>
 <section><b>4. Machines</b> <span class="muted small">What each machine does now.</span><div class="lanes" id="lanes"><div class="muted small">Loading.</div></div></section>
@@ -1836,27 +2084,32 @@ const L=s.lanes||[],W=(s.saturation||[]),G=s.gpu_now||{};
 const work=L.filter(x=>/^(working|running)/.test(x.state));
 const head=W.length?`<span class="paused">Check this: ${esc(W[0])}</span>`:(work.length?`Working: ${work.length} job${work.length==1?"":"s"} running`:"Nothing is running now");
 const by={mac:[],linux:[],unraid:[]};
-(s.pipelines||[]).forEach(p=>(p.stages||[]).filter(x=>x.of_total&&x.host in by).forEach(x=>by[x.host].push({name:x.label.split(" (")[0],count:x.count,total:p.total,pct:x.pct,eta:x.eta_s,ph:x.per_hour})));
-(s.progress_jobs||[]).forEach(j=>(by[j.host]||(by[j.host]=[])).push({name:j.name,count:j.count,total:j.total,pct:j.pct,eta:j.eta_s,ph:j.per_hour,note:j.skipped?`${j.skipped} long ones run last`:""}));
+(s.pipelines||[]).forEach(p=>p.complete?by[(p.stages.find(x=>x.of_total)||{}).host||"linux"].push({name:p.short,state:`done · ${p.total-p.failed} of ${p.total}${p.failed?` · ${p.failed} unreadable`:""}`}):(p.stages||[]).filter(x=>x.of_total&&x.host in by).forEach(x=>by[x.host].push({name:x.label.split(" (")[0],count:x.count,total:p.total,pct:x.pct,eta:x.eta_s,ph:x.per_hour})));
+(s.progress_jobs||[]).forEach(j=>(by[j.host]||(by[j.host]=[])).push({name:j.name,count:j.count,total:j.total,pct:j.pct,eta:j.eta_s,ph:j.per_hour,note:[j.skipped?`${j.skipped} long ones run last`:"",j.failed?`${j.failed} unreadable, skipped`:""].filter(Boolean).join(" · ")}));
 L.filter(x=>!/^(working|running)/.test(x.state)).forEach(x=>(by[x.host]||(by[x.host]=[])).push({name:x.name.split(" (")[0],state:x.state}));
 const row=x=>x.state?`<div class="gl-row"><div class="gl-name">${esc(x.name)}</div><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span></div>`:
  `<div class="gl-row"><div class="gl-name">${esc(x.name)}</div>${bar(x.pct)}<div class="small"><b>${x.count} of ${x.total}</b>${x.pct!=null?` · ${x.pct}%`:""}${x.pct>=100?' · <span class="ok">done</span>':x.eta?` · about ${secs(x.eta)} left`:x.ph===0?' · <span class="paused">none in the last hour</span>':""}${x.note?` · <span class="muted">${esc(x.note)}</span>`:""}</div></div>`;
 const col=h=>`<div class="gl-col"><h3>${hb(h)}</h3><div class="small muted">GPU now: ${(G[h]||[]).map(x=>esc(x.label)).join(" · ")||"nothing"}</div>${(by[h]||[]).map(row).join("")||'<div class="muted small">No jobs.</div>'}</div>`;
 e.innerHTML=`<b>1. At a glance</b><div class="big">${head}</div><div class="glance">${["mac","linux","unraid"].map(col).join("")}</div>`}
-function drawLanes(s){window.LAST_S=s;try{drawSum(s)}catch(err){console.log("sum",err)}const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
+function drawLanes(s){window.LAST_S=s;try{drawSum(s)}catch(err){console.log("sum",err)}try{drawStaged(s)}catch(err){console.log("staged",err)}const g=s.remote||{},L=s.local||{},T=s.storage||{},f=v=>v==null?"…":v;
 const C={mac:[cell("Apple GPU",`${f(L.gpu_pct)}%`,L.gpu_pct,"Metal: mlx-whisper lane, quick triage"),cell("CPU",`${f(L.cpu_pct)}%`,L.cpu_pct),cell("Load",`${f(L.load1)} / ${f(L.cpus)}`,L.cpus?100*L.load1/L.cpus:null)],
  linux:g.reachable?[cell("GPU",`${g.gpu_util}%`,g.gpu_util),cell("VRAM",`${(g.gpu_used_mib/1024).toFixed(1)} / ${(g.gpu_total_mib/1024).toFixed(0)} GB`,100*g.gpu_used_mib/g.gpu_total_mib),cell("CPU",`${f(g.cpu_pct)}%`,g.cpu_pct),cell("RAM",`${((g.mem_total_mib-g.mem_avail_mib)/1024).toFixed(0)} / ${(g.mem_total_mib/1024).toFixed(0)} GB`,100*(g.mem_total_mib-g.mem_avail_mib)/g.mem_total_mib),cell("Temp",`${f(g.gpu_temp)}°C`,null)]:[cell("State","not reachable",null)],
  unraid:T.reachable?[cell("Load",`${f(T.load1)} / ${f(T.cpus)}`,T.cpus?100*T.load1/T.cpus:null)]:[cell("State","not reachable",null)]};
 const M={mac:modem("mac",L.rx_mbs,L.tx_mbs,"This computer's network, MB/s"),linux:g.reachable?modem("linux",g.rx_mbs,g.tx_mbs,"GPU host network, MB/s"):"",unraid:T.reachable?modem("unraid",T.rx_mbs,T.tx_mbs,(T.nic||"Network")+": shared 1 GbE, MB/s"):""};
 const jobs=h=>(s.mac_jobs||[]).filter(j=>(j.host||"mac")===h).map(j=>j.label.split(/[:(]/)[0].trim()),cur=(g.current||[]).length;
 document.getElementById("lanes").innerHTML=["mac","linux","unraid"].map(h=>{const st=(s.lanes||[]).filter(x=>x.host===h),J=jobs(h);
- return `<div class="lane"><h3>${hb(h)} <span class="muted small">${esc((HOST[h]||["",""])[1].split(" · ").slice(1).join(" · "))}</span></h3>${M[h]}${gpuline(h)}<div class="cells">${C[h].join("")}</div>
- ${st.map(x=>`<div class="stream"><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span> <b class="small">${esc(x.name)}</b><div class="small muted now detail">${esc(x.now)}</div></div>`).join("")}
+ return `<div class="lane"><h3>${hb(h)} <span class="muted small">${esc((HOST[h]||["",""])[1].split(" · ").slice(1).join(" · "))}</span></h3>${M[h]}${gpuline(h)}<div class="cells">${C[h].join("")}${(s.disks||[]).filter(d=>d.host===h).map(d=>cell(esc(d.label),`${(d.avail/1e9).toFixed(0)} GB free · ${d.pct}%`,d.pct,`${d.path}: ${(d.avail/1e9).toFixed(0)} of ${(d.size/1e9).toFixed(0)} GB free`)).join("")}</div>
+ ${st.map(x=>`<div class="stream"><span class="pill small s-${esc(x.state.split(" ")[0])}">${esc(x.state)}</span> <b class="small">${esc(x.name)}</b><div class="small muted now detail">${esc(x.now)}</div>${(x.extra||[]).map(e=>`<div class="small muted detail">${esc(e)}</div>`).join("")}${(x.actions||[]).map(a=>`<button class="small" onclick="laneAct(${a.i},${a.k},${esc(JSON.stringify(a.confirm))})">${esc(a.label)}</button>`).join(" ")}</div>`).join("")}
  ${J.length||(h==="linux"&&cur)?`<div class="stream small"><b>${J.length+(h==="linux"?cur:0)} job${J.length+(h==="linux"?cur:0)==1?"":"s"}:</b> ${[...J,...(h==="linux"&&cur?[`${cur} speaker-pass item${cur==1?"":"s"}`]:[])].map(esc).join(" · ")}</div>`:""}</div>`}).join("");
 const P=s.pipelines||[],pe=document.getElementById("pipes");pe.hidden=!P.length;
-pe.innerHTML=P.map(p=>`<b>2. Progress: ${esc(p.name)}</b> <span class="muted small">${p.total!=null?p.total+" in queue":""}${p.note?" · "+esc(p.note):""}</span><table class="pipe">${p.stages.map(x=>`<tr><td>${hb(x.host)}</td><td class="lbl">${esc(x.label)}</td><td><b>${x.count??"?"}</b>${x.of_total?` / ${p.total}`:""}</td><td>${x.pct!=null?ubar(x.pct,20)+` ${x.pct}%`:""}</td><td class="small">${x.per_hour!=null?`${x.per_hour} in the last hour`:""}</td><td class="small muted">${x.eta_s?`~${secs(x.eta_s)} left at this rate`:x.of_total&&x.per_hour===0?'<span class="paused">none in the last hour</span>':""}</td></tr>`).join("")}</table>`).join("<div style='height:8px'></div>");
+pe.innerHTML=P.map(p=>p.complete?`<b>2. Progress: ${esc(p.name)}</b><div class="small"><span class="pill small s-done">✓ done</span> All ${p.total-p.failed} of ${p.total} through every step (${p.stages.filter(x=>x.of_total).map(x=>esc(x.label.split(" (")[0])).join(", ")}).${p.failed?` <span class="muted">${p.failed} ${esc(p.failed_note)}.</span>`:""}</div>`:`<b>2. Progress: ${esc(p.name)}</b> <span class="muted small">${p.total!=null?p.total+" in queue":""}${p.note?" · "+esc(p.note):""}</span><table class="pipe">${p.stages.map(x=>`<tr><td>${hb(x.host)}</td><td class="lbl">${esc(x.label)}</td><td><b>${x.count??"?"}</b>${x.of_total?` / ${p.total}`:""}</td><td>${x.pct!=null?ubar(x.pct,20)+` ${x.pct}%`:""}</td><td class="small">${x.per_hour!=null?`${x.per_hour} in the last hour`:""}</td><td class="small muted">${x.eta_s?`~${secs(x.eta_s)} left at this rate`:x.of_total&&x.per_hour===0?'<span class="paused">none in the last hour</span>':""}</td></tr>`).join("")}</table>`).join("<div style='height:8px'></div>");
 const A=s.archive||{windows:[]};document.getElementById("qnote").textContent=`Click a row to see its purpose and expected gain. ${QALL?"All queues":"Latest 5"} of ${s.queues.length}.`;
 document.getElementById("arch").innerHTML=A.windows.length?`<span class="muted">Older queues (archive):</span> `+A.windows.slice(-3).map(w=>`<a href="/archive?from=${w.from}">${w.from} to ${w.to}</a> <span class="muted">(${w.n})</span>`).join(" · "):"";}
+async function laneAct(i,k,msg){if(msg&&!confirm(msg))return;post("/api/lane_action",{i,k})}
+function drawStaged(s){const e=document.getElementById("staged");if(!e)return;const S=s.staged||[],open=S.filter(x=>x.state!=="done");
+e.innerHTML=`<b>2a. Still to do</b> <span class="muted small">${open.length} open · ${S.length-open.length} done · <a href="/pape">P.A.P.E. scans →</a></span><table class="small">${S.map(x=>`<tr><td><span class="pill small s-${x.state==="done"?"done":"waiting"}">${x.state==="done"?"✓ done":esc(x.who)}</span></td><td><b>${esc(x.name)}</b>${x.now?`<div class="muted">${esc(x.now)}</div>`:""}</td><td class="muted">${esc(x.why)}</td></tr>`).join("")}</table>`;
+const P=s.phones||[],f=n=>Number(n||0).toLocaleString(),ps=document.getElementById("phones");
+if(ps)ps.innerHTML=P.length?`<b>Saved from phones</b> (all pulls, counts only): `+P.map(p=>`${esc(p.name)} <span title="${esc(p.serial)}">·${esc(p.serial.slice(-4))}</span>: ${f(p.pulls)} pulls, last ${esc(p.last)} · ${f(p.texts)} texts · ${f(p.mms)} picture msgs · ${f(p.calls)} calls · ${f(p.pictures)} pictures · ${f(p.videos)} videos · ${f(p.recordings)} recordings${p.tasks?` · ${f(p.tasks)} task files`:""} · ${f(p.files)} files`).join("<br>"):"Phone totals: counting…"}
 async function load(){const s=await (await fetch("/api/status")).json();try{drawLanes(s)}catch(e){console.log("lanes",e)}
 document.getElementById("t").textContent=s.time+(s.dry_run?"  (DRY RUN: buttons only show what they would do)":"");
 document.getElementById("pri").innerHTML=s.priority?`<section style="border-color:var(--warn)"><b class="paused">⇧ Priority: ${esc(s.priority.queue)}</b> since ${esc(s.priority.since)} · runner ${s.priority.pid} · ${s.priority.held.length} other runner(s) held until it ends <button onclick="post('/api/endpriority')">End priority</button></section>`:"";
@@ -1961,6 +2214,8 @@ def make_handler(board):
                 return self._send(200, board.archive_page((q.get("from") or [""])[0]), "text/html; charset=utf-8")
             if self.path == "/api/status":
                 return self._send(200, board.status())
+            if self.path == "/pape":
+                return self._send(200, board.pape_page().replace("__TOKEN__", TOKEN), "text/html; charset=utf-8")
             if self.path == "/api/compute":
                 return self._send(200, board.compute())
             if self.path == "/api/ollama":
@@ -1989,7 +2244,9 @@ def make_handler(board):
                       "/api/queue_uncovered": lambda: board.queue_uncovered(),
                       "/api/catalog_append": lambda: board.catalog_append(),
                       "/api/proc": lambda: board.proc_action(str(body.get("id", "")), str(body.get("mode", ""))),
-                      "/api/game": lambda: board.game(str(body.get("mode", "")))}
+                      "/api/game": lambda: board.game(str(body.get("mode", ""))),
+                      "/api/lane_action": lambda: board.lane_action(int(body.get("i", -1)), int(body.get("k", 0))),
+                      "/api/pape": lambda: board.pape_action(str(body.get("k", "")))}
             if self.path not in routes:
                 return self._send(404, {"error": "not found"})
             self._send(200, routes[self.path]())

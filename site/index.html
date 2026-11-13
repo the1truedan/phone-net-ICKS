@@ -163,6 +163,9 @@
   .sib a, .mu-footer nav a, #sds .section-sub a { color: var(--accent, #6ee7ff); }
   .mu-lc { color: var(--accent-mu); text-transform: none; }
   .mu-footer nav a { font-family: var(--mono); font-size: 0.8rem; margin-left: 0.9rem; }
+  .totals .cubecell { grid-column: span 2; }
+  .totals .cubecell svg { width: 100%; height: auto; display: block; margin: .4rem 0; }
+  @media (max-width: 760px) { .totals .cubecell { grid-column: span 2; } }
 </style>
 </head>
 <body>
@@ -210,7 +213,7 @@
       <defs><filter id="blur"><feGaussianBlur stdDeviation="6"/></filter></defs>
     </svg>
 
-    <span class="private-chip">v0.9.2 A.U.D.I.T. I.T. M.Y.S.E.L.F. edition · 2026-11-07</span> <a class="private-chip" href="alert-gap.html">⚠ THE ALERT GAP field guide →</a> <a class="private-chip" href="paper-trail.html">🧾 PAPER TRAIL one-pager →</a> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a> <a class="private-chip" href="sessions.html">sessions of therapy →</a> <a class="private-chip" href="https://github.com/the1truedan/phone-net-ICKS/tree/main/indoc#readme">🧾 new: I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E. Mac app (alpha) →</a>
+    <span class="private-chip">v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition · 2026-11-13</span> <a class="private-chip" href="data-finger-point.html">📡 three phones over Wi-Fi</a> <a class="private-chip" href="alert-gap.html">⚠ THE ALERT GAP field guide →</a> <a class="private-chip" href="paper-trail.html">🧾 PAPER TRAIL one-pager →</a> <a class="private-chip" href="analytics.html">full analytics →</a> <a class="private-chip" href="workflow.html">workflow →</a> <a class="private-chip" href="sessions.html">sessions of therapy →</a> <a class="private-chip" href="https://github.com/the1truedan/phone-net-ICKS/tree/main/indoc#readme">🧾 new: I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E. Mac app (alpha) →</a>
   </div>
 </header>
 
@@ -262,8 +265,8 @@
   <div class="stats">
     <div class="stat"><b>~19,100</b><span>caregiving notes logged since Jan 2024</span></div>
     <div class="stat"><b>~14.5 h</b><span>average day, first note to last (since Feb 2025)</span></div>
-    <div class="stat"><b>3.5–4.25 h</b><span>paid cap per day in payroll exports; 5.25 sent for Sep; on Oct 28 both offices confirmed in writing 6.5 from Sep 1 and 10.5 from Oct 21 (through Oct 31); the agency's own Nov 3 services report authorizes only 5.2 from Sep 1 and 9.0 from Oct 21 (81.25 h less than confirmed)</span></div>
-    <div class="stat"><b>~1,113 h</b><span>audio catalogued and transcribed locally · 2,816 recordings (Oct 27)</span></div>
+    <div class="stat"><b>3.5 → 10.5 h</b><span>care hours per day: paid cap 3.5 (2025) → 4.0 → 4.25 → 5.25; 6.5 from Sep 1 confirmed in writing Oct 28 and paid on a correction check Nov 10; 10.5 for Oct 21–31 confirmed in writing, but those 11 days were not on the final check (as of Nov 13)</span></div>
+    <div class="stat"><b>~1,350 h</b><span>audio and video catalogued and transcribed locally by two models · 6,373 recordings (Nov 13)</span></div>
   </div>
 
   <div class="viz" id="viz-hours">
@@ -413,7 +416,7 @@
     <p class="section-sub">Built between care tasks with several AI assistants. Citations are commit IDs and session IDs from the owner's private records;
       they are listed so each step can be traced, not as public links. Sources were checked against three records (session index, Grok export, chat-history import); the session index had filed early grok.com chats as ChatGPT, and these entries use the corrected source.</p>
   </div>
-  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of twenty-four coding breakthroughs from April to October 2026, clustered from the last week of September"></svg><div class="tip" hidden></div></div></div>
+  <div class="viz" id="viz-bt"><div class="plot"><svg viewBox="0 0 900 120" role="img" aria-label="Timeline of coding breakthroughs from April to November 2026, clustered from the last week of September"></svg><div class="tip" hidden></div></div></div>
   <ol class="bt">
     <li><span class="bt-date">2026-04-14</span><span class="bt-tool">Grok (grok.com)</span><b>Coding pivot + AI certificate enrollment</b><span class="bt-help">Moved from chatting about the situation to building tools for it.</span>
       <span class="bt-cite">grok.com chat <code>a368cd55</code> (first build question: a Dockerfile) · AI/ML certificate acceptance, same night</span></li>
@@ -468,21 +471,41 @@
       <span class="bt-cite">2026-06-22 to 06-25 grok.com chats <code>11c974f1</code> · <code>069d2727</code> (family-tree files and a cousin's writings) · 2026-10-30 Claude Code session <code>c12db0ab</code> (whole file read, tree exports cross-checked) · <code>scripts/dna/</code> · <code>docs/DNA_MODULE.md</code> · local only</span></li>
     <li><span class="bt-date">2026-11-01</span><span class="bt-tool">Claude · adb · libimobiledevice · local models</span><b>GREEK SQUAT: plug in a loved one's phone after they pass, then go grieve</b><span class="bt-help">One USB-C cable. The person does the consent steps (Trust, Google and Facebook exports); the computer pulls texts, calls, contacts, calendar and storage, saves every carrier voicemail through the voicemail app's own Share button with a who/when list, and shows a status screen on the loved one's own phone through the same cable (counts only). Two misses became rules (owner check by full value; a check that scrolls is an action).</span>
       <span class="bt-cite">session <code>6d0b256a</code> · rack-and-ruin 0882 · 0883 · <a href="greek-squat.html">🏛️ GREEK SQUAT one-pager + workflow diagram</a></span></li>
+    <li><span class="bt-date">2026-11-03</span><span class="bt-tool">Claude · browser</span><b>Every pay period saved without one Save click</b><span class="bt-help">The payroll portal hid each report behind a five-minute signed link and a Save button. The page's own links were caught as they opened and handed to a small receiver on the home computer, which saved each one. 43 pay periods, no clicks.</span>
+      <span class="bt-cite">session <code>fc016e74</code> · portal-pull pattern (private repo)</span></li>
+    <li><span class="bt-date">2026-11-05</span><span class="bt-tool">Claude · Tauri · adb</span><b>Plug in, pulled in 80 seconds</b><span class="bt-help">A listed phone plugged into the desktop app starts its own pull, shows its status page on its own screen, and is done in about 80 seconds for a normal day.</span>
+      <span class="bt-cite">session <code>955c38eb</code> · v0.8.1 PLUG AND PLAY</span></li>
+    <li><span class="bt-date">2026-11-05</span><span class="bt-tool">Claude · local OCR</span><b>Paper into searchable, tagged PDFs, with custody</b><span class="bt-help">P.A.P.E.: a feeder scan becomes a searchable PDF, each page routed to the right reader, tagged for screen readers, and checksummed into a custody log.</span>
+      <span class="bt-cite">sessions <code>6d0b256a</code> · <code>955c38eb</code> · v0.9.0 PAPER TRAIL</span></li>
+    <li><span class="bt-date">2026-11-07</span><span class="bt-tool">Claude · local models</span><b>A 4-minute video of the whole record</b><span class="bt-help">A day-by-day timeline video built from dated notes, payroll exports, visit lists, call logs and emails, ending in one card of where the records disagree. Every quote word for word, with date and time.</span>
+      <span class="bt-cite">session <code>50346b21</code></span></li>
+    <li><span class="bt-date">2026-11-11</span><span class="bt-tool">Claude · local Whisper</span><b>Quiet room audio made readable</b><span class="bt-help">365 home-camera clips from one week were de-noised and leveled, then transcribed by two models on the home GPU and put in time order. Clips not yet transcribed are marked pending, never "no speech".</span>
+      <span class="bt-cite">sessions <code>aae472f5</code> · <code>a30abb02</code></span></li>
+    <li><span class="bt-date">2026-11-12</span><span class="bt-tool">Claude</span><b>Plates read aloud become a log</b><span class="bt-help">Plates spoken into the dash camera, and the trigger word "Sage", are pulled from the transcripts into one log by date, then checked against every earlier drive.</span>
+      <span class="bt-cite">session <code>aae472f5</code></span></li>
+    <li><span class="bt-date">2026-11-13</span><span class="bt-tool">Claude · adb</span><b>162 home-camera clips saved before the cloud lets go</b><span class="bt-help">Times when key statements were spoken became 218 three-minute save windows, split across two phones (one from the start, one from the end). A date-picker fault was found and fixed by running the failed days alone. 162 clips saved, 0 timestamp mismatches.</span>
+      <span class="bt-cite">session <code>a30abb02</code></span></li>
+    <li><span class="bt-date">2026-11-13</span><span class="bt-tool">Claude · adb wireless</span><b>Three phones, no cables</b><span class="bt-help">Wireless debugging: three phones pulled over Wi-Fi, each file checked against the phone's own SHA-256 and custody-logged, with the progress page on the phone. About 18 MB/s, half the cable speed.</span>
+      <span class="bt-cite">session <code>a30abb02</code> · <code>scripts/wifi/pnet_wifi_pull.sh</code> · <a href="data-finger-point.html">📡 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T.</a></span></li>
+    <li><span class="bt-date">2026-11-13</span><span class="bt-tool">Claude · local vision</span><b>The camera backs up the voice</b><span class="bt-help">Frames from the ten seconds before each spoken "Sage" were read by a local vision model. Three spoken plates matched what the camera saw. A new check lines up each plate with the vehicle described at each sighting, to flag a possible plate swap for a person to check.</span>
+      <span class="bt-cite">session <code>a30abb02</code></span></li>
+    <li><span class="bt-date">2026-11-13</span><span class="bt-tool">Claude · Swift</span><b>R.E.:⁄ an alert written over the big screen</b><span class="bt-help">A branded µ box popup drawn by the computer on its own TV monitor, so the TV never changes input. First test filmed on a phone.</span>
+      <span class="bt-cite">session <code>a30abb02</code> · <code>scripts/wifi/re_fraction_popup.swift</code></span></li>
   </ol>
 </section>
 
 <section class="band" id="totals">
   <div class="section-head">
-    <p class="section-eyebrow">By the numbers · v0.9.2 A.U.D.I.T. I.T. M.Y.S.E.L.F. edition · totals as of 2026-10-19 · meeting and follow-ups to 2026-11-04</p>
+    <p class="section-eyebrow">By the numbers · v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition · totals updated 2026-11-13</p>
     <h2 class="section-title">Everything in one place</h2>
-    <p class="section-sub">Totals from Jan 2024 to Oct 19, 2026; meeting and follow-up counts to Oct 28, 2026. Counts only: no names, no content, no medical detail.</p>
+    <p class="section-sub">Totals from Jan 2024 to Nov 13, 2026. Counts only: no names, no content, no medical detail.</p>
   </div>
   <div class="totals">
     <div><b>~19,100</b><span>caregiving notes</span></div>
     <div><b>~14.5 h</b><span>average day, first note to last (since Feb 2025)</span></div>
-    <div><b>3.5 → 4.0 → 4.25 → 5.25</b><span>paid cap per day from payroll exports (6.5 from Sep 1 and 10.5 from Oct 21 confirmed in writing on Oct 28, through Oct 31; the agency's Nov 3 report authorizes 5.2 and 9.0)</span></div>
-    <div><b>~1,113 h</b><span>audio catalogued on local hardware (Oct 27 afternoon), all transcribed. Earlier counts (~775 h) left out 702 recordings whose length had not been stored; a full recount found no duplicates</span></div>
-    <div><b>2,816</b><span>phone-pull recordings catalogued and checked by hash (~1,113 h of audio), including the pulls to Oct 27; 0 not covered</span></div>
+    <div><b>3.5 → 4.0 → 4.25 → 5.25 → 6.5 → 10.5</b><span>care hours per day from payroll exports and written confirmations: 6.5 from Sep 1 (paid on the Nov 10 correction); 10.5 for Oct 21–31 (11 days, 147 h logged, not on the final check as of Nov 13). The agency's own Nov 3 report authorizes 5.2 and 9.0</span></div>
+    <div><b>~1,350 h</b><span>audio and video catalogued on local hardware and transcribed by two models (Nov 13). Lengths re-read from the files where the index had none</span></div>
+    <div><b>6,373</b><span>recordings catalogued and checked by hash: 3,150 voice, 1,987 phone video (incl. dashcam), 1,236 home camera</span></div>
     <div><b>4,975 · 60</b><span>speaker-separated outputs (recordings + fifteen-minute chunks) · recordings redone at deep quality with voiceprints</span></div>
     <div><b>296</b><span>voicemails from named callers: leveled, speaker-separated, checked against the provider's own transcript, each with a speaker-name confidence</span></div>
     <div><b>325</b><span>home-camera clips saved from the phone app and pulled, each timestamp-checked against its target minute</span></div>
@@ -495,7 +518,7 @@
     <div><b>720</b><span>candidate trips for mileage</span></div>
     <div><b>14 · 40</b><span>days with a 911 call · a choking incident</span></div>
     <div><b>32</b><span>days with a safety incident noted</span></div>
-    <div><b>28</b><span>device pulls and reads from 5 phones (one with the care receiver's OK, case contacts only)</span></div>
+    <div><b>140 · 4</b><span>phone pulls with SHA-256 checksums (983 custody log entries) · phones in daily use: Moto G Play 2024, Moto G Stylus 2023, Galaxy S26 Ultra, and the care receiver's phone (with her OK, case contacts only); 2 older phones read once</span></div>
     <div><b>20 · 3</b><span>faxes delivered since Sep 1 (17 to the care agency, payroll company and advocates) · faxes that failed at the receiving machine (an email copy went instead)</span></div>
     <div><b>41 · 23</b><span>letters and email drafts checked before sending since Oct 14 (facts, dates, tone and legal wording) · saved revisions</span></div>
     <div><b>1</b><span>all-caps subject line changed to "Please reply by…" before sending. Calm and exact is stronger.</span></div>
@@ -524,6 +547,11 @@
     <div><b>3,786 h · 2,018 h</b><span>hours logged · hours paid (Mar 2025 to Oct 2026)</span></div>
     <div><b>568</b><span>days in the day-by-day ledger (hours, notes, emails, calls, recordings)</span></div>
     <div><b>36 of 40</b><span>pay stubs match the paid daily cap exactly (the other 4 are split corrections)</span></div>
+    <div><b>60 · 4.8 h</b><span>calls with the care agency, Feb 2025–Sep 2026, from 3 phones (call logs)</span></div>
+    <div><b>37 · 7.5 h</b><span>calls with the payroll company, Apr 2025–Nov 2026; about 7 of the 31 longer calls were recorded</span></div>
+    <div><b>~42 h · 4</b><span>median time to a written answer from the payroll company (range 12.5 h to 7 days) · written asks still unanswered (the oldest ~150 days)</span></div>
+    <div><b>5 · 12</b><span>paper letters from the care agency scanned with checksums (one: 145 pages, 0 words of text) · gaps found between what was said, written, authorized and paid (see the cube)</span></div>
+    <div class="cubecell"><b>Where the asks went</b><svg id="askcube" viewBox="0 0 720 230" role="img" aria-label="A black cube holding clusters of dots: one dot per call, written ask, scanned letter or gap found"></svg><span>one dot = one call, written ask, scanned letter or gap found. Counts only.</span></div>
   </div>
 
   <div class="how">
@@ -743,7 +771,7 @@
 </section>
 
 <footer><div class="mu-footer">
-  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.9.2 A.U.D.I.T. I.T. M.Y.S.E.L.F. edition · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
+  <span class="mu-mark">phone<span class="tp">+</span>net<span class="tp">+</span>tics · v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition · one door in a larger <span>µ</span>lab · © 2026 M.A.N.A.G.E.R. LLC — prepare for the care when we cannot be there</span>
   <nav>
     <a href="https://github.com/the1truedan/phone-net-ICKS">source</a>
     <a href="https://github.com/the1truedan/phone-net-ICKS/blob/main/README.md">README</a>
@@ -932,10 +960,10 @@ function bar(svg, x, w, y0, y1, fill, up) { const top = Math.min(y0, y1), h = Ma
   hover(svg, tip, W, f, i => `${label(MONTHS[i][0])}<br><b>${AIH[MONTHS[i][0]] || 0} h</b> active`);
 })();
 
-const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"], ["2026-09-29", "Claude \u00b7 adb", "Payroll truth, straight from the payroll app"], ["2026-10-02", "Claude", "Two computers at once: Mac quick pass + GPU deep pass"], ["2026-10-03", "Claude", "Every pull covered, broken files recovered"], ["2026-10-11", "Claude \u00b7 adb", "Camera clips saved with a person in the loop"], ["2026-10-12", "Claude", "A six-year-old phone backup opened without the vendor app"], ["2026-10-15", "Claude", "The whole care-record export, read on the home computers"], ["2026-10-16", "Claude", "One visit fully mapped; what was said in one place"], ["2026-10-16", "Claude", "Bottlenecks visible per job; a side matter handed to counsel"], ["2026-10-19", "Claude", "A misheard word settled from the audio"], ["2026-10-19", "Claude", "Phone answers set beside the written questions"], ["2026-10-19", "Claude \u00b7 adb", "Private-care windows the camera tools must skip"], ["2026-10-19", "Claude", "Visit recordings found from the calendar"], ["2026-10-28", "Claude", "Two encrypted replies read and answered the same afternoon"], ["2026-10-30", "Grok \u2192 Claude", "A DNA file read after 9 years on the shelf"]];
+const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], ["2026-06-19", "Grok", "One caregiving catalog"], ["2026-07-22", "Codex", "Portable intake with checksums"], ["2026-08-04", "Pi \u00b7 Codex", "Memory that survives long days"], ["2026-08-12", "Codex", "Browsing history made searchable"], ["2026-09-22", "Claude", "Local search over the agency record"], ["2026-09-25", "Claude \u00b7 Grok", "Every agency call transcribed and summarized locally"], ["2026-09-26", "Claude", "Two-recorder cross-check, phone inventory, texts and call logs"], ["2026-09-27", "Claude", "The caregiver's own log became the timing backbone"], ["2026-09-29", "Claude", "Keyword + meaning sweeps, true dates, trip context"], ["2026-09-29", "Claude \u00b7 adb", "Payroll truth, straight from the payroll app"], ["2026-10-02", "Claude", "Two computers at once: Mac quick pass + GPU deep pass"], ["2026-10-03", "Claude", "Every pull covered, broken files recovered"], ["2026-10-11", "Claude \u00b7 adb", "Camera clips saved with a person in the loop"], ["2026-10-12", "Claude", "A six-year-old phone backup opened without the vendor app"], ["2026-10-15", "Claude", "The whole care-record export, read on the home computers"], ["2026-10-16", "Claude", "One visit fully mapped; what was said in one place"], ["2026-10-16", "Claude", "Bottlenecks visible per job; a side matter handed to counsel"], ["2026-10-19", "Claude", "A misheard word settled from the audio"], ["2026-10-19", "Claude", "Phone answers set beside the written questions"], ["2026-10-19", "Claude \u00b7 adb", "Private-care windows the camera tools must skip"], ["2026-10-19", "Claude", "Visit recordings found from the calendar"], ["2026-10-28", "Claude", "Two encrypted replies read and answered the same afternoon"], ["2026-10-30", "Grok \u2192 Claude", "A DNA file read after 9 years on the shelf"], ["2026-11-03", "Claude \u00b7 browser", "Every pay period saved without one Save click"], ["2026-11-05", "Claude \u00b7 Tauri \u00b7 adb", "Plug in, pulled in 80 seconds"], ["2026-11-05", "Claude \u00b7 local OCR", "Paper into searchable, tagged PDFs, with custody"], ["2026-11-07", "Claude \u00b7 local models", "A 4-minute video of the whole record"], ["2026-11-11", "Claude \u00b7 local Whisper", "Quiet room audio made readable"], ["2026-11-12", "Claude", "Plates read aloud become a log"], ["2026-11-13", "Claude \u00b7 adb", "162 home-camera clips saved before the cloud lets go"], ["2026-11-13", "Claude \u00b7 adb wireless", "Three phones, no cables"], ["2026-11-13", "Claude \u00b7 local vision", "The camera backs up the voice"], ["2026-11-13", "Claude \u00b7 Swift", "R.E.:\u2044 an alert written over the big screen"]];
 (function bt() {
   const root = document.getElementById("viz-bt"), svg = root.querySelector("svg"), tip = root.querySelector(".tip"), W = 900;
-  const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-11-05"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
+  const x0 = 40, x1 = 860, t0 = Date.parse("2026-04-01"), t1 = Date.parse("2026-11-15"), X = d => x0 + (Date.parse(d) - t0) / (t1 - t0) * (x1 - x0), y = 50;
   el("line", { x1: x0, x2: x1, y1: y, y2: y, stroke: "#273044", "stroke-width": 2 }, svg);
   ["2026-04","2026-05","2026-06","2026-07","2026-08","2026-09","2026-10"].forEach(m => el("text", { x: X(m + "-01"), y: y + 40, "text-anchor": "middle" }, svg, label(m).split(" ")[0]));
   BT.forEach(([d, t, w], k) => { const cy = y - (k >= 5 ? (k - 5) * 4 : 0);
@@ -947,5 +975,30 @@ const BT = [["2026-04-14", "Grok", "Coding pivot + AI certificate enrollment"], 
 })();
 </script>
 
+<script>
+(() => {
+  const svg = document.getElementById("askcube"); if (!svg) return;
+  const NS = "http://www.w3.org/2000/svg", mk = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+  mk("polygon", { points: "40,60 210,15 380,60 210,105", fill: "#151a24", stroke: "#2b3346" });
+  mk("polygon", { points: "40,60 210,105 210,215 40,170", fill: "#0b0e14", stroke: "#2b3346" });
+  mk("polygon", { points: "380,60 210,105 210,215 380,170", fill: "#10141c", stroke: "#2b3346" });
+  const groups = [
+    { n: 60, c: "#2a97c4", x: 125, y: 120, label: "care agency calls · 60" },
+    { n: 37, c: "#c4841a", x: 295, y: 120, label: "payroll calls · 37" },
+    { n: 16, c: "#8a6fd1", x: 210, y: 62, label: "payroll written asks · 16 (4 open)" },
+    { n: 5, c: "#4cc27e", x: 125, y: 182, label: "agency letters scanned · 5" },
+    { n: 12, c: "#e34948", x: 295, y: 182, label: "gaps found · 12" } ];
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  groups.forEach((g, gi) => {
+    const r = 8 + Math.sqrt(g.n) * 4.2;
+    for (let k = 0; k < g.n; k++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * r;
+      const open = gi === 2 && k < 4;
+      mk("circle", { cx: g.x + Math.cos(a) * d, cy: g.y + Math.sin(a) * d * 0.6, r: 3.2, fill: open ? "none" : g.c, stroke: g.c, "stroke-width": open ? 1.4 : 0, opacity: 0.92 }); }
+    const ly = 34 + gi * 38;
+    mk("circle", { cx: 420, cy: ly - 4, r: 5, fill: g.c });
+    const t = mk("text", { x: 432, y: ly, fill: "currentColor", "font-size": 15 }); t.textContent = g.label; });
+  const t = mk("text", { x: 420, y: 222, fill: "currentColor", "font-size": 12, opacity: 0.7 }); t.textContent = "hollow dots: asks with no written answer yet";
+})();
+</script>
 </body>
 </html>

@@ -139,3 +139,12 @@ The head of the paper scroll order. The phones are saved; now the paper trail jo
   not 'unprocessed'; Stylus `.pending-<ts>-RecordNNN.wav` files and subfolder SHA256SUMS paths must be counted correctly).
 - Two-model transcription and P2000 embedding runners already exist in grokcode (`deep_all_transcribe.py`, `deep_all_embed.py`):
   the app should append to their queue instead of starting new jobs.
+
+## I.N-D.O.C.-T.R.I.N. 8-P.I.E.C.E. (standalone Mac scan app) — dev starts 2026-11-06 AM, after WLTCAC submit + Megan visit
+- [ ] GUI shell (Tauri, CSS theme) over `scripts/pape/`: batch scan + live preview grid (rescan/rotate/drop)
+- [ ] Post-scan passes: clean → OCR → QC (skew, blank, low confidence) → ADA/PDF-UA check, pass/fail per page
+- [ ] Receipt parse (M.A.R.K. Receipt Processor): store, date, time, line items, tax, total → CSV/JSON for inventory, finance audits, E.R.R.A.N.D.S.
+- [ ] Load guard on M4RV: one OCR job at a time, `taskpolicy -b`, per-file timeout (a smoke-test ocrmypdf hung 3 d 9 h at 100% CPU on 11/6), GPU only for receipt parse, "pause while watching" toggle
+
+## Earmark (Dan, 2026-11-11): spare-phone app routines
+- [ ] Old phone on the desk Mac runs scheduled, read-only routines in Flipp and local grocer apps (deals, coupons, lists) over adb; results to the job board. Plan and limits: `docs/EARMARK_SPARE_PHONE_APP_ROUTINES.md`.

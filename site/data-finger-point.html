@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D.A.T.A. F.I.N.G.E.R. P.O.I.N.T.</title>
+<meta name="description" content="phone-net-ICKS v0.9.3: three phones pulled over Wi-Fi, no cables. Counts and hashes only.">
+<style>
+  :root { --bg: #07090e; --ink: #e8edf6; --dim: #7d889c; --cube: #0b0e14; --edge: #2b3346;
+          --c1: #2a97c4; --c2: #c4841a; --c3: #8a6fd1; --mu: #6ee7ff; --laser: #ff4d6d; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, sans-serif; }
+  .bar { background: #ffeb3b; color: #000; padding: 8px 12px; font: 600 15px system-ui; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  svg { width: 100%; height: auto; display: block; }
+  h1 { font: 700 clamp(22px, 4vw, 40px)/1.1 ui-monospace, Menlo, monospace; letter-spacing: .06em; margin: 18px 0 6px; }
+  .exp { color: var(--dim); font-size: 15px; line-height: 1.6; margin: 0; }
+  .exp b { color: var(--ink); }
+  .lbl { fill: var(--dim); font: 13px ui-monospace, Menlo, monospace; }
+  @media (prefers-reduced-motion: reduce) { .anim { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg id="hero" viewBox="0 0 1200 620" role="img"
+     aria-label="Three devices in the background, a Mac mini, an Android phone and a car dash camera, send swarms of dots over Wi-Fi with no cables. The dots spiral into a black cube marked with the micro sign. A laser from the cube pops a passing cloud into bubbles.">
+  <defs>
+    <radialGradient id="floor" cx="50%" cy="80%" r="70%"><stop offset="0" stop-color="#121826"/><stop offset="1" stop-color="#07090e"/></radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <linearGradient id="top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2232"/><stop offset="1" stop-color="#121826"/></linearGradient>
+  </defs>
+  <rect width="1200" height="620" fill="url(#floor)"/>
+
+  <!-- background devices, dimmer and smaller (farther away) -->
+  <g id="dev-mac" transform="translate(150,170)" opacity=".75" filter="url(#soft)">
+    <rect x="-55" y="-14" width="110" height="28" rx="9" fill="#c9ced8"/>
+    <rect x="-55" y="10" width="110" height="5" rx="2" fill="#9aa1ae"/>
+    <circle cx="40" cy="0" r="2.5" fill="#4cc27e"/>
+    <text class="lbl" x="0" y="44" text-anchor="middle">Mac mini</text>
+  </g>
+  <g id="dev-phone" transform="translate(600,120)" opacity=".75" filter="url(#soft)">
+    <rect x="-17" y="-34" width="34" height="68" rx="6" fill="#1f2636" stroke="#5c6880"/>
+    <rect x="-13" y="-28" width="26" height="54" rx="3" fill="#2a97c4" opacity=".55"/>
+    <text class="lbl" x="0" y="54" text-anchor="middle">Android</text>
+  </g>
+  <g id="dev-cam" transform="translate(1050,175)" opacity=".75" filter="url(#soft)">
+    <rect x="-34" y="-18" width="68" height="34" rx="6" fill="#1f2636" stroke="#5c6880"/>
+    <circle cx="0" cy="-1" r="11" fill="#0b0e14" stroke="#8b97ad" stroke-width="2"/>
+    <circle cx="0" cy="-1" r="4" fill="#c4841a"/>
+    <rect x="-8" y="-30" width="16" height="12" rx="2" fill="#5c6880"/>
+    <text class="lbl" x="0" y="40" text-anchor="middle">car dash cam</text>
+  </g>
+
+  <!-- Wi-Fi arcs above each device (no cables anywhere) -->
+  <g id="wifi" fill="none" stroke-linecap="round"></g>
+
+  <!-- cloud + laser + bubble packets -->
+  <g id="cloud"><path d="M0,20 a18,18 0 0 1 22,-22 a26,26 0 0 1 48,4 a18,18 0 0 1 10,34 h-74 a16,16 0 0 1 -6,-16z" fill="#c9d4e6" opacity=".85"/></g>
+  <line id="laser" x1="600" y1="300" x2="600" y2="300" stroke="var(--laser)" stroke-width="3" opacity="0"/>
+  <g id="bubbles"></g>
+
+  <!-- swarm dots go here, drawn before the cube so they vanish into it -->
+  <g id="dots"></g>
+
+  <!-- the cube: front and centre, closest to the viewer -->
+  <g id="cube" transform="translate(600,415)">
+    <polygon class="anim" points="-150,-62 0,-128 150,-62 0,4" fill="none" stroke="var(--mu)" stroke-width="12" opacity=".25" filter="url(#blur)">
+      <animate attributeName="opacity" values=".15;.4;.15" dur="3.2s" repeatCount="indefinite"/>
+    </polygon>
+    <polygon points="-150,-62 0,-128 150,-62 0,4" fill="url(#top)" stroke="var(--edge)" stroke-width="2"/>
+    <polygon points="-150,-62 0,4 0,160 -150,94" fill="var(--cube)" stroke="var(--edge)" stroke-width="2"/>
+    <polygon points="150,-62 0,4 0,160 150,94" fill="#10141c" stroke="var(--edge)" stroke-width="2"/>
+    <text x="-75" y="72" text-anchor="middle" font-size="96" font-family="Georgia, serif" fill="var(--mu)" opacity=".9"
+          transform="skewY(24)" style="transform-box: fill-box; transform-origin: center;">µ</text>
+    <circle id="emitter" cx="0" cy="-62" r="5" fill="var(--laser)" opacity=".8"/>
+  </g>
+
+  <text class="lbl" x="600" y="606" text-anchor="middle">no cables · Wi-Fi only · counts and hashes in, nothing personal out</text>
+</svg>
+
+<h1>D.A.T.A. F.I.N.G.E.R. P.O.I.N.T.</h1>
+<p class="exp"><a href="index.html" style="color:#6ee7ff">← phone-net-ICKS home</a> · v0.9.3 · 2026-11-13</p>
+<p class="exp"><b>D.A.T.A.</b> Dated, Audited, Traced, Archived · <b>F.I.N.G.E.R.</b> Forensic Index of Notes, Gaps, Evidence and Records · <b>P.O.I.N.T.</b> Proof Of Integrity, Never Tampered.<br>
+Jargon: a <i>data fingerprint</i> is a file's SHA-256 hash, so any change shows. A <i>finger point</i> is the plain job of the record: point at the exact minute, file and line where what was said, written, authorized and paid stop matching.</p>
+</div>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = id => document.getElementById(id);
+  const mk = (p, t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; };
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const CUBE = { x: 600, y: 380 };
+  const SRC = [ { x: 150, y: 170, c: "var(--c1)" }, { x: 600, y: 120, c: "var(--c3)" }, { x: 1050, y: 175, c: "var(--c2)" } ];
+
+  // Wi-Fi arcs that pulse outward from each device
+  SRC.forEach((s, i) => [16, 28, 40].forEach((r, k) => {
+    const a = mk($("wifi"), "path", { d: `M${s.x - r},${s.y - 36} A${r},${r} 0 0 1 ${s.x + r},${s.y - 36}`, stroke: s.c, "stroke-width": 3, opacity: 0 });
+    if (!reduce) mk(a, "animate", { attributeName: "opacity", values: "0;.9;0", dur: "1.8s", begin: `${(k * 0.3 + i * 0.2).toFixed(1)}s`, repeatCount: "indefinite" });
+    else a.setAttribute("opacity", ".5");
+  }));
+
+  // dot swarm: each dot leaves its device, swirls in a shrinking spiral, and is swallowed by the cube
+  const N = 150, dots = [];
+  for (let i = 0; i < N; i++) {
+    const s = SRC[i % 3];
+    dots.push({ s, t: Math.random(), spd: 0.0016 + Math.random() * 0.0018, turn: (Math.random() < .5 ? -1 : 1) * (1.4 + Math.random()),
+                jit: (Math.random() - .5) * 26, el: mk($("dots"), "circle", { r: 2.6 + Math.random() * 1.6, fill: s.c }) });
+  }
+  const place = d => {
+    const t = d.t, e = t * t * (3 - 2 * t);
+    const bx = d.s.x + (CUBE.x - d.s.x) * e, by = d.s.y + (CUBE.y - d.s.y) * e;
+    const ang = t * Math.PI * 2 * d.turn, rad = (1 - t) * 70 + d.jit * (1 - t);
+    d.el.setAttribute("cx", (bx + Math.cos(ang) * rad).toFixed(1));
+    d.el.setAttribute("cy", (by + Math.sin(ang) * rad * 0.55).toFixed(1));
+    d.el.setAttribute("opacity", (t < .08 ? t / .08 : t > .9 ? (1 - t) / .1 : 1).toFixed(2));
+  };
+
+  // cloud drifts in; the cube's laser pops it into bubble packets (a nod to future free-space optical links)
+  let cx = 1260, popAt = 0, state = "drift";
+  const cloud = $("cloud"), laser = $("laser"), bub = $("bubbles");
+  const pop = () => {
+    for (let k = 0; k < 14; k++) {
+      const b = mk(bub, "circle", { cx: cx + 40, cy: 92, r: 3 + Math.random() * 5, fill: "none", stroke: "#c9d4e6", "stroke-width": 1.5 });
+      const dx = (Math.random() - .5) * 140, dy = (Math.random() - .3) * 90, t0 = performance.now();
+      const fly = now => { const u = Math.min(1, (now - t0) / 1400);
+        b.setAttribute("cx", (cx + 40 + dx * u).toFixed(1)); b.setAttribute("cy", (92 + dy * u).toFixed(1)); b.setAttribute("opacity", (1 - u).toFixed(2));
+        if (u < 1) requestAnimationFrame(fly); else b.remove(); };
+      requestAnimationFrame(fly);
+    }
+  };
+  const frame = now => {
+    dots.forEach(d => { d.t += d.spd; if (d.t >= 1) d.t = 0; place(d); });
+    if (state === "drift") {
+      cx -= 1.1; cloud.setAttribute("transform", `translate(${cx},70)`); cloud.setAttribute("opacity", 1);
+      if (cx < 760) { state = "fire"; popAt = now; }
+    } else if (state === "fire") {
+      const u = Math.min(1, (now - popAt) / 260);
+      laser.setAttribute("x1", CUBE.x); laser.setAttribute("y1", 353);
+      laser.setAttribute("x2", (CUBE.x + (cx + 40 - CUBE.x) * u).toFixed(1)); laser.setAttribute("y2", (353 + (100 - 353) * u).toFixed(1));
+      laser.setAttribute("opacity", .95);
+      if (u >= 1) { pop(); cloud.setAttribute("opacity", 0); state = "fade"; popAt = now; }
+    } else if (state === "fade") {
+      const u = (now - popAt) / 500; laser.setAttribute("opacity", Math.max(0, .95 - u).toFixed(2));
+      if (u > 3) { cx = 1260; state = "drift"; }
+    }
+    requestAnimationFrame(frame);
+  };
+  if (reduce) { dots.forEach(d => place(d)); cloud.setAttribute("transform", "translate(900,70)"); }
+  else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
