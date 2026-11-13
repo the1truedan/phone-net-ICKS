@@ -31,8 +31,20 @@ if [ -z "$W" ] || ! adb devices | grep -q "^$W[[:space:]]*device"; then   # mDNS
   for d in $(adb devices | awk 'NR>1 && $2=="device" && $1 ~ /:/ {print $1}'); do
     [ "$(adb -s "$d" shell getprop ro.serialno </dev/null 2>/dev/null | tr -d '\r')" = "$SER" ] && { W=$d; break; }; done
 fi
-[ -n "$W" ] || { echo "phone $SER not found on Wi-Fi (is Wireless debugging on?)"; exit 1; }
+[ -n "$W" ] || { adb devices | grep -q "^$SER[[:space:]]*device" && W=$SER; }
+[ -n "$W" ] || { echo "phone $SER not found on Wi-Fi or USB (is Wireless debugging on?)"; exit 1; }
 A=(adb -s "$W"); echo "wifi target $W"
+# Handoff: whenever the phone is also plugged in by USB (and allowed), use the cable; it is about twice as fast and
+# does not drop when the phone's Wi-Fi debugging port changes. Checked before every file, so plugging in mid-run
+# moves the rest of the run to USB-C, and unplugging moves it back to Wi-Fi.
+VIA=wifi
+usb_up(){ adb devices | grep -q "^$SER[[:space:]]*device"; }
+pick(){ if usb_up; then [ "$VIA" = usb ] || { echo "$(ts) handoff: USB-C cable found, switching to the cable" >> "$L"; VIA=usb; }; A=(adb -s "$SER")
+        else [ "$VIA" = wifi ] || { echo "$(ts) handoff: cable gone, back to Wi-Fi" >> "$L"; VIA=wifi; }
+             adb devices | grep -q "^$W[[:space:]]*device" || { W2=$(adb mdns services 2>&1 | grep "adb-$SER-" | awk '{print $3}' | tail -1)
+               [ -n "$W2" ] && timeout 15 adb connect "$W2" >/dev/null 2>&1 && W=$W2; }
+             A=(adb -s "$W"); fi; }
+pick
 
 { echo "$(ts) phase1 start $SER over Wi-Fi ($W) since $SINCE -> $P"; echo "$(ts) phone connected"; echo "$(ts) unlocked"; } > "$L"
 ( cd "$APP" && nohup "$PY" stack/jobboard/phone_status.py --root "$P" --port "$PORT" \
@@ -66,8 +78,8 @@ find ${PREFIX%delta_}* -type f ! -path "$P/*" -exec stat -f '%z|%N' {} + 2>/dev/
 TOT=$(wc -l < "$P/_new.txt" | tr -d ' '); BYTES=$(awk -F'|' '{s+=$1} END{print s+0}' "$P/_new.txt")
 echo "$(ts) new files 0/$TOT" >> "$L"
 t0=$(date +%s); n=0
-while IFS='|' read -r sz p; do mkdir -p "$P$(dirname "$p")"
-  "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt" && n=$((n+1)); echo "$(ts) new files $n/$TOT" >> "$L"
+while IFS='|' read -r sz p; do mkdir -p "$P$(dirname "$p")"; pick
+  "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt" || { sleep 5; pick; "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt"; } && n=$((n+1)); echo "$(ts) new files $n/$TOT ($VIA)" >> "$L"
 done < "$P/_new.txt"; t1=$(date +%s)
 
 # 4) photo GPS tags (only if the camera saved them)
@@ -81,7 +93,7 @@ done < "$P/_new.txt"
 ok=0; bad=0
 if [ "$TOT" -gt 0 ]; then
   (cd "$P" && find . -type f ! -name '_*' ! -name 'PULL_LOG.txt' ! -name 'SHA256SUMS.txt' ! -name '*.local.txt' ! -name 'DEVICE_SNAPSHOT.txt' ! -name 'PHOTO_GPS.tsv' -print0 | xargs -0 shasum -a 256 > SHA256SUMS.txt)
-  while IFS='|' read -r sz p; do h=$("${A[@]}" shell "sha256sum '$p'" </dev/null | cut -c1-64); l=$(shasum -a 256 "$P$p" | cut -c1-64)
+  pick; while IFS='|' read -r sz p; do h=$("${A[@]}" shell "sha256sum '$p'" </dev/null | cut -c1-64); l=$(shasum -a 256 "$P$p" | cut -c1-64)
     if [ -n "$h" ] && [ "$h" = "$l" ]; then ok=$((ok+1)); else bad=$((bad+1)); echo "DIFF or MISSING $p" >> "$P/_pull_err.txt"; fi; done < "$P/_new.txt"
   [ -n "$CUSTODY" ] && bash "$CUSTODY" acquire "$P/SHA256SUMS.txt" device="$SER" source="phone (since $SINCE)" note="Wi-Fi pull (adb wireless)" >/dev/null 2>&1
 fi
