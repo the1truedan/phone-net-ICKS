@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T.U.R.B.O. handoff</title>
+<meta name="description" content="phone-net-ICKS v0.9.4: a Wi-Fi phone pull hands off to the USB-C cable the moment it is plugged in. Measured speeds, counts only.">
+<style>
+  :root { --bg:#07090e; --ink:#e8edf6; --dim:#7d889c; --edge:#2b3346; --wifi:#2a97c4; --usb:#ffb020; --mu:#6ee7ff; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:16px; }
+  svg { width:100%; height:auto; display:block; }
+  h1 { font:700 clamp(22px,4vw,38px)/1.1 ui-monospace,Menlo,monospace; letter-spacing:.06em; margin:16px 0 6px; }
+  p { color:var(--dim); line-height:1.6; margin:6px 0; } p b { color:var(--ink); }
+  .lbl { fill:var(--dim); font:13px ui-monospace,Menlo,monospace; }
+  .big { font:700 30px ui-monospace,Menlo,monospace; }
+  .log { font:13px ui-monospace,Menlo,monospace; fill:#b9c3d6; }
+  table { border-collapse:collapse; margin:10px 0 4px; font:14px ui-monospace,Menlo,monospace; }
+  td,th { border:1px solid var(--edge); padding:6px 10px; text-align:left; } th { color:var(--dim); font-weight:600; }
+  a { color:var(--mu); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg id="t" viewBox="0 0 1000 500" role="img"
+  aria-label="A phone sends files to a µ cube over Wi-Fi at about 18 megabytes a second. A USB-C cable plugs in, the pull hands off to the cable, and the speed rises to about 40 megabytes a second in T.U.R.B.O. mode. The cable is unplugged and the pull goes back to Wi-Fi.">
+  <defs><filter id="glow"><feGaussianBlur stdDeviation="5"/></filter></defs>
+  <rect width="1000" height="500" fill="#07090e"/>
+  <!-- phone -->
+  <g transform="translate(150,190)">
+    <rect x="-42" y="-86" width="84" height="172" rx="14" fill="#151a24" stroke="#5c6880" stroke-width="2"/>
+    <rect x="-34" y="-74" width="68" height="140" rx="6" fill="#0b0e14"/>
+    <text x="0" y="-40" text-anchor="middle" class="lbl" style="font-size:11px">please</text>
+    <text x="0" y="-26" text-anchor="middle" class="lbl" style="font-size:11px">don't touch</text>
+    <rect x="-26" y="-6" width="52" height="8" rx="4" fill="#1f2636"/>
+    <rect id="pbar" x="-26" y="-6" width="0" height="8" rx="4" fill="var(--mu)"/>
+    <text id="pcount" x="0" y="22" text-anchor="middle" class="lbl" style="font-size:11px">0/476</text>
+    <rect x="-10" y="86" width="20" height="6" rx="2" fill="#5c6880"/>
+    <text x="0" y="122" text-anchor="middle" class="lbl">phone</text>
+  </g>
+  <!-- wifi arcs -->
+  <g id="wifi" fill="none" stroke="var(--wifi)" stroke-linecap="round" stroke-width="3">
+    <path d="M128,80 A30,30 0 0 1 172,80" opacity=".9"/><path d="M118,70 A44,44 0 0 1 182,70" opacity=".6"/><path d="M108,60 A58,58 0 0 1 192,60" opacity=".35"/>
+  </g>
+  <!-- cube -->
+  <g transform="translate(790,215)">
+    <polygon points="-110,-48 0,-98 110,-48 0,2" fill="none" stroke="var(--mu)" stroke-width="10" opacity=".25" filter="url(#glow)"/>
+    <polygon points="-110,-48 0,-98 110,-48 0,2" fill="#1b2232" stroke="var(--edge)" stroke-width="2"/>
+    <polygon points="-110,-48 0,2 0,120 -110,70" fill="#0b0e14" stroke="var(--edge)" stroke-width="2"/>
+    <polygon points="110,-48 0,2 0,120 110,70" fill="#10141c" stroke="var(--edge)" stroke-width="2"/>
+    <text x="-55" y="58" text-anchor="middle" font-size="74" font-family="Georgia,serif" fill="var(--mu)">µ</text>
+    <text x="0" y="150" text-anchor="middle" class="lbl">desk computer · checksums + custody</text>
+  </g>
+  <!-- cable (drawn when plugged) -->
+  <path id="cable" d="M150,282 C160,470 610,470 700,300" fill="none" stroke="var(--usb)" stroke-width="7" stroke-linecap="round" opacity="0"/>
+  <path id="air" d="M190,150 C380,40 560,40 690,170" fill="none" stroke="none"/>
+  <g id="dots"></g>
+  <!-- readout -->
+  <g transform="translate(330,232)">
+    <text id="mode" class="big" fill="var(--wifi)">📡 Wi-Fi</text>
+    <text id="speed" y="38" class="big" fill="var(--ink)">0.0 MB/s now</text>
+    <text id="avg" y="66" class="lbl" style="font-size:15px">0.0 MB/s average</text>
+  </g>
+  <text id="logline" x="500" y="488" text-anchor="middle" class="log"></text>
+</svg>
+
+<h1>⚡ T.U.R.B.O.</h1>
+<p><b>Tethered USB Rapid Bulk Offload.</b> A phone pull starts over Wi-Fi. Before every file the script checks for the
+USB-C cable; the moment the phone is plugged in, the rest of the pull moves to the cable, and if it is unplugged the pull
+goes back to Wi-Fi (finding the phone's new Wi-Fi port on its own). Every file is still checked against the phone's own
+SHA-256, and the log and the phone's progress page show the mode with this file's speed and the average.</p>
+<table>
+  <tr><th>Measured 2026-11-13</th><th>Average</th><th>Per file</th></tr>
+  <tr><td>📡 Wi-Fi (three phones)</td><td>17–18 MB/s</td><td>—</td></tr>
+  <tr><td>⚡ T.U.R.B.O. · USB-C (one phone, 470+ files)</td><td>~40 MB/s</td><td>13–42 MB/s (small files are slower)</td></tr>
+</table>
+<p>Log line: <code>new files 33/476 (⚡ T.U.R.B.O. · USB-C · 40.8 MB/s now · 36.9 MB/s avg)</code> ·
+<code>scripts/wifi/pnet_wifi_pull.sh</code> · <a href="data-finger-point.html">D.A.T.A. F.I.N.G.E.R. P.O.I.N.T.</a> · <a href="index.html">home</a></p>
+</div>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg", $ = id => document.getElementById(id);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const air = $("air"), cable = $("cable"), dots = $("dots");
+  const L1 = air.getTotalLength(), L2 = cable.getTotalLength();
+  // phases (seconds): Wi-Fi, plug in + T.U.R.B.O., unplug back to Wi-Fi
+  const PH = [[0, 7, "wifi"], [7, 17, "usb"], [17, 22, "wifi"]], CYCLE = 22, TOTAL = 476;
+  const pool = []; for (let i = 0; i < 46; i++) { const c = document.createElementNS(NS, "circle"); c.setAttribute("r", 4); dots.appendChild(c); pool.push({ el: c, t: Math.random() }); }
+  let shown = 0, bytes = 0, t0 = performance.now(), lastLog = -1, prev = performance.now(), lastS = 0;
+  const phaseAt = s => PH.find(p => s >= p[0] && s < p[1])[2];
+  const frame = now => {
+    now = performance.now(); const s = Math.max(0, ((now - t0) / 1000) % CYCLE), mode = phaseAt(s), usb = mode === "usb";
+    let dt = (now - prev) / 1000; prev = now; if (dt > 2) dt = 0;   // tab was hidden
+    if (s < lastS) { shown = 0; bytes = 0; }   // new cycle
+    lastS = s;
+    cable.setAttribute("opacity", usb ? 1 : 0);
+    $("wifi").setAttribute("opacity", usb ? .25 : 1);
+    const target = usb ? 38 + 4 * Math.sin(s * 3) : 17.5 + 1.2 * Math.sin(s * 2);
+    $("mode").textContent = usb ? "⚡ T.U.R.B.O. · USB-C" : "📡 Wi-Fi";
+    $("mode").setAttribute("fill", usb ? "var(--usb)" : "var(--wifi)");
+    $("speed").textContent = target.toFixed(1) + " MB/s now";
+    bytes += target * dt; shown = Math.min(TOTAL, shown + target * dt / 1.6);   // ~1.6 MB per file, scaled for the loop
+    $("avg").textContent = (bytes / Math.max(0.5, s)).toFixed(1) + " MB/s average";
+    $("pbar").setAttribute("width", (52 * shown / TOTAL).toFixed(1));
+    $("pcount").textContent = Math.floor(shown) + "/" + TOTAL;
+    const step = usb ? 0.016 : 0.007, path = usb ? cable : air, L = usb ? L2 : L1, n = usb ? 46 : 16;
+    pool.forEach((d, i) => { if (i >= n) { d.el.setAttribute("opacity", 0); return; }
+      d.t = (d.t + step) % 1; const p = path.getPointAtLength(d.t * L);
+      d.el.setAttribute("cx", p.x.toFixed(1)); d.el.setAttribute("cy", p.y.toFixed(1));
+      d.el.setAttribute("fill", usb ? "var(--usb)" : "var(--wifi)"); d.el.setAttribute("opacity", (0.35 + 0.65 * Math.sin(d.t * Math.PI)).toFixed(2)); });
+    const sec = Math.floor(s);
+    if (sec !== lastLog) { lastLog = sec;
+      $("logline").textContent = sec === 7 ? "handoff: USB-C cable found, switching to the cable"
+        : sec === 17 ? "handoff: cable gone, back to Wi-Fi"
+        : `new files ${Math.floor(shown)}/${TOTAL} (${usb ? "⚡ T.U.R.B.O. · USB-C" : "📡 Wi-Fi"} · ${target.toFixed(1)} MB/s now)`; }
+    requestAnimationFrame(frame);
+  };
+  if (reduce) { cable.setAttribute("opacity", 1); $("mode").textContent = "⚡ T.U.R.B.O. · USB-C"; $("speed").textContent = "~40 MB/s (cable) · ~18 MB/s (Wi-Fi)"; }
+  else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

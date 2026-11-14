@@ -78,8 +78,17 @@ find ${PREFIX%delta_}* -type f ! -path "$P/*" -exec stat -f '%z|%N' {} + 2>/dev/
 TOT=$(wc -l < "$P/_new.txt" | tr -d ' '); BYTES=$(awk -F'|' '{s+=$1} END{print s+0}' "$P/_new.txt")
 echo "$(ts) new files 0/$TOT" >> "$L"
 t0=$(date +%s); n=0
-while IFS='|' read -r sz p; do mkdir -p "$P$(dirname "$p")"; pick
-  "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt" || { sleep 5; pick; "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt"; } && n=$((n+1)); echo "$(ts) new files $n/$TOT ($VIA)" >> "$L"
+# T.U.R.B.O. (Tethered USB Rapid Bulk Offload): when the run is on the USB-C cable, the log and the phone page say so,
+# with this file's speed and the run's average speed.
+now(){ perl -MTime::HiRes=time -e 'printf "%.3f", time'; }
+T0=$(now); DONE_B=0
+mode(){ [ "$VIA" = usb ] && echo "⚡ T.U.R.B.O. · USB-C" || echo "📡 Wi-Fi"; }
+while IFS='|' read -r sz p; do mkdir -p "$P$(dirname "$p")"; pick; f0=$(now)
+  "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt" || { sleep 5; pick; "${A[@]}" pull -a "$p" "$P$p" </dev/null >/dev/null 2>>"$P/_pull_err.txt"; } && n=$((n+1))
+  f1=$(now); DONE_B=$((DONE_B+sz))
+  sp=$(awk -v b=$sz -v a=$f0 -v z=$f1 'BEGIN{d=z-a; if(d<0.05)d=0.05; printf "%.1f", b/1048576/d}')
+  av=$(awk -v b=$DONE_B -v a=$T0 -v z=$f1 'BEGIN{d=z-a; if(d<0.05)d=0.05; printf "%.1f", b/1048576/d}')
+  echo "$(ts) new files $n/$TOT ($(mode) · ${sp} MB/s now · ${av} MB/s avg)" >> "$L"
 done < "$P/_new.txt"; t1=$(date +%s)
 
 # 4) photo GPS tags (only if the camera saved them)
@@ -102,4 +111,4 @@ else echo "$(ts) INCOMPLETE: $n of $TOT copied, $ok verified, $bad missing or di
 # let the finish screen show, then stop this pull's progress page so the script can exit
 ( sleep 30; pkill -f "phone_status.py --root $P " ) >/dev/null 2>&1 </dev/null &
 secs=$((t1-t0)); [ $secs -lt 1 ] && secs=1
-echo "WIFI_PULL $SER: $n/$TOT files, $(awk -v b=$BYTES 'BEGIN{printf "%.1f",b/1048576}') MB in ${secs}s; checksums $ok ok, $bad differ; sms $(grep -c '^Row' "$P/SMS_since.local.txt"), mms $(grep -c '^Row' "$P/MMS_INDEX_since.local.txt"), calls $(grep -c '^Row' "$P/CALL_LOG_since.local.txt"); photos with GPS $(wc -l < "$P/PHOTO_GPS.tsv" | tr -d ' ') -> $P"
+echo "WIFI_PULL $SER: $n/$TOT files, $(awk -v b=$BYTES 'BEGIN{printf "%.1f",b/1048576}') MB in ${secs}s (avg $(awk -v b=$DONE_B -v s=$secs 'BEGIN{printf "%.1f",b/1048576/s}') MB/s, ended on $VIA); checksums $ok ok, $bad differ; sms $(grep -c '^Row' "$P/SMS_since.local.txt"), mms $(grep -c '^Row' "$P/MMS_INDEX_since.local.txt"), calls $(grep -c '^Row' "$P/CALL_LOG_since.local.txt"); photos with GPS $(wc -l < "$P/PHOTO_GPS.tsv" | tr -d ' ') -> $P"

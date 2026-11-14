@@ -108,10 +108,14 @@ def status():
         for k, (ic, name, _) in kinds.items():
             if want[k]:
                 add(ic, name, have[k], want[k])
-    nf = re.findall(r"new files (\d+)/(\d+)", log)
+    nf = re.findall(r"new files (\d+)/(\d+)(?: \(([^)]*)\))?", log)
     if nf:
-        k, tot = map(int, nf[-1])
-        add("🗂️", "New files", tot if "phase1 done" in log else k, tot, re.search(r"SAFE TO UNPLUG: (\d+) new files", log) and f"{re.search(r'SAFE TO UNPLUG: (\d+) new files', log).group(1)} saved, rest already on the drive" or "")
+        k, tot = int(nf[-1][0]), int(nf[-1][1])
+        speed = nf[-1][2]   # e.g. "⚡ T.U.R.B.O. · USB-C · 38.2 MB/s now · 35.0 MB/s avg" (Wi-Fi pulls)
+        if speed and "phase1 done" not in log:
+            add("🗂️", "New files", k, tot, speed)
+        else:
+          add("🗂️", "New files", tot if "phase1 done" in log else k, tot, re.search(r"SAFE TO UNPLUG: (\d+) new files", log) and f"{re.search(r'SAFE TO UNPLUG: (\d+) new files', log).group(1)} saved, rest already on the drive" or "")
     m = re.search(r"sdcard \+ system done \(([^,]+), (\d+) files\)", log)
     if m:
         add("📁", "Phone storage", int(m.group(2)), int(m.group(2)), m.group(1))

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.9.4 — 2026-11-13 · T.U.R.B.O. edition
+**T.U.R.B.O.** Tethered USB Rapid Bulk Offload.
+- **`scripts/wifi/pnet_wifi_pull.sh`:** hands off from Wi-Fi to the USB-C cable when the phone is plugged in mid-run, and
+  back to Wi-Fi when it is unplugged (reconnecting on the phone's new mDNS port); can start on USB alone; retries one failed
+  file once after re-checking the link. Each log line shows the mode (⚡ T.U.R.B.O. · USB-C or 📡 Wi-Fi), this file's speed
+  and the average; the summary gives the average speed and the link it ended on.
+- **`stack/jobboard/phone_status.py`:** the phone's progress page shows that mode and speed note on the "New files" row.
+- **`site/turbo.html`:** animated explainer of the handoff with the measured speeds; linked from the home page and the
+  D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. page. Version, badge and footers to v0.9.4.
+
 ## v0.9.3 — 2026-11-13 · D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition
 **D.A.T.A.** Dated, Audited, Traced, Archived · **F.I.N.G.E.R.** Forensic Index of Notes, Gaps, Evidence and Records · **P.O.I.N.T.** Proof Of Integrity, Never Tampered.
 - **`scripts/wifi/pnet_wifi_pull.sh`:** pull any paired phone over adb wireless debugging (texts, MMS index, calls, new media on

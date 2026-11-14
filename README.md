@@ -4,7 +4,7 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition (2026-11-13) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.4 T.U.R.B.O. edition (2026-11-13) · [⚡ T.U.R.B.O. handoff](https://the1truedan.github.io/phone-net-ICKS/turbo.html) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -30,7 +30,19 @@ The [one-page field guide](https://the1truedan.github.io/phone-net-ICKS/alert-ga
 
 Both are unsigned: the first time, see [install](#desktop-app-from-v080-install). Check downloads against `SHA256SUMS.txt` on each release page.
 
-## Latest · v0.9.3 · D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition (2026-11-13)
+## Latest · v0.9.4 · T.U.R.B.O. edition (2026-11-13)
+
+**T.U.R.B.O.** Tethered USB Rapid Bulk Offload.
+
+- **Wi-Fi to USB-C handoff:** a phone pull starts over Wi-Fi; before every file `scripts/wifi/pnet_wifi_pull.sh` checks for the
+  USB-C cable, and the moment the phone is plugged in the rest of the pull moves to the cable. Unplug it and the pull goes
+  back to Wi-Fi, finding the phone's new Wi-Fi port on its own. A run can also start on the cable alone.
+- **Speed you can see:** every log line and the phone's progress page show the mode with this file's speed and the run's
+  average: `new files 33/476 (⚡ T.U.R.B.O. · USB-C · 40.8 MB/s now · 36.9 MB/s avg)`. Measured 2026-11-13: about 40 MB/s
+  on the cable (13-42 MB/s per file; small files are slower) against 17-18 MB/s over Wi-Fi.
+- **Animated explainer:** [`site/turbo.html`](https://the1truedan.github.io/phone-net-ICKS/turbo.html).
+
+## v0.9.3 · D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition (2026-11-13)
 
 **D.A.T.A.** Dated, Audited, Traced, Archived · **F.I.N.G.E.R.** Forensic Index of Notes, Gaps, Evidence and Records · **P.O.I.N.T.** Proof Of Integrity, Never Tampered.
 A *data fingerprint* is a file's SHA-256 hash, so any change shows. A *finger point* is the record's plain job: point at the exact minute, file and line where what was said, written, authorized and paid stop matching.
@@ -286,7 +298,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.3"><img src="https://img.shields.io/badge/release-v0.9.3_D.A.T.A._F.I.N.G.E.R._P.O.I.N.T._edition-3dcaa0?style=for-the-badge" alt="v0.9.3 D.A.T.A. F.I.N.G.E.R. P.O.I.N.T. edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.4"><img src="https://img.shields.io/badge/release-v0.9.4_T.U.R.B.O._edition-3dcaa0?style=for-the-badge" alt="v0.9.4 T.U.R.B.O. edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>
