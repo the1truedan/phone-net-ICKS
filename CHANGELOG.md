@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.9.4.1 — 2026-11-13 · icons and heroes
+- **`site/data-finger-point.svg`, `site/turbo.svg`:** the v0.9.3 and v0.9.4 animations as standalone SVG (SMIL, no scripts), made by
+  `scripts/site/make_hero_svgs.py`; shown at the top of the README and the home page.
+- **`site/icons/`:** app icons for phone-net-ICKS, in-doc-trin-8-piece and S.O.R.T.Y. (S.O.R.T.Y. release soon), in the README and home page.
+- **`site/index.html`:** T.U.R.B.O. breakthrough entry (476/476 files at ~39 MB/s). Version, badge and footers (index, analytics,
+  workflow) to v0.9.4.1. No change to the pull scripts.
+
 ## v0.9.4 — 2026-11-13 · T.U.R.B.O. edition
 **T.U.R.B.O.** Tethered USB Rapid Bulk Offload.
 - **`scripts/wifi/pnet_wifi_pull.sh`:** hands off from Wi-Fi to the USB-C cable when the phone is plugged in mid-run, and
