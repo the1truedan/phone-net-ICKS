@@ -4,7 +4,19 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.4 T.U.R.B.O. edition (2026-11-13) · [⚡ T.U.R.B.O. handoff](https://the1truedan.github.io/phone-net-ICKS/turbo.html) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.4.1 (2026-11-13: icons + heroes, on the v0.9.4 T.U.R.B.O. edition) · [⚡ T.U.R.B.O. handoff](https://the1truedan.github.io/phone-net-ICKS/turbo.html) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+
+
+<p align="center">
+  <img src="site/data-finger-point.svg" width="49%" alt="D.A.T.A. F.I.N.G.E.R. P.O.I.N.T.: a Mac mini, a phone and a dash camera send dots over Wi-Fi into a µ cube">
+  <img src="site/turbo.svg" width="49%" alt="T.U.R.B.O.: a Wi-Fi pull hands off to the USB-C cable, about 18 MB/s to about 40 MB/s">
+</p>
+
+| | App | Status |
+| :---: | --- | --- |
+| <img src="site/icons/phone-net-icks.png" width="72" alt="phone-net-ICKS icon"> | **phone-net-ICKS** · pull a phone (USB-C or Wi-Fi) into a checksummed, searchable record | Mac app 0.8.1 · scripts v0.9.4.1 |
+| <img src="site/icons/in-doc-trin-8.png" width="72" alt="in-doc-trin-8-piece icon"> | **in-doc-trin-8-piece** · paper receipts to your own ledger (CSV) | Mac app 0.1.0 alpha |
+| <img src="site/icons/sorty.png" width="72" alt="S.O.R.T.Y. icon"> | **S.O.R.T.Y.** (Staging · OCR · Rename · Triage · Yield) · sort a messy folder of scans and downloads, on this Mac | *release soon* |
 
 A local-only toolkit for family caregivers. It turns the recordings, emails and letters on your **own** phone into an indexed, checksummed, searchable record. With that record you can ask care agencies precise questions in writing, and show how each answer was found.
 
@@ -30,7 +42,14 @@ The [one-page field guide](https://the1truedan.github.io/phone-net-ICKS/alert-ga
 
 Both are unsigned: the first time, see [install](#desktop-app-from-v080-install). Check downloads against `SHA256SUMS.txt` on each release page.
 
-## Latest · v0.9.4 · T.U.R.B.O. edition (2026-11-13)
+## Latest · v0.9.4.1 · icons and heroes (2026-11-13)
+
+- Both v0.9.3 and v0.9.4 animations are now plain SVG files (`site/data-finger-point.svg`, `site/turbo.svg`, no scripts),
+  so they play here in the README and on the home page. Made by `scripts/site/make_hero_svgs.py`.
+- App icons for phone-net-ICKS, in-doc-trin-8-piece and S.O.R.T.Y. (S.O.R.T.Y. release soon).
+- Version, badge and page footers to v0.9.4.1. No code change to the pull scripts.
+
+## v0.9.4 · T.U.R.B.O. edition (2026-11-13)
 
 **T.U.R.B.O.** Tethered USB Rapid Bulk Offload.
 
@@ -298,7 +317,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.4"><img src="https://img.shields.io/badge/release-v0.9.4_T.U.R.B.O._edition-3dcaa0?style=for-the-badge" alt="v0.9.4 T.U.R.B.O. edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.4.1"><img src="https://img.shields.io/badge/release-v0.9.4.1_T.U.R.B.O._edition-3dcaa0?style=for-the-badge" alt="v0.9.4.1 T.U.R.B.O. edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>
