@@ -4,8 +4,12 @@
 
 **Intake · Custody · Keywords · Synthesis**
 
-**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.4.1 (2026-11-13: icons + heroes, on the v0.9.4 T.U.R.B.O. edition) · [⚡ T.U.R.B.O. handoff](https://the1truedan.github.io/phone-net-ICKS/turbo.html) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
+**Live page:** https://the1truedan.github.io/phone-net-ICKS/ · v0.9.4.1.1 (2026-11-18: S.H.O.W. A.N.D. T.E.L.L. edition) · [⚡ T.U.R.B.O. handoff](https://the1truedan.github.io/phone-net-ICKS/turbo.html) · [Three phones over Wi-Fi](https://the1truedan.github.io/phone-net-ICKS/data-finger-point.html) · [THE ALERT GAP](https://the1truedan.github.io/phone-net-ICKS/alert-gap.html) · [PAPER TRAIL one-pager](https://the1truedan.github.io/phone-net-ICKS/paper-trail.html) · [Sessions of Therapy](https://the1truedan.github.io/phone-net-ICKS/sessions.html) · public since 2026-09-30 · MIT
 
+
+<p align="center">
+  <img src="site/show-and-tell.svg" width="98%" alt="S.H.O.W. A.N.D. T.E.L.L.: sealed records drop into a µ cube and come out as accessible pages, 25 of 25 in 24 minutes; then six local sources flow into a 29-month grid and a few months flash amber where care needs and paid hours do not match.">
+</p>
 
 <p align="center">
   <img src="site/data-finger-point.svg" width="49%" alt="D.A.T.A. F.I.N.G.E.R. P.O.I.N.T.: a Mac mini, a phone and a dash camera send dots over Wi-Fi into a µ cube">
@@ -14,7 +18,7 @@
 
 | | App | Status |
 | :---: | --- | --- |
-| <img src="site/icons/phone-net-icks.png" width="72" alt="phone-net-ICKS icon"> | **phone-net-ICKS** · pull a phone (USB-C or Wi-Fi) into a checksummed, searchable record | Mac app 0.8.1 · scripts v0.9.4.1 |
+| <img src="site/icons/phone-net-icks.png" width="72" alt="phone-net-ICKS icon"> | **phone-net-ICKS** · pull a phone (USB-C or Wi-Fi) into a checksummed, searchable record | Mac app 0.8.1 · scripts v0.9.4.1.1 |
 | <img src="site/icons/in-doc-trin-8.png" width="72" alt="in-doc-trin-8-piece icon"> | **in-doc-trin-8-piece** · paper receipts to your own ledger (CSV) | Mac app 0.1.0 alpha |
 | <img src="site/icons/sorty.png" width="72" alt="S.O.R.T.Y. icon"> | **S.O.R.T.Y.** (Staging · OCR · Rename · Triage · Yield) · sort a messy folder of scans and downloads, on this Mac | *release soon* |
 
@@ -42,7 +46,32 @@ The [one-page field guide](https://the1truedan.github.io/phone-net-ICKS/alert-ga
 
 Both are unsigned: the first time, see [install](#desktop-app-from-v080-install). Check downloads against `SHA256SUMS.txt` on each release page.
 
-## Latest · v0.9.4.1 · icons and heroes (2026-11-13)
+## Latest · v0.9.4.1.1 · S.H.O.W. A.N.D. T.E.L.L. edition (2026-11-18)
+
+**S.H.O.W.** Sealed mail, Hashed, OCR'd, Web-accessible · **A.N.D.** Audited, Normalized, Dated · **T.E.L.L.** Turnaround, Every Line Logged.
+
+One morning, measured. A family caregiver, in the first weeks after a loss, got 25 medical records by encrypted email.
+Dense, scanned and inaccessible was the old barrier. This time:
+
+| Step | Time | Result |
+|---|---|---|
+| First encrypted message to all 25 records saved, SHA-256 checksummed and custody-logged | 17 min | 24.4 MB, 787 pages, about 266,600 words |
+| P.A.P.E. accessibility pass (OCR, tagging, PDF/UA-1 check with veraPDF) | 7 min more (24 min total) | PDF/UA-1: 0 of 25 passed before, 25 of 25 after · failed checks 214,743 to 0 · pages with no text 63 to 1 |
+| A payroll portal: 44 pay periods pulled, checksummed, compared with the last pull, pay stub checked | about 12 min from sign-in | only the changed periods flagged |
+| Local fact extraction from the 787 pages, two machines in parallel | the same day | 2,148 dated facts, each with a page reference |
+| Cross-check: every month for 29 months against six local sources (care records, clinic export, own notes, hours evidence, pay stubs, agency letters) | 23 min on one local GPU | a computed counts table plus a month-by-month draft, every line cited |
+| A handwritten form (colored paper) | seconds | standard OCR read 0 words; on-device OCR read every handwritten field |
+
+Nothing left the house: every model ran on the owner's own machines, and health records went to local models only
+(routed through [ai-gateway](https://github.com/the1truedan/ai-gateway)).
+
+- **New:** `scripts/pape/vision_ocr.swift`, on-device OCR for printed and handwritten pages (Apple Vision; `swiftc -O scripts/pape/vision_ocr.swift -o vision_ocr`).
+- **New:** `site/show-and-tell.svg`, made by `scripts/site/make_show_and_tell_svg.py`.
+- **Stays in the private hub:** the month-by-month comparison and the payroll audit (they read case files). Their method is described here; their data never is.
+- **Session record (AgentsView), since v0.9.4.1:** 20 working sessions, about 5,100 messages, six days. Session IDs stay private.
+- **Known issue:** some scans of colored or handwritten forms come out tilted (scanner software step); fix planned.
+
+## v0.9.4.1 · icons and heroes (2026-11-13)
 
 - Both v0.9.3 and v0.9.4 animations are now plain SVG files (`site/data-finger-point.svg`, `site/turbo.svg`, no scripts),
   so they play here in the README and on the home page. Made by `scripts/site/make_hero_svgs.py`.
@@ -317,7 +346,7 @@ phone-net · I.C.K.S. is one door in a larger µlab. The sibling public repos:
 
 <p align="left">
   <a href="https://the1truedan.github.io/phone-net-ICKS/"><img src="https://img.shields.io/badge/pages-phone--net--ICKS-e8b84a?style=for-the-badge" alt="GitHub Pages"></a>
-  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.4.1"><img src="https://img.shields.io/badge/release-v0.9.4.1_T.U.R.B.O._edition-3dcaa0?style=for-the-badge" alt="v0.9.4.1 T.U.R.B.O. edition"></a>
+  <a href="https://github.com/the1truedan/phone-net-ICKS/releases/tag/v0.9.4.1.1"><img src="https://img.shields.io/badge/release-v0.9.4.1.1_S.H.O.W._A.N.D._T.E.L.L._edition-3dcaa0?style=for-the-badge" alt="v0.9.4.1.1 S.H.O.W. A.N.D. T.E.L.L. edition"></a>
   <a href="https://linktr.ee/the1truedan"><img src="https://img.shields.io/badge/Linktree-39E09B?style=for-the-badge&logo=linktree&logoColor=white" alt="Linktree"></a>
   <a href="https://ko-fi.com/the1truedan"><img src="https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
 </p>

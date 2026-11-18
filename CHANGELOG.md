@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.9.4.1.1 — 2026-11-18 · S.H.O.W. A.N.D. T.E.L.L. edition
+**S.H.O.W.** Sealed mail, Hashed, OCR'd, Web-accessible · **A.N.D.** Audited, Normalized, Dated · **T.E.L.L.** Turnaround, Every Line Logged.
+- **Field result (2026-11-18):** 25 encrypted records (787 pages) to PDF/UA-1 in 24 minutes; 44 payroll periods audited in
+  about 12 minutes; 29 months cross-checked against six local sources in 23 minutes. Aggregate numbers only.
+- **`scripts/pape/vision_ocr.swift`:** Apple Vision OCR (printed and handwritten), on-device. Standard OCR read 0 words
+  from a handwritten form on colored paper; this read every field.
+- **`site/show-and-tell.svg`:** animated hero (SMIL, no scripts), made by `scripts/site/make_show_and_tell_svg.py`; at the
+  top of the README and the home page.
+- **`site/index.html`:** S.H.O.W. A.N.D. T.E.L.L. breakthrough entry and stats. Version, badge and footers (index, analytics, workflow) to v0.9.4.1.1.
+- **Known issue:** a tilt in some scans of colored or handwritten forms (scanner software step); fix planned.
+
 ## v0.9.4.1 — 2026-11-13 · icons and heroes
 - **`site/data-finger-point.svg`, `site/turbo.svg`:** the v0.9.3 and v0.9.4 animations as standalone SVG (SMIL, no scripts), made by
   `scripts/site/make_hero_svgs.py`; shown at the top of the README and the home page.
