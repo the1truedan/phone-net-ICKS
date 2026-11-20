@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sessions of Therapy</title>
-<meta name="description" content="Sessions of Therapy: groggy logs of how one family caregiver used AI tools, counted and not read. 1,649 sessions in a black box." />
+<meta name="description" content="Sessions of Therapy: groggy logs of how one family caregiver used AI tools, counted and not read. 1,716 sessions in a black box (counted Nov 20, 2026)." />
 <meta name="robots" content="noindex" />
 <style>
   :root {
@@ -78,6 +78,7 @@
     <nav class="switch" aria-label="Pages"><a href="index.html">Summary</a><a href="analytics.html">Analytics</a><a href="workflow.html">Workflow</a><a href="sessions.html" aria-current="page">Sessions of Therapy</a></nav>
     <p class="eyebrow">phone+net+tics · phone-net · I.C.K.S. v0.9.2 A.U.D.I.T. I.T. M.Y.S.E.L.F. edition · sessions of therapy</p>
     <h1>Sessions of <em>Therapy</em></h1>
+    <p class="lede" style="opacity:.75;font-size:.9rem">Counted Nov 20, 2026 · 1,716 sessions, Feb 2023 to Nov 19, 2026</p>
     <p class="sub">Groggy logs: how one family caregiver used AI tools, day and night, to the point of explaining their own work back to them. Every session is a dot in the black box. We count the sessions. We do not show what they say.</p>
     <div class="stats" id="stats"></div>
   </div>
@@ -87,6 +88,7 @@
   <section>
     <h2>The black box</h2>
     <p class="lede">Each dot is one AI session. The dot size shows how many messages it had. Dots group by topic. The moving sparks show the same week jumping from one topic to another. Type in the search box, or click a topic, to zoom in.</p>
+    <p class="tf" style="opacity:.75;font-size:.85rem;margin:.2rem 0 .6rem">🗓 Time frame: Feb 2023 – Nov 19, 2026 · 1,639 of 1,716 sessions (95%) are from Mar–Nov 2026</p>
     <div class="viz">
       <div>
         <div class="stage">
@@ -106,6 +108,7 @@
   <section>
     <h2>Where the line splits</h2>
     <p class="lede">Some prompts belong to two topics at once. These counts come from a first keyword pass over all prompts. A local model will replace the keywords before this page is final.</p>
+    <p class="tf" style="opacity:.75;font-size:.85rem;margin:.2rem 0 .6rem">🗓 Time frame: Feb 2023 – Nov 19, 2026 · 1,639 of 1,716 sessions (95%) are from Mar–Nov 2026</p>
     <div class="grid3">
       <div class="card"><h3>Care and evidence</h3><p><span class="num" data-st="split0"></span> prompts. Care problems turned into records: recordings, custody logs, transcripts.</p></div>
       <div class="card"><h3>Care and the law</h3><p><span class="num" data-st="split1"></span> prompts asked what the rules say: statutes, ADA, appeal rights.</p></div>
@@ -116,9 +119,18 @@
   <section>
     <h2>Calling out the tools</h2>
     <p class="lede">The caregiver checks the AI. When the AI is wrong, the error gets a name and a number: a CVE-FAUX record.</p>
+    <p class="tf" style="opacity:.75;font-size:.85rem;margin:.2rem 0 .6rem">🗓 Time frame: Feb 2023 – Nov 19, 2026 · 1,639 of 1,716 sessions (95%) are from Mar–Nov 2026</p>
     <div class="grid3">
       <div class="card"><h3>Call-outs</h3><p><span class="num" data-st="callouts"></span> prompts corrected the AI ("that's not right", "you said…"), in <span class="num" id="xs"></span> sessions.</p></div>
-      <div class="card"><h3>Glitches</h3><p><span class="num" data-st="cjk"></span> AI replies had stray Chinese characters in English text.</p></div>
+      <div class="card"><h3>&ldquo;Glitches&rdquo;</h3><p><span class="num" data-st="cjk"></span> AI replies had stray Chinese characters in English text.</p>
+        <svg viewBox="0 0 300 150" role="img" aria-label="The most common stray character, 真 (zhēn, true or real), seen 15 times, with smaller strays 完美 (perfect), 成功 (success) and 一 (one)." style="width:100%;max-width:300px;height:auto;display:block;margin:.4rem auto 0">
+          <text x="80" y="112" text-anchor="middle" font-size="110" font-weight="700" fill="currentColor" font-family="'PingFang SC','Hiragino Sans GB','Noto Sans CJK SC','Microsoft YaHei',sans-serif">真</text>
+          <text x="80" y="140" text-anchor="middle" font-size="12" fill="currentColor" opacity=".75">zhēn · "true, real" · 15×</text>
+          <g font-family="'PingFang SC','Hiragino Sans GB','Noto Sans CJK SC','Microsoft YaHei',sans-serif" fill="currentColor" opacity=".7" text-anchor="middle">
+            <text x="225" y="44" font-size="30">完美</text><text x="225" y="60" font-size="10" font-family="inherit">"perfect"</text>
+            <text x="200" y="100" font-size="30">成功</text><text x="200" y="116" font-size="10" font-family="inherit">"success"</text>
+            <text x="270" y="100" font-size="30">一</text><text x="270" y="116" font-size="10" font-family="inherit">"one"</text>
+          </g></svg></div>
       <div class="card"><h3>Caught mid-thought</h3><p data-st="caught"></p></div>
       <div class="card"><h3>The CVE wall</h3><ul data-st-html="cves"></ul></div>
       <div class="card"><h3>The missing answers</h3><p data-st="missing"></p></div>
@@ -128,6 +140,27 @@
   <section>
     <h2>Tools and cost</h2>
     <p class="lede">What the agents used. MCP tools connect the AI to the family's own data. The local ones never leave the house.</p>
+    <p class="tf" style="opacity:.75;font-size:.85rem;margin:.2rem 0 .6rem">🗓 Time frame: Feb 2023 – Nov 19, 2026 · 1,639 of 1,716 sessions (95%) are from Mar–Nov 2026</p>
+    <div class="card" style="margin:.6rem 0 1rem">
+      <h3>What an hour of directing the AI was worth</h3>
+      <svg viewBox="0 0 760 170" role="img" aria-label="List-price value of AI compute per hour of directing it: about $111 an hour, against $19.28 an hour the care program pays for an hour of attendant care and $16.50 an hour the caregiver is paid." style="width:100%;height:auto;max-width:760px">
+        <g font-family="inherit" font-size="14" fill="currentColor">
+          <text x="0" y="26">AI compute, list price</text><rect x="230" y="12" width="430" height="20" rx="4" fill="#6ee7ff"/><text x="668" y="27" font-weight="700">$111.45/h</text>
+          <text x="0" y="62">Program pays per care hour</text><rect x="230" y="48" width="74" height="20" rx="4" fill="#c4841a"/><text x="312" y="63">$19.28/h</text>
+          <text x="0" y="98">Caregiver's wage</text><rect x="230" y="84" width="64" height="20" rx="4" fill="#e0716b"/><text x="302" y="99">$16.50/h</text>
+          <text x="0" y="132" font-size="12" opacity=".8">$76,178 of AI work at list price ÷ 683.5 hours of directing it (10-minute windows with a prompt, Mar–Nov 2026) = $111.45/h:</text>
+          <text x="0" y="150" font-size="12" opacity=".8">6.8× the caregiver's wage and 5.8× what the program pays per hour of care. Not money paid: the AI ran on flat subscriptions.</text>
+        </g></svg>
+      <table style="font-size:.9rem;margin:.6rem 0;border-collapse:collapse">
+        <tr><th style="text-align:left;padding:2px 10px 2px 0">Per day, Mar 1 – Nov 19, 2026</th><th style="text-align:right;padding:2px 10px">Hours</th><th style="text-align:right;padding:2px 0">Value</th></tr>
+        <tr><td style="padding:2px 10px 2px 0">AI compute directed (list price, 264 days)</td><td style="text-align:right;padding:2px 10px">2.6 h of directing</td><td style="text-align:right">$288.55</td></tr>
+        <tr><td style="padding:2px 10px 2px 0">Care hours the program certified and paid (Mar–Oct, 245 days, 1,211 h)</td><td style="text-align:right;padding:2px 10px">4.94 h</td><td style="text-align:right">$95.30 program cost · $81.56 wage</td></tr>
+        <tr><td style="padding:2px 10px 2px 0">For scale: the 2025 cap</td><td style="text-align:right;padding:2px 10px">3.5 h</td><td style="text-align:right">$67.48 program cost · $57.75 wage</td></tr>
+      </table>
+      <p style="font-size:.85rem;opacity:.8;margin:.2rem 0">Around the clock, the AI work came to $12.02 for every hour of the calendar; the certified care came to $3.97. Certified care in 2026 stepped from 4 to 4.25, 6.5 and 10.5 h a day; 3.5 was the 2025 cap.</p>
+      <p style="font-size:.85rem;opacity:.8;margin:.2rem 0">Helpers: RTK trims command output so fewer tokens are spent · Hippo memory phased out (read-only since Oct 16, its tool off since Oct 31) · PMB is the memory in use.</p>
+      <p style="font-size:.85rem;opacity:.8;margin:.4rem 0 0">Home gear, theoretical peak: Desk Mac (Apple M4 Neural Engine) 38 TOPS · GPU box (RTX 4060 Ti 16 GB) 353 AI TOPS · Storage server: Quadro P2000 about 3 TFLOPS FP32 (no tensor cores) and a Xeon E5-2699 v3 CPU (18 cores, 36 threads) about 1.3 TFLOPS FP32 peak. About 391 AI TOPS plus about 4.3 TFLOPS of plain FP32 in all. Used: the Xeon was busy for 3,407 core-hours in the last 90 days (Aug 22 – Nov 20, 2026; the metrics keep 90 days), about 4% of its 36 threads around the clock. The hours are a floor: the agents kept working between prompts.</p>
+    </div>
     <div class="grid3">
       <div class="card"><h3>Tool calls</h3><p><span class="num" data-st="tools"></span> calls.</p></div>
       <div class="card"><h3>MCP calls: <span class="num" data-st="mcp"></span></h3><p data-st="mcpList"></p></div>
@@ -137,6 +170,7 @@
   <section>
     <h2>The workbench</h2>
     <p class="lede">What the agents did with their hands: the commands they ran, the folders they worked in, and the files they made or changed.</p>
+    <p class="tf" style="opacity:.75;font-size:.85rem;margin:.2rem 0 .6rem">🗓 Time frame: Feb 2023 – Nov 19, 2026 · 1,639 of 1,716 sessions (95%) are from Mar–Nov 2026</p>
     <div class="grid3">
       <div class="card"><h3>Most used commands</h3><p data-st="cmds"></p></div>
       <div class="card"><h3>Most used folders</h3><p data-st="folders"></p></div>
@@ -147,7 +181,20 @@
   </section>
   <section>
     <h2>Build the tools · What tools</h2>
-    <p class="lede" id="reposLede">The public repos that came out of the sessions. The goal behind all of them: <b>prepare for the care when we cannot be there.</b></p>
+    
+    <p class="tf" style="opacity:.75;font-size:.85rem;margin:.2rem 0 .6rem">🗓 Counted Nov 20, 2026 · totals only, no repo names</p>
+    <svg viewBox="0 0 760 216" role="img" aria-label="Code pushed, counted Nov 20, 2026. Public: 12 repos, 527 commits, 54 releases. Private: 1,386 commits (10 private GitHub repos with 1,356, private-server-only repos 7, local commits not yet pushed 23), 0 releases." style="width:100%;height:auto;max-width:760px">
+      <g font-family="inherit" font-size="14" fill="currentColor">
+        <text x="0" y="22" font-weight="700">Commits pushed</text>
+        <a href="https://github.com/the1truedan?tab=repositories&amp;type=public"><text x="0" y="56" text-decoration="underline">Public</text></a><rect x="120" y="42" width="198" height="20" rx="4" fill="#6ee7ff"/><a href="https://github.com/the1truedan?tab=repositories&amp;type=public"><text x="326" y="57">527 · 12 repos</text></a>
+        <text x="0" y="90">Private</text>
+        <rect x="120" y="76" width="509" height="20" rx="4" fill="#8a6fd1"/><rect x="629" y="76" width="3" height="20" fill="#c4841a"/><rect x="631" y="76" width="9" height="20" fill="#f0b429"/>
+        <text x="650" y="91">1,386</text>
+        <text x="120" y="118" font-size="12" opacity=".75">private: 1,356 on 10 private GitHub repos · 7 on the home server only · 23 local, not pushed yet</text>
+        <text x="0" y="160" font-weight="700">Releases</text>
+        <text x="0" y="190">Public</text><rect x="120" y="176" width="225" height="20" rx="4" fill="#6ee7ff"/><a href="https://the1truedan.github.io/phone-net-ICKS/"><text x="353" y="191">54 releases · 72 tags</text></a>
+        <text x="520" y="190">Private: 0</text><a href="https://the1truedan.github.io/phone-net-ICKS/"><text x="0" y="207" font-size="12" text-decoration="underline">Live one-page site →</text></a>
+      </g></svg><p class="lede" id="reposLede">The public repos that came out of the sessions. The goal behind all of them: <b>prepare for the care when we cannot be there.</b></p>
     <div style="overflow-x:auto"><table class="repos" id="repos"></table></div>
   </section>
 </main>
@@ -203,7 +250,7 @@ document.querySelectorAll("[data-st]").forEach(el => { const k = el.dataset.st; 
 document.querySelectorAll("[data-st-html]").forEach(el => { el.innerHTML = ST[el.dataset.stHtml] || "<li>—</li>"; });
 document.getElementById("note").textContent = LOCAL ? "" : ST.note;
 const REPOS = window.SOT_REPOS || [];
-document.getElementById("repos").innerHTML = REPOS.length ? "<tr><td><b>repo</b></td><td><b>what it does</b></td><td><b>how it helps care when we cannot be there</b></td></tr>" + REPOS.map(r => `<tr><td>${r.n}</td><td>${r.d}</td><td>${r.g}</td></tr>`).join("") : "";
+document.getElementById("repos").innerHTML = REPOS.length ? "<tr><td><b>repo</b></td><td><b>what it does</b></td><td><b>how it helps care when we cannot be there</b></td></tr>" + REPOS.map(r => `<tr><td>${r.u ? `<a href="${r.u}">${r.n}</a>` : r.n}</td><td>${r.d}</td><td>${r.g}</td></tr>`).join("") : "";
 document.getElementById("xs").textContent = DATA.filter(d => d.x).length;
 
 // chips
